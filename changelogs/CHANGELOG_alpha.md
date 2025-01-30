@@ -1,3 +1,10 @@
+# [6.0.0-alpha.25](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.24...6.0.0-alpha.25) (2025-01-30)
+
+
+### Features
+
+* Add info panel item `panel` to load and display data on demand ([#2622](https://github.com/ParsePlatform/parse-dashboard/issues/2622)) ([8e5741d](https://github.com/ParsePlatform/parse-dashboard/commit/8e5741d73b5a8c4fcb5d4248de1bdcd7bd957ee8))
+
 # [6.0.0-alpha.24](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.23...6.0.0-alpha.24) (2025-01-29)
 
 
