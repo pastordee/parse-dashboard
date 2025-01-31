@@ -1,3 +1,10 @@
+# [6.0.0-alpha.26](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.25...6.0.0-alpha.26) (2025-01-31)
+
+
+### Features
+
+* Add info panel `keyValue` item parameter `isRelativeUrl` to link to dashboard pages ([#2646](https://github.com/ParsePlatform/parse-dashboard/issues/2646)) ([6389fc6](https://github.com/ParsePlatform/parse-dashboard/commit/6389fc6097a76dc95e3cbcdab56c8d1f96909d97))
+
 # [6.0.0-alpha.25](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.24...6.0.0-alpha.25) (2025-01-30)
 
 
