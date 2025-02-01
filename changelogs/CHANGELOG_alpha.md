@@ -1,3 +1,10 @@
+# [6.0.0-alpha.28](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.27...6.0.0-alpha.28) (2025-02-01)
+
+
+### Bug Fixes
+
+* Info panel item `panel` calls Cloud Code with parameter `objectId` instead of `Parse.Object` and without `masterKey` ([#2649](https://github.com/ParsePlatform/parse-dashboard/issues/2649)) ([884ff70](https://github.com/ParsePlatform/parse-dashboard/commit/884ff70567e372ff676297b6fb7856fbb7b71cbb))
+
 # [6.0.0-alpha.27](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.26...6.0.0-alpha.27) (2025-02-01)
 
 
