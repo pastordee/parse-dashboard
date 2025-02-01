@@ -1,3 +1,10 @@
+# [6.0.0-alpha.27](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.26...6.0.0-alpha.27) (2025-02-01)
+
+
+### Bug Fixes
+
+* Security upgrade node from 20.17.0-alpine3.20 to 20.18.2-alpine3.20 ([#2647](https://github.com/ParsePlatform/parse-dashboard/issues/2647)) ([44df723](https://github.com/ParsePlatform/parse-dashboard/commit/44df723b56636607f44c16f2ca24e81e0e17dfb3))
+
 # [6.0.0-alpha.26](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.25...6.0.0-alpha.26) (2025-01-31)
 
 
