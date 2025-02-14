@@ -1,3 +1,10 @@
+# [6.0.0-alpha.29](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.28...6.0.0-alpha.29) (2025-02-14)
+
+
+### Features
+
+* Add dynamic master key by allowing to set option `masterKey` to a function ([#2655](https://github.com/ParsePlatform/parse-dashboard/issues/2655)) ([9025ed0](https://github.com/ParsePlatform/parse-dashboard/commit/9025ed07b5e7fd801a6ec56c71a12299b2d57279))
+
 # [6.0.0-alpha.28](https://github.com/ParsePlatform/parse-dashboard/compare/6.0.0-alpha.27...6.0.0-alpha.28) (2025-02-01)
 
 
