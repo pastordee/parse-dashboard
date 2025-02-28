@@ -68,7 +68,7 @@ export default class BrowserCell extends Component {
         this.props.appId,
         this.props.value.className
       );
-      let value = this.props.value; 
+      let value = this.props.value;
       let dataValue = this.props.value.id || this.props.value.objectId;
       if (defaultPointerKey !== 'objectId') {
         dataValue = this.props.value.get(defaultPointerKey);
