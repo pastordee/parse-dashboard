@@ -103,7 +103,7 @@ export default class DataBrowser extends React.Component {
       this.setState({ order });
     }
     if (props && props.className) {
-      if (!props.classwiseCloudFunctions[props.className]) {
+      if (!props.classwiseCloudFunctions?.[`${props.app.applicationId}${props.appName}`]?.[props.className]) {
         this.setState({ isPanelVisible: false });
         this.setState({ selectedObjectId: undefined });
       }
@@ -198,7 +198,7 @@ export default class DataBrowser extends React.Component {
       if(this.props.errorAggregatedData != {}){
         this.props.setErrorAggregatedData({});
       }
-      this.props.callCloudFunction(this.state.selectedObjectId, this.props.className);
+      this.props.callCloudFunction(this.state.selectedObjectId, this.props.className,this.props.app.applicationId);
     }
   }
 
@@ -364,7 +364,7 @@ export default class DataBrowser extends React.Component {
           showAggregatedData:true
         })
         if(prevObjectID !== this.state.selectedObjectId && this.state.isPanelVisible){
-          this.props.callCloudFunction(this.state.selectedObjectId,this.props.className)
+          this.props.callCloudFunction(this.state.selectedObjectId,this.props.className,this.props.app.applicationId)
         }
         e.preventDefault();
         break;
@@ -405,7 +405,7 @@ export default class DataBrowser extends React.Component {
           showAggregatedData: true,
         });
         if (prevObjectID !== this.state.selectedObjectId && this.state.isPanelVisible) {
-          this.props.callCloudFunction(this.state.selectedObjectId, this.props.className);
+          this.props.callCloudFunction(this.state.selectedObjectId, this.props.className,this.props.app.applicationId);
         }
 
         e.preventDefault();
@@ -416,6 +416,15 @@ export default class DataBrowser extends React.Component {
           if (this.props.showNote) {
             this.props.showNote('Value copied to clipboard', false);
           }
+          e.preventDefault();
+        }
+        break;
+      case 32: // Space
+        // Only handle space if not editing and there's a current row selected
+        if (!this.state.editing && this.state.current?.row >= 0) {
+          const rowId = this.props.data[this.state.current.row].id;
+          const isSelected = this.props.selection[rowId];
+          this.props.selectRow(rowId, !isSelected);
           e.preventDefault();
         }
         break;
@@ -609,6 +618,8 @@ export default class DataBrowser extends React.Component {
                   setErrorAggregatedData={this.props.setErrorAggregatedData}
                   setSelectedObjectId={this.setSelectedObjectId}
                   selectedObjectId={this.state.selectedObjectId}
+                  appName = {this.props.appName}
+                  className = {this.props.className}
                 />
               </div>
             </ResizableBox>
@@ -642,6 +653,8 @@ export default class DataBrowser extends React.Component {
           allClassesSchema={this.state.allClassesSchema}
           togglePanel={this.togglePanelVisibility}
           isPanelVisible={this.state.isPanelVisible}
+          appId={this.props.app.applicationId}
+          appName = {this.props.appName}
           {...other}
         />
 
