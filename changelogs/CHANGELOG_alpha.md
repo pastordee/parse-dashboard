@@ -1,3 +1,10 @@
+# [6.2.0-alpha.1](https://github.com/ParsePlatform/parse-dashboard/compare/6.1.1-alpha.1...6.2.0-alpha.1) (2025-03-09)
+
+
+### Features
+
+* Use Enter key to edit cell content in data browser ([#2672](https://github.com/ParsePlatform/parse-dashboard/issues/2672)) ([ac2dc41](https://github.com/ParsePlatform/parse-dashboard/commit/ac2dc41122faedb1fb7da205ba26229a77417da8))
+
 ## [6.1.1-alpha.1](https://github.com/ParsePlatform/parse-dashboard/compare/6.1.0...6.1.1-alpha.1) (2025-03-06)
 
 
