@@ -1,3 +1,10 @@
+# [6.2.0-alpha.2](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.0-alpha.1...6.2.0-alpha.2) (2025-03-16)
+
+
+### Bug Fixes
+
+* Security upgrade node from 20.18.2-alpine3.20 to 20.19.0-alpine3.20 ([#2676](https://github.com/ParsePlatform/parse-dashboard/issues/2676)) ([d251334](https://github.com/ParsePlatform/parse-dashboard/commit/d251334df22fbe46e77076bb583b218be6f1889c))
+
 # [6.2.0-alpha.1](https://github.com/ParsePlatform/parse-dashboard/compare/6.1.1-alpha.1...6.2.0-alpha.1) (2025-03-09)
 
 
