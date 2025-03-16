@@ -1,3 +1,10 @@
+# [6.2.0-alpha.3](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.0-alpha.2...6.2.0-alpha.3) (2025-03-16)
+
+
+### Bug Fixes
+
+* Bump @babel/runtime from 7.20.13 to 7.26.10 ([#2677](https://github.com/ParsePlatform/parse-dashboard/issues/2677)) ([37f4ea6](https://github.com/ParsePlatform/parse-dashboard/commit/37f4ea64a39c0f54aaf2e3631fd1f7b6bc03ae96))
+
 # [6.2.0-alpha.2](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.0-alpha.1...6.2.0-alpha.2) (2025-03-16)
 
 
