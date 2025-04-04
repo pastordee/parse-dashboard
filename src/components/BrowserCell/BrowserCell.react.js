@@ -137,7 +137,7 @@ export default class BrowserCell extends Component {
         this.copyableValue = content = (
           <ul>
             {array.map(a => (
-              <li>{a}</li>
+              <li key={a}>{a}</li>
             ))}
           </ul>
         );
@@ -578,7 +578,7 @@ export default class BrowserCell extends Component {
       markRequiredFieldRow,
       handleCellClick,
       selectedCells,
-      setShowAggregatedData
+      setShowAggregatedData,
     } = this.props;
 
     const classes = [...this.state.classes];

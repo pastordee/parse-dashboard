@@ -1,3 +1,29 @@
+# [7.0.0-alpha.2](https://github.com/ParsePlatform/parse-dashboard/compare/7.0.0-alpha.1...7.0.0-alpha.2) (2025-03-27)
+
+
+### Features
+
+* Allow to select and copy multiple cells in data browser ([#2691](https://github.com/ParsePlatform/parse-dashboard/issues/2691)) ([eb50315](https://github.com/ParsePlatform/parse-dashboard/commit/eb503151b30a5fd35437559eaddfc7e7e5991dc7))
+
+# [7.0.0-alpha.1](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.1-alpha.1...7.0.0-alpha.1) (2025-03-22)
+
+
+### Features
+
+* Increase minimum required Node versions to `18.20.4`, `20.18.0`, `22.12.0` ([#2694](https://github.com/ParsePlatform/parse-dashboard/issues/2694)) ([034df6a](https://github.com/ParsePlatform/parse-dashboard/commit/034df6af3526edc33768f408c9e8faf018fa2ba9))
+
+
+### BREAKING CHANGES
+
+* Increases the minimum required Node versions to `18.20.4`, `20.18.0`, `22.12.0`. ([034df6a](034df6a))
+
+## [6.2.1-alpha.1](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.0...6.2.1-alpha.1) (2025-03-19)
+
+
+### Bug Fixes
+
+* Title row disappears when scrolling down in data browser ([#2690](https://github.com/ParsePlatform/parse-dashboard/issues/2690)) ([7eebc45](https://github.com/ParsePlatform/parse-dashboard/commit/7eebc45a17844e7d72c5a7e86963ee355f63dd77))
+
 # [6.2.0-alpha.3](https://github.com/ParsePlatform/parse-dashboard/compare/6.2.0-alpha.2...6.2.0-alpha.3) (2025-03-16)
 
 
