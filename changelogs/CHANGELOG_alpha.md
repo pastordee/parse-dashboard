@@ -1,3 +1,10 @@
+# [7.1.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.4...7.1.0-alpha.5) (2025-04-06)
+
+
+### Bug Fixes
+
+* Logout bar layout not aligned with data browser navigation bar ([#2720](https://github.com/parse-community/parse-dashboard/issues/2720)) ([01a2a1c](https://github.com/parse-community/parse-dashboard/commit/01a2a1c773484fef2f847e0c05a8823174782ee2))
+
 # [7.1.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.3...7.1.0-alpha.4) (2025-04-06)
 
 
