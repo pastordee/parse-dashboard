@@ -1,3 +1,10 @@
+# [7.1.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.2...7.1.0-alpha.3) (2025-04-06)
+
+
+### Bug Fixes
+
+* Obsolete, long-running data fetch request overrides displayed data of newer fetch request in the data browser ([#2715](https://github.com/parse-community/parse-dashboard/issues/2715)) ([31668eb](https://github.com/parse-community/parse-dashboard/commit/31668ebdbb298b96597243947fd842be9063eed5))
+
 # [7.1.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.1...7.1.0-alpha.2) (2025-04-06)
 
 
