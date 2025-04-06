@@ -1,3 +1,10 @@
+# [7.1.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.3...7.1.0-alpha.4) (2025-04-06)
+
+
+### Bug Fixes
+
+* Navigation bar in data browser is transparent and partly covers info panel ([#2717](https://github.com/parse-community/parse-dashboard/issues/2717)) ([60b38a5](https://github.com/parse-community/parse-dashboard/commit/60b38a53e1e288aab2a47d43697fe660fef1fffb))
+
 # [7.1.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.2...7.1.0-alpha.3) (2025-04-06)
 
 
