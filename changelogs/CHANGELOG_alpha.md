@@ -1,3 +1,10 @@
+# [7.1.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.8...7.1.0-alpha.9) (2025-04-17)
+
+
+### Features
+
+* Display filter list in data browser sorted alphabetically ([#2761](https://github.com/parse-community/parse-dashboard/issues/2761)) ([0209a0d](https://github.com/parse-community/parse-dashboard/commit/0209a0d78a3864ba059444ec5eb4a6d00a0430f4))
+
 # [7.1.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/7.1.0-alpha.7...7.1.0-alpha.8) (2025-04-17)
 
 
