@@ -1,3 +1,10 @@
+## [7.1.1-alpha.3](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.2...7.1.1-alpha.3) (2025-05-03)
+
+
+### Bug Fixes
+
+* Selecting a saved filter in data browser may highlight a different filter ([#2783](https://github.com/parse-community/parse-dashboard/issues/2783)) ([4c6e853](https://github.com/parse-community/parse-dashboard/commit/4c6e853f4aa660a8dab61f349f8ccf70572ab8ca))
+
 ## [7.1.1-alpha.2](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.1...7.1.1-alpha.2) (2025-05-03)
 
 
