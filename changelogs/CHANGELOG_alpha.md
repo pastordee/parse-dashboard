@@ -1,3 +1,10 @@
+## [7.1.1-alpha.2](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.1...7.1.1-alpha.2) (2025-05-03)
+
+
+### Bug Fixes
+
+* Data browser table shows loading indicator when info panel is loading ([#2782](https://github.com/parse-community/parse-dashboard/issues/2782)) ([da57e5e](https://github.com/parse-community/parse-dashboard/commit/da57e5ea5ec77abc1bbd4d97ba3a5a30cd82e4a7))
+
 ## [7.1.1-alpha.1](https://github.com/parse-community/parse-dashboard/compare/7.1.0...7.1.1-alpha.1) (2025-05-02)
 
 
