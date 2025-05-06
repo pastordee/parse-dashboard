@@ -1,3 +1,10 @@
+# [7.2.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.3...7.2.0-alpha.1) (2025-05-06)
+
+
+### Features
+
+* Add custom CSS styling for info panel items ([#2788](https://github.com/parse-community/parse-dashboard/issues/2788)) ([f031e5d](https://github.com/parse-community/parse-dashboard/commit/f031e5d4fa509c9fe098d0a6c77e960f79536334))
+
 ## [7.1.1-alpha.3](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.2...7.1.1-alpha.3) (2025-05-03)
 
 
