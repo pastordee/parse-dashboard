@@ -1,3 +1,10 @@
+# [7.2.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.1...7.2.0-alpha.2) (2025-05-09)
+
+
+### Bug Fixes
+
+* Pagination does not reset to page 1 when clicking on class or filter ([#2798](https://github.com/parse-community/parse-dashboard/issues/2798)) ([29d1447](https://github.com/parse-community/parse-dashboard/commit/29d1447509db74c2ddc0c7f01a1cb7c7cd8573ff))
+
 # [7.2.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/7.1.1-alpha.3...7.2.0-alpha.1) (2025-05-06)
 
 
