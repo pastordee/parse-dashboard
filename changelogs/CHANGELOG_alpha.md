@@ -1,3 +1,10 @@
+# [7.2.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.5...7.2.0-alpha.6) (2025-05-24)
+
+
+### Features
+
+* Add relative date filter in data browser for date constraints relative to when the query is run ([#2736](https://github.com/parse-community/parse-dashboard/issues/2736)) ([d9dfd69](https://github.com/parse-community/parse-dashboard/commit/d9dfd69b0fcef01456f1feee9b939b7504113e29))
+
 # [7.2.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.4...7.2.0-alpha.5) (2025-05-24)
 
 
