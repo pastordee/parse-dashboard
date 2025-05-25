@@ -1,3 +1,10 @@
+# [7.2.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.6...7.2.0-alpha.7) (2025-05-25)
+
+
+### Bug Fixes
+
+* Data browser not scrolling to top when changing filter while cell selected ([#2821](https://github.com/parse-community/parse-dashboard/issues/2821)) ([c2527dc](https://github.com/parse-community/parse-dashboard/commit/c2527dc1d3e084dcab3d52955bae7760bb27da36))
+
 # [7.2.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.5...7.2.0-alpha.6) (2025-05-24)
 
 
