@@ -1,3 +1,10 @@
+# [7.2.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.7...7.2.0-alpha.8) (2025-05-25)
+
+
+### Bug Fixes
+
+* Notifications fade out erratically when executing a script on large number of rows ([#2822](https://github.com/parse-community/parse-dashboard/issues/2822)) ([3891381](https://github.com/parse-community/parse-dashboard/commit/38913813f0f3252b241a322aaf50142d5564201a))
+
 # [7.2.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.6...7.2.0-alpha.7) (2025-05-25)
 
 
