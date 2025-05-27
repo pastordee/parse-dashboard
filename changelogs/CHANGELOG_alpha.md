@@ -1,3 +1,10 @@
+# [7.2.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.8...7.2.0-alpha.9) (2025-05-27)
+
+
+### Features
+
+* Add script execution on parallel batches with option `script.executionBatchSize` ([#2828](https://github.com/parse-community/parse-dashboard/issues/2828)) ([cee8b8d](https://github.com/parse-community/parse-dashboard/commit/cee8b8dd12bc44a352e43073aed65782277841dd))
+
 # [7.2.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/7.2.0-alpha.7...7.2.0-alpha.8) (2025-05-25)
 
 
