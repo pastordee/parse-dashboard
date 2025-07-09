@@ -51,6 +51,8 @@ export default class BrowserRow extends Component {
       onMouseUpRowCheckBox,
       onMouseOverRowCheckBox,
       onMouseOverRow,
+      stickyLefts,
+      freezeIndex,
     } = this.props;
     const attributes = obj.attributes;
     let requiredCols = [];
@@ -69,12 +71,25 @@ export default class BrowserRow extends Component {
     } else if (obj.className === '_User' && obj.get('authData') !== undefined) {
       requiredCols = ['authData'];
     }
+    const rowBackground = row % 2 ? '#F4F5F7' : '#fdfafb';
+    const rowStyle = { minWidth: rowWidth };
     return (
-      <div className={styles.tableRow} style={{ minWidth: rowWidth }} onMouseOver={() => onMouseOverRow(obj.id)}>
+      <div className={styles.tableRow} style={rowStyle} onMouseOver={() => onMouseOverRow(obj.id)}>
         <span
           className={styles.checkCell}
           onMouseUp={onMouseUpRowCheckBox}
           onMouseOver={() => onMouseOverRowCheckBox(obj.id)}
+          style={
+            freezeIndex >= 0
+              ? {
+                position: 'sticky',
+                left: 0,
+                zIndex: 1,
+                background: rowBackground,
+                borderBottom: '1px solid #e3e3ea',
+              }
+              : {}
+          }
         >
           <input
             type="checkbox"
@@ -133,6 +148,8 @@ export default class BrowserRow extends Component {
               type={type}
               readonly={isUnique || readOnlyFields.indexOf(name) > -1}
               width={width}
+              stickyLeft={freezeIndex >= j ? stickyLefts[j] : undefined}
+              rowBackground={rowBackground}
               current={currentCol === j}
               onSelect={setCurrent}
               onEditChange={setEditing}

@@ -70,6 +70,7 @@ Parse Dashboard is a standalone dashboard for managing your [Parse Server](https
       - [Audio Item](#audio-item)
       - [Button Item](#button-item)
       - [Panel Item](#panel-item)
+    - [Freeze Columns](#freeze-columns)
   - [Browse as User](#browse-as-user)
   - [Change Pointer Key](#change-pointer-key)
     - [Limitations](#limitations)
@@ -1153,6 +1154,12 @@ Example:
   "style": { "backgroundColor": "lightGray" },
 }
 ```
+
+### Freeze Columns
+
+▶️ *Core > Browser > Freeze column*
+
+Right-click on a table column header to freeze columns from the left up to the clicked column in the data browser. When scrolling horizontally, the frozen columns remain visible while the other columns scroll underneath.
 
 ## Browse as User
 

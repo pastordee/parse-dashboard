@@ -632,11 +632,20 @@ export default class BrowserCell extends Component {
       classes.push(styles.selected);
     }
 
+    const style = { width };
+    if (this.props.stickyLeft !== undefined) {
+      style.position = 'sticky';
+      style.left = this.props.stickyLeft;
+      style.zIndex = 1;
+      style.background = this.props.rowBackground;
+      style.borderBottom = '1px solid #e3e3ea';
+    }
+
     return (
       <span
         ref={this.cellRef}
         className={classes.join(' ')}
-        style={{ width }}
+        style={style}
         onClick={e => {
           if (e.metaKey === true && type === 'Pointer') {
             onPointerCmdClick(value);
