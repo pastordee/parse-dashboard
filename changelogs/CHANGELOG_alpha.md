@@ -1,3 +1,10 @@
+# [7.3.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.3...7.3.0-alpha.4) (2025-07-09)
+
+
+### Features
+
+* Add column freezing in data browser ([#2877](https://github.com/parse-community/parse-dashboard/issues/2877)) ([29f4a88](https://github.com/parse-community/parse-dashboard/commit/29f4a88dc8dc4c9e1673cfbbbbd39db37231f983))
+
 # [7.3.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.2...7.3.0-alpha.3) (2025-07-09)
 
 
