@@ -1,3 +1,10 @@
+# [7.3.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.8...7.3.0-alpha.9) (2025-07-09)
+
+
+### Bug Fixes
+
+* Fails to generate MFA code with CLI command `parse-dashboard --createMFA` ([#2883](https://github.com/parse-community/parse-dashboard/issues/2883)) ([544df1f](https://github.com/parse-community/parse-dashboard/commit/544df1ff606d45693596bc20179d129d6a9c91f1))
+
 # [7.3.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.7...7.3.0-alpha.8) (2025-07-09)
 
 
