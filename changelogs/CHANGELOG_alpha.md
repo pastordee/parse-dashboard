@@ -1,3 +1,10 @@
+# [7.3.0-alpha.10](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.9...7.3.0-alpha.10) (2025-07-10)
+
+
+### Features
+
+* Warn when leaving data browser page with selected rows ([#2887](https://github.com/parse-community/parse-dashboard/issues/2887)) ([206ead1](https://github.com/parse-community/parse-dashboard/commit/206ead15fec0a505a3efcf9c50b78fa4d0561234))
+
 # [7.3.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.8...7.3.0-alpha.9) (2025-07-09)
 
 
