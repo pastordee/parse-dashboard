@@ -38,10 +38,85 @@ import subscribeTo from 'lib/subscribeTo';
 import * as ColumnPreferences from 'lib/ColumnPreferences';
 import * as ClassPreferences from 'lib/ClassPreferences';
 import { Helmet } from 'react-helmet';
+import { useBeforeUnload } from 'react-router-dom';
 import generatePath from 'lib/generatePath';
 import { withRouter } from 'lib/withRouter';
 import { get } from 'lib/AJAX';
 import BrowserFooter from './BrowserFooter.react';
+
+const SELECTED_ROWS_MESSAGE =
+  'There are selected rows. Are you sure you want to leave this page?';
+
+function SelectedRowsNavigationPrompt({ when }) {
+  const message = SELECTED_ROWS_MESSAGE;
+
+  React.useEffect(() => {
+    if (!when) {
+      return;
+    }
+
+    const handleBeforeUnload = event => {
+      event.preventDefault();
+      event.returnValue = message;
+      return message;
+    };
+
+    const handleLinkClick = event => {
+      if (event.defaultPrevented) {
+        return;
+      }
+      if (event.button !== 0) {
+        return;
+      }
+      if (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) {
+        return;
+      }
+      const anchor = event.target.closest('a[href]');
+      if (!anchor || anchor.target === '_blank') {
+        return;
+      }
+      const href = anchor.getAttribute('href');
+      if (!href || href === '#') {
+        return;
+      }
+      if (!window.confirm(message)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    const handlePopState = () => {
+      if (!window.confirm(message)) {
+        window.history.go(1);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleLinkClick, true);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleLinkClick, true);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [when, message]);
+
+  useBeforeUnload(
+    React.useCallback(
+      event => {
+        if (when) {
+          event.preventDefault();
+          event.returnValue = message;
+          return message;
+        }
+      },
+      [when, message]
+    )
+  );
+
+  return null;
+}
 
 // The initial and max amount of rows fetched by lazy loading
 const BROWSER_LAST_LOCATION = 'brower_last_location';
@@ -879,6 +954,11 @@ class Browser extends DashboardView {
   }
 
   async refresh() {
+    if (Object.keys(this.state.selection).length > 0) {
+      if (!window.confirm(SELECTED_ROWS_MESSAGE)) {
+        return;
+      }
+    }
     const relation = this.state.relation;
     const prevFilters = this.state.filters || new List();
     const initialState = {
@@ -2446,6 +2526,9 @@ class Browser extends DashboardView {
         <Helmet>
           <title>{pageTitle}</title>
         </Helmet>
+        <SelectedRowsNavigationPrompt
+          when={Object.keys(this.state.selection).length > 0}
+        />
         {browser}
         {notification}
         {extras}
