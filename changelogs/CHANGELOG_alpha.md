@@ -1,3 +1,10 @@
+# [7.3.0-alpha.11](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.10...7.3.0-alpha.11) (2025-07-13)
+
+
+### Features
+
+* Add custom data views with aggregation query ([#2888](https://github.com/parse-community/parse-dashboard/issues/2888)) ([b1679db](https://github.com/parse-community/parse-dashboard/commit/b1679db1210a52c8c5299eb4b66e33f96963311e))
+
 # [7.3.0-alpha.10](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.9...7.3.0-alpha.10) (2025-07-10)
 
 
