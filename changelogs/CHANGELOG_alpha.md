@@ -1,3 +1,10 @@
+# [7.3.0-alpha.12](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.11...7.3.0-alpha.12) (2025-07-13)
+
+
+### Bug Fixes
+
+* Warning dialog is shown after executing script on selected rows ([#2899](https://github.com/parse-community/parse-dashboard/issues/2899)) ([027f1ed](https://github.com/parse-community/parse-dashboard/commit/027f1edacaa74b67e9e28bbb039465b075fcf6b4))
+
 # [7.3.0-alpha.11](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.10...7.3.0-alpha.11) (2025-07-13)
 
 
