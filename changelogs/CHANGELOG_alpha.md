@@ -1,3 +1,10 @@
+# [7.3.0-alpha.13](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.12...7.3.0-alpha.13) (2025-07-14)
+
+
+### Features
+
+* Add view edit icon to views list in sidebar ([#2901](https://github.com/parse-community/parse-dashboard/issues/2901)) ([96e33b9](https://github.com/parse-community/parse-dashboard/commit/96e33b9f59fb590b0a4041d0b87cf8820c5551ff))
+
 # [7.3.0-alpha.12](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.11...7.3.0-alpha.12) (2025-07-13)
 
 
