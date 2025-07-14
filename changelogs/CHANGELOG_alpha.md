@@ -1,3 +1,10 @@
+# [7.3.0-alpha.14](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.13...7.3.0-alpha.14) (2025-07-14)
+
+
+### Bug Fixes
+
+* Clicking linked pointer with Cmd key in view table doesn't open page in new browser tab ([#2902](https://github.com/parse-community/parse-dashboard/issues/2902)) ([101b194](https://github.com/parse-community/parse-dashboard/commit/101b1943b01367402b2bbab61cabf2c267540c3e))
+
 # [7.3.0-alpha.13](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.12...7.3.0-alpha.13) (2025-07-14)
 
 
