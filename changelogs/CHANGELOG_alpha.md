@@ -1,3 +1,10 @@
+# [7.3.0-alpha.15](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.14...7.3.0-alpha.15) (2025-07-15)
+
+
+### Features
+
+* Add additional values in info panel key-value element ([#2904](https://github.com/parse-community/parse-dashboard/issues/2904)) ([a8f110e](https://github.com/parse-community/parse-dashboard/commit/a8f110e1349e8b51927be0386f8dd1a4a031fd6b))
+
 # [7.3.0-alpha.14](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.13...7.3.0-alpha.14) (2025-07-14)
 
 
