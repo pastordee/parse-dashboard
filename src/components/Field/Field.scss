@@ -28,6 +28,9 @@
 .left {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  width: calc(var(--modal-min-width, 540px) * var(--modal-label-ratio, 0.5));
+  max-width: calc(var(--modal-min-width, 540px) * var(--modal-label-ratio, 0.5));
 }
 
 .right {
@@ -39,7 +42,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  flex: 1
+  flex: 1;
 }
 
 
