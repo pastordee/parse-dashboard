@@ -1,3 +1,10 @@
+# [7.3.0-alpha.16](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.15...7.3.0-alpha.16) (2025-07-16)
+
+
+### Features
+
+* Persist info panel visibility when navigating across classes in data browser ([#2908](https://github.com/parse-community/parse-dashboard/issues/2908)) ([1a3610a](https://github.com/parse-community/parse-dashboard/commit/1a3610a4632be78353db4f511781ca7757a12361))
+
 # [7.3.0-alpha.15](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.14...7.3.0-alpha.15) (2025-07-15)
 
 
