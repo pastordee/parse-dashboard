@@ -1,3 +1,10 @@
+# [7.3.0-alpha.18](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.17...7.3.0-alpha.18) (2025-07-16)
+
+
+### Features
+
+* Allow freeform text view resizing in modal dialogs ([#2910](https://github.com/parse-community/parse-dashboard/issues/2910)) ([1399162](https://github.com/parse-community/parse-dashboard/commit/139916211113dec14a835fea50838e495dc15077))
+
 # [7.3.0-alpha.17](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.16...7.3.0-alpha.17) (2025-07-16)
 
 
