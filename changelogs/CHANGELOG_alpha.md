@@ -1,3 +1,10 @@
+# [7.3.0-alpha.19](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.18...7.3.0-alpha.19) (2025-07-17)
+
+
+### Features
+
+* Add support for "not equal to" filter for Boolean values in data browser and analytics explorer ([#2914](https://github.com/parse-community/parse-dashboard/issues/2914)) ([d55b89c](https://github.com/parse-community/parse-dashboard/commit/d55b89c34caee7490eaf78787d28bc8cdbeedbe8))
+
 # [7.3.0-alpha.18](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.17...7.3.0-alpha.18) (2025-07-16)
 
 
