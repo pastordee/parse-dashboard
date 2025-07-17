@@ -12,6 +12,7 @@ import BrowserToolbar from 'dashboard/Data/Browser/BrowserToolbar.react';
 import * as ColumnPreferences from 'lib/ColumnPreferences';
 import { dateStringUTC } from 'lib/DateUtils';
 import getFileName from 'lib/getFileName';
+import Parse from 'parse';
 import React from 'react';
 import { ResizableBox } from 'react-resizable';
 import styles from './Databrowser.scss';
@@ -106,6 +107,8 @@ export default class DataBrowser extends React.Component {
       showAggregatedData: true,
       frozenColumnIndex: -1,
       showRowNumber: storedRowNumber,
+      prefetchCache: {},
+      selectionHistory: [],
     };
 
     this.handleResizeDiv = this.handleResizeDiv.bind(this);
@@ -122,6 +125,7 @@ export default class DataBrowser extends React.Component {
     this.setShowAggregatedData = this.setShowAggregatedData.bind(this);
     this.setCopyableValue = this.setCopyableValue.bind(this);
     this.setSelectedObjectId = this.setSelectedObjectId.bind(this);
+    this.handleCallCloudFunction = this.handleCallCloudFunction.bind(this);
     this.setContextMenu = this.setContextMenu.bind(this);
     this.freezeColumns = this.freezeColumns.bind(this);
     this.unfreezeColumns = this.unfreezeColumns.bind(this);
@@ -149,6 +153,8 @@ export default class DataBrowser extends React.Component {
         firstSelectedCell: null,
         selectedData: [],
         frozenColumnIndex: -1,
+        prefetchCache: {},
+        selectionHistory: [],
       });
     } else if (
       Object.keys(props.columns).length !== Object.keys(this.props.columns).length ||
@@ -269,7 +275,7 @@ export default class DataBrowser extends React.Component {
       if (this.props.errorAggregatedData != {}) {
         this.props.setErrorAggregatedData({});
       }
-      this.props.callCloudFunction(
+      this.handleCallCloudFunction(
         this.state.selectedObjectId,
         this.props.className,
         this.props.app.applicationId
@@ -440,7 +446,7 @@ export default class DataBrowser extends React.Component {
 
     switch (e.keyCode) {
       case 8:
-      case 46:
+      case 46: {
         // Backspace or Delete
         const colName = this.state.order[this.state.current.col].name;
         const col = this.props.columns[colName];
@@ -449,7 +455,8 @@ export default class DataBrowser extends React.Component {
         }
         e.preventDefault();
         break;
-      case 37:
+      }
+      case 37: {
         // Left - standalone (move to the next visible column on the left)
         // or with ctrl/meta (excel style - move to the first visible column)
 
@@ -468,30 +475,32 @@ export default class DataBrowser extends React.Component {
         });
         e.preventDefault();
         break;
-      case 38:
+      }
+      case 38: {
         // Up - standalone (move to the previous row)
         // or with ctrl/meta (excel style - move to the first row)
-        let prevObjectID = this.state.selectedObjectId;
+        const prevObjectID = this.state.selectedObjectId;
+        const newRow = e.ctrlKey || e.metaKey ? 0 : Math.max(this.state.current.row - 1, 0);
         this.setState({
           current: {
-            row: e.ctrlKey || e.metaKey ? 0 : Math.max(this.state.current.row - 1, 0),
+            row: newRow,
             col: this.state.current.col,
           },
         });
-        this.setState({
-          selectedObjectId: this.props.data[this.state.current.row].id,
-          showAggregatedData: true,
-        });
-        if (prevObjectID !== this.state.selectedObjectId && this.state.isPanelVisible) {
-          this.props.callCloudFunction(
-            this.state.selectedObjectId,
+        const newObjectId = this.props.data[newRow].id;
+        this.setSelectedObjectId(newObjectId);
+        this.setState({ showAggregatedData: true });
+        if (prevObjectID !== newObjectId && this.state.isPanelVisible) {
+          this.handleCallCloudFunction(
+            newObjectId,
             this.props.className,
             this.props.app.applicationId
           );
         }
         e.preventDefault();
         break;
-      case 39:
+      }
+      case 39: {
         // Right - standalone (move to the next visible column on the right)
         // or with ctrl/meta (excel style - move to the last visible column)
         this.setState({
@@ -509,27 +518,28 @@ export default class DataBrowser extends React.Component {
         });
         e.preventDefault();
         break;
-      case 40:
+      }
+      case 40: {
         // Down - standalone (move to the next row)
         // or with ctrl/meta (excel style - move to the last row)
-        prevObjectID = this.state.selectedObjectId;
+        const prevObjectID = this.state.selectedObjectId;
+        const newRow =
+          e.ctrlKey || e.metaKey
+            ? this.props.data.length - 1
+            : Math.min(this.state.current.row + 1, this.props.data.length - 1);
         this.setState({
           current: {
-            row:
-              e.ctrlKey || e.metaKey
-                ? this.props.data.length - 1
-                : Math.min(this.state.current.row + 1, this.props.data.length - 1),
+            row: newRow,
             col: this.state.current.col,
           },
         });
 
-        this.setState({
-          selectedObjectId: this.props.data[this.state.current.row].id,
-          showAggregatedData: true,
-        });
-        if (prevObjectID !== this.state.selectedObjectId && this.state.isPanelVisible) {
-          this.props.callCloudFunction(
-            this.state.selectedObjectId,
+        const newObjectIdDown = this.props.data[newRow].id;
+        this.setSelectedObjectId(newObjectIdDown);
+        this.setState({ showAggregatedData: true });
+        if (prevObjectID !== newObjectIdDown && this.state.isPanelVisible) {
+          this.handleCallCloudFunction(
+            newObjectIdDown,
             this.props.className,
             this.props.app.applicationId
           );
@@ -537,7 +547,8 @@ export default class DataBrowser extends React.Component {
 
         e.preventDefault();
         break;
-      case 67: // C
+      }
+      case 67: { // C
         if ((e.ctrlKey || e.metaKey) && this.state.copyableValue !== undefined) {
           copy(this.state.copyableValue); // Copies current cell value to clipboard
           if (this.props.showNote) {
@@ -546,7 +557,8 @@ export default class DataBrowser extends React.Component {
           e.preventDefault();
         }
         break;
-      case 32: // Space
+      }
+      case 32: { // Space
         // Only handle space if not editing and there's a current row selected
         if (!this.state.editing && this.state.current?.row >= 0) {
           const rowId = this.props.data[this.state.current.row].id;
@@ -555,12 +567,14 @@ export default class DataBrowser extends React.Component {
           e.preventDefault();
         }
         break;
-      case 13: // Enter (enable editing)
+      }
+      case 13: { // Enter (enable editing)
         if (!this.state.editing && this.state.current) {
           this.setEditing(true);
           e.preventDefault();
         }
         break;
+      }
     }
   }
 
@@ -606,7 +620,20 @@ export default class DataBrowser extends React.Component {
 
   setSelectedObjectId(selectedObjectId) {
     if (this.state.selectedObjectId !== selectedObjectId) {
-      this.setState({ selectedObjectId });
+      const index = this.props.data?.findIndex(obj => obj.id === selectedObjectId);
+      this.setState(
+        prevState => {
+          const history = [...prevState.selectionHistory];
+          if (index !== undefined && index > -1) {
+            history.push(index);
+          }
+          if (history.length > 3) {
+            history.shift();
+          }
+          return { selectedObjectId, selectionHistory: history };
+        },
+        () => this.handlePrefetch()
+      );
     }
   }
 
@@ -627,15 +654,129 @@ export default class DataBrowser extends React.Component {
     window.localStorage?.setItem(BROWSER_SHOW_ROW_NUMBER, show);
   }
 
+  getPrefetchSettings() {
+    const config =
+      this.props.classwiseCloudFunctions?.[
+        `${this.props.app.applicationId}${this.props.appName}`
+      ]?.[this.props.className]?.[0];
+    return {
+      prefetchObjects: config?.prefetchObjects || 0,
+      prefetchStale: config?.prefetchStale || 0,
+    };
+  }
+
+  handlePrefetch() {
+    const { prefetchObjects, prefetchStale } = this.getPrefetchSettings();
+    if (!prefetchObjects) {
+      return;
+    }
+
+    const cache = { ...this.state.prefetchCache };
+    if (prefetchStale) {
+      const now = Date.now();
+      Object.keys(cache).forEach(key => {
+        if ((now - cache[key].timestamp) / 1000 >= prefetchStale) {
+          delete cache[key];
+        }
+      });
+    }
+    if (Object.keys(cache).length !== Object.keys(this.state.prefetchCache).length) {
+      this.setState({ prefetchCache: cache });
+    }
+
+    const history = this.state.selectionHistory;
+    if (history.length < 3) {
+      return;
+    }
+    const [a, b, c] = history.slice(-3);
+    if (a + 1 === b && b + 1 === c) {
+      for (
+        let i = 1;
+        i <= prefetchObjects && c + i < this.props.data.length;
+        i++
+      ) {
+        const objId = this.props.data[c + i].id;
+        if (!cache[objId]) {
+          this.prefetchObject(objId);
+        }
+      }
+    }
+  }
+
+  prefetchObject(objectId) {
+    const { className, app } = this.props;
+    const cloudCodeFunction =
+      this.props.classwiseCloudFunctions?.[
+        `${app.applicationId}${this.props.appName}`
+      ]?.[className]?.[0]?.cloudCodeFunction;
+    if (!cloudCodeFunction) {
+      return;
+    }
+    const params = {
+      object: Parse.Object.extend(className)
+        .createWithoutData(objectId)
+        .toPointer(),
+    };
+    const options = { useMasterKey: true };
+    Parse.Cloud.run(cloudCodeFunction, params, options).then(result => {
+      this.setState(prev => ({
+        prefetchCache: {
+          ...prev.prefetchCache,
+          [objectId]: { data: result, timestamp: Date.now() },
+        },
+      }));
+    }).catch(error => {
+      console.error(`Failed to prefetch object ${objectId}:`, error);
+    });
+  }
+
+  handleCallCloudFunction(objectId, className, appId) {
+    const { prefetchCache } = this.state;
+    const { prefetchStale } = this.getPrefetchSettings();
+    const cached = prefetchCache[objectId];
+    if (
+      cached &&
+      (!prefetchStale || (Date.now() - cached.timestamp) / 1000 < prefetchStale)
+    ) {
+      this.props.setAggregationPanelData(cached.data);
+      this.props.setLoadingInfoPanel(false);
+    } else {
+      if (cached) {
+        this.setState(prev => {
+          const n = { ...prev.prefetchCache };
+          delete n[objectId];
+          return { prefetchCache: n };
+        });
+      }
+      this.props.callCloudFunction(objectId, className, appId);
+    }
+  }
+
   handleColumnsOrder(order, shouldReload) {
     this.setState({ order: [...order] }, () => {
       this.updatePreferences(order, shouldReload);
     });
   }
 
-  handleCellClick(event, row, col) {
+  handleCellClick(event, row, col, objectId) {
     const { firstSelectedCell } = this.state;
     const clickedCellKey = `${row}-${col}`;
+
+    if (this.state.selectedObjectId !== objectId) {
+      this.setShowAggregatedData(true);
+      this.setSelectedObjectId(objectId);
+      if (
+        objectId &&
+        this.state.isPanelVisible &&
+        ((event.shiftKey && !firstSelectedCell) || !event.shiftKey)
+      ) {
+        this.handleCallCloudFunction(
+          objectId,
+          this.props.className,
+          this.props.app.applicationId
+        );
+      }
+    }
 
     if (event.shiftKey && firstSelectedCell) {
       const [firstRow, firstCol] = firstSelectedCell.split('-').map(Number);
@@ -729,7 +870,7 @@ export default class DataBrowser extends React.Component {
             setCopyableValue={this.setCopyableValue}
             selectedObjectId={this.state.selectedObjectId}
             setSelectedObjectId={this.setSelectedObjectId}
-            callCloudFunction={this.props.callCloudFunction}
+            callCloudFunction={this.handleCallCloudFunction}
             setContextMenu={this.setContextMenu}
             freezeIndex={this.state.frozenColumnIndex}
             freezeColumns={this.freezeColumns}
