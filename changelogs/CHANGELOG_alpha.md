@@ -1,3 +1,10 @@
+# [7.3.0-alpha.20](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.19...7.3.0-alpha.20) (2025-07-17)
+
+
+### Features
+
+* Prefetch info panel data with config options `prefetchObjects` and `prefetchStale` ([#2915](https://github.com/parse-community/parse-dashboard/issues/2915)) ([54a8156](https://github.com/parse-community/parse-dashboard/commit/54a8156994a4c720b9f09d9f97ac4342d8039a77))
+
 # [7.3.0-alpha.19](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.18...7.3.0-alpha.19) (2025-07-17)
 
 
