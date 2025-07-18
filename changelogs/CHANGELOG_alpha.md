@@ -1,3 +1,10 @@
+# [7.3.0-alpha.21](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.20...7.3.0-alpha.21) (2025-07-18)
+
+
+### Performance Improvements
+
+* Add config option `enableResourceCache` to cache dashboard resources locally for faster loading in additional browser tabs ([#2920](https://github.com/parse-community/parse-dashboard/issues/2920)) ([41a4963](https://github.com/parse-community/parse-dashboard/commit/41a4963ce6068e6f14a6a6008812ac3c1821e0fb))
+
 # [7.3.0-alpha.20](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.19...7.3.0-alpha.20) (2025-07-17)
 
 
