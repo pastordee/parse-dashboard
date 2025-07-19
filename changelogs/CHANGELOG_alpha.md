@@ -1,3 +1,10 @@
+# [7.3.0-alpha.23](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.22...7.3.0-alpha.23) (2025-07-19)
+
+
+### Bug Fixes
+
+* Hyperlink in Views table ignores `urlQuery` key ([#2926](https://github.com/parse-community/parse-dashboard/issues/2926)) ([c5eedf4](https://github.com/parse-community/parse-dashboard/commit/c5eedf4c0d3db6572ba47838970d259ce1e7e11f))
+
 # [7.3.0-alpha.22](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.21...7.3.0-alpha.22) (2025-07-19)
 
 
