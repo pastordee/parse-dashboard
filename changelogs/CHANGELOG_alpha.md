@@ -1,3 +1,10 @@
+# [7.3.0-alpha.22](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.21...7.3.0-alpha.22) (2025-07-19)
+
+
+### Features
+
+* Add hyperlink support in Views table ([#2925](https://github.com/parse-community/parse-dashboard/issues/2925)) ([06cfc11](https://github.com/parse-community/parse-dashboard/commit/06cfc11f6e62d2da99882dbf659bd7c6428f06ce))
+
 # [7.3.0-alpha.21](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.20...7.3.0-alpha.21) (2025-07-18)
 
 
