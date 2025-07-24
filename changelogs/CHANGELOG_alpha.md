@@ -1,3 +1,10 @@
+# [7.3.0-alpha.28](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.27...7.3.0-alpha.28) (2025-07-24)
+
+
+### Bug Fixes
+
+* Info panel scroll-to-top setting not persistent across dashboard sessions ([#2938](https://github.com/parse-community/parse-dashboard/issues/2938)) ([2b78087](https://github.com/parse-community/parse-dashboard/commit/2b7808766516a6833236c5a0721084f3ffe026b0))
+
 # [7.3.0-alpha.27](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.26...7.3.0-alpha.27) (2025-07-24)
 
 
