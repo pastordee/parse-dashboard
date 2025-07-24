@@ -107,6 +107,7 @@ export default class DataBrowser extends React.Component {
       showAggregatedData: true,
       frozenColumnIndex: -1,
       showRowNumber: storedRowNumber,
+      scrollToTop: true,
       prefetchCache: {},
       selectionHistory: [],
     };
@@ -130,8 +131,10 @@ export default class DataBrowser extends React.Component {
     this.freezeColumns = this.freezeColumns.bind(this);
     this.unfreezeColumns = this.unfreezeColumns.bind(this);
     this.setShowRowNumber = this.setShowRowNumber.bind(this);
+    this.toggleScrollToTop = this.toggleScrollToTop.bind(this);
     this.handleCellClick = this.handleCellClick.bind(this);
     this.saveOrderTimeout = null;
+    this.aggregationPanelRef = React.createRef();
   }
 
   componentWillReceiveProps(props) {
@@ -213,6 +216,17 @@ export default class DataBrowser extends React.Component {
       this.props.setAggregationPanelData({});
       if (this.props.errorAggregatedData != {}) {
         this.props.setErrorAggregatedData({});
+      }
+    }
+
+    if (
+      (this.props.AggregationPanelData !== prevProps.AggregationPanelData ||
+        this.state.selectedObjectId !== prevState.selectedObjectId) &&
+      this.state.isPanelVisible &&
+      this.aggregationPanelRef?.current
+    ) {
+      if (this.state.scrollToTop) {
+        this.aggregationPanelRef.current.scrollTop = 0;
       }
     }
   }
@@ -654,6 +668,10 @@ export default class DataBrowser extends React.Component {
     window.localStorage?.setItem(BROWSER_SHOW_ROW_NUMBER, show);
   }
 
+  toggleScrollToTop() {
+    this.setState(prevState => ({ scrollToTop: !prevState.scrollToTop }));
+  }
+
   getPrefetchSettings() {
     const config =
       this.props.classwiseCloudFunctions?.[
@@ -902,7 +920,10 @@ export default class DataBrowser extends React.Component {
               resizeHandles={['w']}
               className={styles.resizablePanel}
             >
-              <div className={styles.aggregationPanelContainer}>
+              <div
+                className={styles.aggregationPanelContainer}
+                ref={this.aggregationPanelRef}
+              >
                 <AggregationPanel
                   data={this.props.AggregationPanelData}
                   isLoadingCloudFunction={this.props.isLoadingCloudFunction}
@@ -949,6 +970,8 @@ export default class DataBrowser extends React.Component {
           isPanelVisible={this.state.isPanelVisible}
           appId={this.props.app.applicationId}
           appName={this.props.appName}
+          scrollToTop={this.state.scrollToTop}
+          toggleScrollToTop={this.toggleScrollToTop}
           {...other}
         />
 
