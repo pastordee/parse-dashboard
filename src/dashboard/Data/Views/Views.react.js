@@ -1,30 +1,31 @@
-import CategoryList from 'components/CategoryList/CategoryList.react';
-import SidebarAction from 'components/Sidebar/SidebarAction';
-import TableView from 'dashboard/TableView.react';
-import Toolbar from 'components/Toolbar/Toolbar.react';
-import Icon from 'components/Icon/Icon.react';
-import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
-import Parse from 'parse';
-import React from 'react';
-import Notification from 'dashboard/Data/Browser/Notification.react';
-import Pill from 'components/Pill/Pill.react';
-import DragHandle from 'components/DragHandle/DragHandle.react';
-import CreateViewDialog from './CreateViewDialog.react';
-import EditViewDialog from './EditViewDialog.react';
-import DeleteViewDialog from './DeleteViewDialog.react';
-import ViewValueDialog from './ViewValueDialog.react';
 import BrowserMenu from 'components/BrowserMenu/BrowserMenu.react';
 import MenuItem from 'components/BrowserMenu/MenuItem.react';
 import Separator from 'components/BrowserMenu/Separator.react';
+import CategoryList from 'components/CategoryList/CategoryList.react';
+import DragHandle from 'components/DragHandle/DragHandle.react';
 import EmptyState from 'components/EmptyState/EmptyState.react';
+import Icon from 'components/Icon/Icon.react';
+import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
+import Pill from 'components/Pill/Pill.react';
+import SidebarAction from 'components/Sidebar/SidebarAction';
+import Toolbar from 'components/Toolbar/Toolbar.react';
+import browserStyles from 'dashboard/Data/Browser/Browser.scss';
+import Notification from 'dashboard/Data/Browser/Notification.react';
+import TableView from 'dashboard/TableView.react';
+import tableStyles from 'dashboard/TableView.scss';
 import * as ViewPreferences from 'lib/ViewPreferences';
 import generatePath from 'lib/generatePath';
-import { withRouter } from 'lib/withRouter';
-import subscribeTo from 'lib/subscribeTo';
 import { ActionTypes as SchemaActionTypes } from 'lib/stores/SchemaStore';
+import subscribeTo from 'lib/subscribeTo';
+import { withRouter } from 'lib/withRouter';
+import Parse from 'parse';
+import React from 'react';
+import CloudFunctionInputDialog from './CloudFunctionInputDialog.react';
+import CreateViewDialog from './CreateViewDialog.react';
+import DeleteViewDialog from './DeleteViewDialog.react';
+import EditViewDialog from './EditViewDialog.react';
+import ViewValueDialog from './ViewValueDialog.react';
 import styles from './Views.scss';
-import tableStyles from 'dashboard/TableView.scss';
-import browserStyles from 'dashboard/Data/Browser/Browser.scss';
 
 export default
 @subscribeTo('Schema', 'schema')
@@ -50,6 +51,8 @@ class Views extends TableView {
       lastNote: null,
       loading: false,
       viewValue: null,
+      showCloudFunctionInput: false,
+      cloudFunctionInputConfig: null,
     };
     this.headersRef = React.createRef();
     this.noteTimeout = null;
@@ -84,20 +87,38 @@ class Views extends TableView {
     this.setState({ views, counts: {} }, () => {
       views.forEach(view => {
         if (view.showCounter) {
-          new Parse.Query(view.className)
-            .aggregate(view.query, { useMasterKey: true })
-            .then(res => {
-              if (this._isMounted) {
-                this.setState(({ counts }) => ({
-                  counts: { ...counts, [view.name]: res.length },
-                }));
-              }
-            })
-            .catch(error => {
-              if (this._isMounted) {
-                this.showNote(`Request failed: ${error.message || 'Unknown error occurred'}`, true);
-              }
-            });
+          if (view.cloudFunction) {
+            // For Cloud Function views, call the function to get count
+            Parse.Cloud.run(view.cloudFunction, {}, { useMasterKey: true })
+              .then(res => {
+                if (this._isMounted) {
+                  this.setState(({ counts }) => ({
+                    counts: { ...counts, [view.name]: Array.isArray(res) ? res.length : 0 },
+                  }));
+                }
+              })
+              .catch(error => {
+                if (this._isMounted) {
+                  this.showNote(`Request failed: ${error.message || 'Unknown error occurred'}`, true);
+                }
+              });
+          } else if (view.query && Array.isArray(view.query)) {
+            // For aggregation pipeline views, use existing logic
+            new Parse.Query(view.className)
+              .aggregate(view.query, { useMasterKey: true })
+              .then(res => {
+                if (this._isMounted) {
+                  this.setState(({ counts }) => ({
+                    counts: { ...counts, [view.name]: res.length },
+                  }));
+                }
+              })
+              .catch(error => {
+                if (this._isMounted) {
+                  this.showNote(`Request failed: ${error.message || 'Unknown error occurred'}`, true);
+                }
+              });
+          }
         }
       });
       if (this._isMounted) {
@@ -123,9 +144,64 @@ class Views extends TableView {
       }
       return;
     }
-    new Parse.Query(view.className)
-      .aggregate(view.query, { useMasterKey: true })
+
+    // Check if cloud function view requires input
+    if (view.cloudFunction && (view.requireTextInput || view.requireFileUpload)) {
+      if (this._isMounted) {
+        this.setState({
+          loading: false,
+          showCloudFunctionInput: true,
+          cloudFunctionInputConfig: {
+            view,
+            requireTextInput: view.requireTextInput,
+            requireFileUpload: view.requireFileUpload,
+          },
+        });
+      }
+      return;
+    }
+
+    this.executeCloudFunctionOrQuery(view);
+  }
+
+  executeCloudFunctionOrQuery(view, params = {}) {
+    // Choose data source: Cloud Function or Aggregation Pipeline
+    const dataPromise = view.cloudFunction
+      ? Parse.Cloud.run(view.cloudFunction, params, { useMasterKey: true })
+      : new Parse.Query(view.className).aggregate(view.query || [], { useMasterKey: true });
+
+    dataPromise
       .then(results => {
+        // Normalize Parse.Object instances to raw JSON for consistent rendering as pointer
+        const normalizeValue = val => {
+          if (val && typeof val === 'object' && val instanceof Parse.Object) {
+            return {
+              __type: 'Pointer',
+              className: val.className,
+              objectId: val.id
+            };
+          }
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            const normalized = {};
+            Object.keys(val).forEach(key => {
+              normalized[key] = normalizeValue(val[key]);
+            });
+            return normalized;
+          }
+          if (Array.isArray(val)) {
+            return val.map(normalizeValue);
+          }
+          return val;
+        };
+
+        const normalizedResults = results.map(item => {
+          const normalized = {};
+          Object.keys(item).forEach(key => {
+            normalized[key] = normalizeValue(item[key]);
+          });
+          return normalized;
+        });
+
         const columns = {};
         const computeWidth = str => {
           let text = str;
@@ -151,7 +227,7 @@ class Views extends TableView {
           }
           return Math.max((text.length + 2) * 12, 40);
         };
-        results.forEach(item => {
+        normalizedResults.forEach(item => {
           Object.keys(item).forEach(key => {
             const val = item[key];
             let type = 'String';
@@ -191,7 +267,7 @@ class Views extends TableView {
         const order = colNames.map(name => ({ name, width: columns[name].width }));
         const tableWidth = order.reduce((sum, col) => sum + col.width, 0);
         if (this._isMounted) {
-          this.setState({ data: results, order, columns, tableWidth, loading: false });
+          this.setState({ data: normalizedResults, order, columns, tableWidth, loading: false });
         }
       })
       .catch(error => {
@@ -203,6 +279,13 @@ class Views extends TableView {
   }
 
   onRefresh() {
+    // Clear any existing cloud function input modal first
+    if (this.state.showCloudFunctionInput) {
+      this.setState({
+        showCloudFunctionInput: false,
+        cloudFunctionInputConfig: null,
+      });
+    }
     this.loadData(this.props.params.name);
   }
 
@@ -603,6 +686,27 @@ class Views extends TableView {
                 this.loadViews(this.context);
               }
             );
+          }}
+        />
+      );
+    } else if (this.state.showCloudFunctionInput && this.state.cloudFunctionInputConfig) {
+      const config = this.state.cloudFunctionInputConfig;
+      extras = (
+        <CloudFunctionInputDialog
+          requireTextInput={config.requireTextInput}
+          requireFileUpload={config.requireFileUpload}
+          onCancel={() => this.setState({
+            showCloudFunctionInput: false,
+            cloudFunctionInputConfig: null,
+            loading: false,
+          })}
+          onConfirm={(params) => {
+            this.setState({
+              showCloudFunctionInput: false,
+              cloudFunctionInputConfig: null,
+              loading: true,
+            });
+            this.executeCloudFunctionOrQuery(config.view, params);
           }}
         />
       );
