@@ -1,3 +1,10 @@
+# [7.3.0-alpha.29](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.28...7.3.0-alpha.29) (2025-07-24)
+
+
+### Features
+
+* Add Cloud Function as data source for views with optional text or file upload ([#2939](https://github.com/parse-community/parse-dashboard/issues/2939)) ([f5831c7](https://github.com/parse-community/parse-dashboard/commit/f5831c71b16c135b6bc51dd2ff37991d2b2b57f9))
+
 # [7.3.0-alpha.28](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.27...7.3.0-alpha.28) (2025-07-24)
 
 
