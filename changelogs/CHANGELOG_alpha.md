@@ -1,3 +1,10 @@
+# [7.3.0-alpha.30](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.29...7.3.0-alpha.30) (2025-07-24)
+
+
+### Bug Fixes
+
+* Move settings button on data browser toolbar for better UI ([#2940](https://github.com/parse-community/parse-dashboard/issues/2940)) ([c473ce6](https://github.com/parse-community/parse-dashboard/commit/c473ce6153f12c1eebcb7467d185b9f7482d42a8))
+
 # [7.3.0-alpha.29](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.28...7.3.0-alpha.29) (2025-07-24)
 
 
