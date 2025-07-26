@@ -1,3 +1,10 @@
+# [7.3.0-alpha.33](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.32...7.3.0-alpha.33) (2025-07-26)
+
+
+### Bug Fixes
+
+* Saved legacy filter in data browser cannot be deleted or cloned ([#2944](https://github.com/parse-community/parse-dashboard/issues/2944)) ([15da90d](https://github.com/parse-community/parse-dashboard/commit/15da90d05bf8cde6cc383a3f9bd060d48214ccc6))
+
 # [7.3.0-alpha.32](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.31...7.3.0-alpha.32) (2025-07-26)
 
 
