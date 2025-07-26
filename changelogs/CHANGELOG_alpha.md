@@ -1,3 +1,10 @@
+# [7.3.0-alpha.34](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.33...7.3.0-alpha.34) (2025-07-26)
+
+
+### Bug Fixes
+
+* Legacy filters without `filterId` do not appear in sidebar ([#2945](https://github.com/parse-community/parse-dashboard/issues/2945)) ([fde3769](https://github.com/parse-community/parse-dashboard/commit/fde376923dc5a7ada689b5a35c54065c90870070))
+
 # [7.3.0-alpha.33](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.32...7.3.0-alpha.33) (2025-07-26)
 
 
