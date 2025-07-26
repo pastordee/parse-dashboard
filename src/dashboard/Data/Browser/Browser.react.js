@@ -5,43 +5,43 @@
  * This source code is licensed under the license found in the LICENSE file in
  * the root directory of this source tree.
  */
-import { ActionTypes } from 'lib/stores/SchemaStore';
-import AddColumnDialog from 'dashboard/Data/Browser/AddColumnDialog.react';
 import CategoryList from 'components/CategoryList/CategoryList.react';
-import CreateClassDialog from 'dashboard/Data/Browser/CreateClassDialog.react';
-import DashboardView from 'dashboard/DashboardView.react';
-import DataBrowser from 'dashboard/Data/Browser/DataBrowser.react';
-import { DefaultColumns, SpecialClasses } from 'lib/Constants';
-import DeleteRowsDialog from 'dashboard/Data/Browser/DeleteRowsDialog.react';
-import DropClassDialog from 'dashboard/Data/Browser/DropClassDialog.react';
 import EmptyState from 'components/EmptyState/EmptyState.react';
-import ExportDialog from 'dashboard/Data/Browser/ExportDialog.react';
+import SidebarAction from 'components/Sidebar/SidebarAction';
+import DashboardView from 'dashboard/DashboardView.react';
+import AddColumnDialog from 'dashboard/Data/Browser/AddColumnDialog.react';
 import AttachRowsDialog from 'dashboard/Data/Browser/AttachRowsDialog.react';
 import AttachSelectedRowsDialog from 'dashboard/Data/Browser/AttachSelectedRowsDialog.react';
-import ExecuteScriptRowsDialog from 'dashboard/Data/Browser/ExecuteScriptRowsDialog.react';
+import styles from 'dashboard/Data/Browser/Browser.scss';
 import CloneSelectedRowsDialog from 'dashboard/Data/Browser/CloneSelectedRowsDialog.react';
+import CreateClassDialog from 'dashboard/Data/Browser/CreateClassDialog.react';
+import DataBrowser from 'dashboard/Data/Browser/DataBrowser.react';
+import DeleteRowsDialog from 'dashboard/Data/Browser/DeleteRowsDialog.react';
+import DropClassDialog from 'dashboard/Data/Browser/DropClassDialog.react';
 import EditRowDialog from 'dashboard/Data/Browser/EditRowDialog.react';
-import ExportSelectedRowsDialog from 'dashboard/Data/Browser/ExportSelectedRowsDialog.react';
+import ExecuteScriptRowsDialog from 'dashboard/Data/Browser/ExecuteScriptRowsDialog.react';
+import ExportDialog from 'dashboard/Data/Browser/ExportDialog.react';
 import ExportSchemaDialog from 'dashboard/Data/Browser/ExportSchemaDialog.react';
-import { List, Map } from 'immutable';
+import ExportSelectedRowsDialog from 'dashboard/Data/Browser/ExportSelectedRowsDialog.react';
 import Notification from 'dashboard/Data/Browser/Notification.react';
-import Parse from 'parse';
+import PointerKeyDialog from 'dashboard/Data/Browser/PointerKeyDialog.react';
+import RemoveColumnDialog from 'dashboard/Data/Browser/RemoveColumnDialog.react';
+import { List, Map } from 'immutable';
+import { get } from 'lib/AJAX';
+import * as ClassPreferences from 'lib/ClassPreferences';
+import * as ColumnPreferences from 'lib/ColumnPreferences';
+import { DefaultColumns, SpecialClasses } from 'lib/Constants';
+import generatePath from 'lib/generatePath';
 import prettyNumber from 'lib/prettyNumber';
 import queryFromFilters from 'lib/queryFromFilters';
-import React from 'react';
-import RemoveColumnDialog from 'dashboard/Data/Browser/RemoveColumnDialog.react';
-import PointerKeyDialog from 'dashboard/Data/Browser/PointerKeyDialog.react';
-import SidebarAction from 'components/Sidebar/SidebarAction';
+import { ActionTypes } from 'lib/stores/SchemaStore';
 import stringCompare from 'lib/stringCompare';
-import styles from 'dashboard/Data/Browser/Browser.scss';
 import subscribeTo from 'lib/subscribeTo';
-import * as ColumnPreferences from 'lib/ColumnPreferences';
-import * as ClassPreferences from 'lib/ClassPreferences';
+import { withRouter } from 'lib/withRouter';
+import Parse from 'parse';
+import React from 'react';
 import { Helmet } from 'react-helmet';
 import { useBeforeUnload } from 'react-router-dom';
-import generatePath from 'lib/generatePath';
-import { withRouter } from 'lib/withRouter';
-import { get } from 'lib/AJAX';
 import BrowserFooter from './BrowserFooter.react';
 
 const SELECTED_ROWS_MESSAGE = 'There are selected rows. Are you sure you want to leave this page?';
@@ -227,6 +227,7 @@ class Browser extends DashboardView {
     this.getClassRelationColumns = this.getClassRelationColumns.bind(this);
     this.showCreateClass = this.showCreateClass.bind(this);
     this.refresh = this.refresh.bind(this);
+    this.deleteFilter = this.deleteFilter.bind(this);
     this.selectRow = this.selectRow.bind(this);
     this.updateRow = this.updateRow.bind(this);
     this.updateOrdering = this.updateOrdering.bind(this);
@@ -523,10 +524,23 @@ class Browser extends DashboardView {
     if (query.has('filters')) {
       const queryFilters = JSON.parse(query.get('filters'));
       queryFilters.forEach(
-        filter =>
-          (filters = filters.push(
-            new Map({ ...filter, class: filter.class || props.params.className })
-          ))
+        filter => {
+          // Convert date strings to Parse Date objects for proper Parse query functionality
+          const processedFilter = { ...filter, class: filter.class || props.params.className };
+
+          // Check if compareTo is a date string and convert it to a Parse Date object
+          if (processedFilter.compareTo &&
+              typeof processedFilter.compareTo === 'string' &&
+              !isNaN(Date.parse(processedFilter.compareTo))) {
+            // Convert string date to Parse Date format for proper query functionality
+            processedFilter.compareTo = {
+              __type: 'Date',
+              iso: new Date(processedFilter.compareTo).toISOString()
+            };
+          }
+
+          filters = filters.push(Map(processedFilter));
+        }
       );
     }
     return filters;
@@ -1187,9 +1201,28 @@ class Browser extends DashboardView {
     } else {
       const source = this.props.params.className;
       const _filters = JSON.stringify(filters.toJSON());
-      const url = `browser/${source}${
-        filters.size === 0 ? '' : `?filters=${encodeURIComponent(_filters)}`
-      }`;
+
+      // Preserve filterId from current URL if it exists
+      const currentUrlParams = new URLSearchParams(window.location.search);
+      const currentFilterId = currentUrlParams.get('filterId');
+
+      let url = `browser/${source}`;
+      if (filters.size === 0) {
+        // If no filters, don't include any query parameters
+        url = `browser/${source}`;
+      } else {
+        // Build query parameters
+        const queryParams = new URLSearchParams();
+        queryParams.set('filters', _filters);
+
+        // Preserve filterId if it exists in current URL
+        if (currentFilterId) {
+          queryParams.set('filterId', currentFilterId);
+        }
+
+        url = `browser/${source}?${queryParams.toString()}`;
+      }
+
       // filters param change is making the fetch call
       this.props.navigate(generatePath(this.context, url));
     }
@@ -1199,7 +1232,7 @@ class Browser extends DashboardView {
     });
   }
 
-  saveFilters(filters, name, relativeDate) {
+  saveFilters(filters, name, relativeDate, filterId = null) {
     const jsonFilters = filters.toJSON();
     if (relativeDate && jsonFilters?.length) {
       for (let i = 0; i < jsonFilters.length; i++) {
@@ -1223,13 +1256,37 @@ class Browser extends DashboardView {
       this.context.applicationId,
       this.props.params.className
     );
-    if (!preferences.filters.includes(_filters)) {
+
+    let newFilterId = filterId;
+
+    if (filterId) {
+      // Update existing filter
+      const existingFilterIndex = preferences.filters.findIndex(filter => filter.id === filterId);
+      if (existingFilterIndex !== -1) {
+        preferences.filters[existingFilterIndex] = {
+          name,
+          id: filterId,
+          filter: _filters,
+        };
+      } else {
+        // Fallback: if filter not found, create new one
+        newFilterId = crypto.randomUUID();
+        preferences.filters.push({
+          name,
+          id: newFilterId,
+          filter: _filters,
+        });
+      }
+    } else {
+      // Create new filter
+      newFilterId = crypto.randomUUID();
       preferences.filters.push({
         name,
-        id: crypto.randomUUID(),
+        id: newFilterId,
         filter: _filters,
       });
     }
+
     ClassPreferences.updatePreferences(
       preferences,
       this.context.applicationId,
@@ -1237,25 +1294,43 @@ class Browser extends DashboardView {
     );
 
     super.forceUpdate();
+
+    // Return the filter ID for new filters so the caller can apply them
+    return newFilterId;
   }
 
-  removeFilter(filter) {
+  deleteFilter(filterIdOrObject) {
     const preferences = ClassPreferences.getPreferences(
       this.context.applicationId,
       this.props.params.className
     );
-    let i = preferences.filters.length;
-    while (i--) {
-      const item = preferences.filters[i];
-      if (JSON.stringify(item) === JSON.stringify(filter)) {
-        preferences.filters.splice(i, 1);
+
+    if (preferences.filters) {
+      // Try to find by ID first (modern approach)
+      let updatedFilters = preferences.filters.filter(filter => filter.id !== filterIdOrObject);
+
+      // If no filter was removed (ID not found), use fallback method
+      if (updatedFilters.length === preferences.filters.length && filterIdOrObject) {
+        // Fallback: try to find by comparing the entire filter object if filterIdOrObject is actually a filter object
+        if (typeof filterIdOrObject === 'object') {
+          let i = preferences.filters.length;
+          updatedFilters = [...preferences.filters];
+          while (i--) {
+            const item = updatedFilters[i];
+            if (JSON.stringify(item) === JSON.stringify(filterIdOrObject)) {
+              updatedFilters.splice(i, 1);
+            }
+          }
+        }
       }
+
+      ClassPreferences.updatePreferences(
+        { ...preferences, filters: updatedFilters },
+        this.context.applicationId,
+        this.props.params.className
+      );
     }
-    ClassPreferences.updatePreferences(
-      preferences,
-      this.context.applicationId,
-      this.props.params.className
-    );
+
     super.forceUpdate();
   }
 
@@ -1293,13 +1368,23 @@ class Browser extends DashboardView {
         data: null,
       },
       () => {
-        let filterQueryString;
+        // Preserve filterId from current URL if it exists
+        const currentUrlParams = new URLSearchParams(window.location.search);
+        const currentFilterId = currentUrlParams.get('filterId');
+
+        let url = this.getRelationURL();
         if (filters && filters.size) {
-          filterQueryString = encodeURIComponent(JSON.stringify(filters.toJSON()));
+          const queryParams = new URLSearchParams();
+          queryParams.set('filters', JSON.stringify(filters.toJSON()));
+
+          // Preserve filterId if it exists in current URL
+          if (currentFilterId) {
+            queryParams.set('filterId', currentFilterId);
+          }
+
+          url = `${url}?${queryParams.toString()}`;
         }
-        const url = `${this.getRelationURL()}${
-          filterQueryString ? `?filters=${filterQueryString}` : ''
-        }`;
+
         this.props.navigate(url);
       }
     );
@@ -2074,10 +2159,6 @@ class Browser extends DashboardView {
           this.resetPage();
           this.props.navigate(generatePath(this.context, url));
         }}
-        removeFilter={filter => {
-          this.resetPage();
-          this.removeFilter(filter);
-        }}
         classClicked={() => {
           this.resetPage();
         }}
@@ -2256,6 +2337,7 @@ class Browser extends DashboardView {
               filters={this.state.filters}
               onFilterChange={this.updateFilters}
               onFilterSave={(...args) => this.saveFilters(...args)}
+              onDeleteFilter={this.deleteFilter}
               onRemoveColumn={this.showRemoveColumn}
               onDeleteRows={this.showDeleteRows}
               onDropClass={this.showDropClass}

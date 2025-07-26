@@ -5,24 +5,28 @@
  * This source code is licensed under the license found in the LICENSE file in
  * the root directory of this source tree.
  */
-import * as Filters from 'lib/Filters';
-import Button from 'components/Button/Button.react';
-import Filter from 'components/Filter/Filter.react';
+import styles from 'components/BrowserFilter/BrowserFilter.scss';
 import FilterRow from 'components/BrowserFilter/FilterRow.react';
-import Icon from 'components/Icon/Icon.react';
-import Popover from 'components/Popover/Popover.react';
+import Button from 'components/Button/Button.react';
+import Checkbox from 'components/Checkbox/Checkbox.react';
 import Field from 'components/Field/Field.react';
-import TextInput from 'components/TextInput/TextInput.react';
+import Filter from 'components/Filter/Filter.react';
+import Icon from 'components/Icon/Icon.react';
 import Label from 'components/Label/Label.react';
+import Popover from 'components/Popover/Popover.react';
+import TextInput from 'components/TextInput/TextInput.react';
+import { CurrentApp } from 'context/currentApp';
+import { List, Map as ImmutableMap } from 'immutable';
+import * as ClassPreferences from 'lib/ClassPreferences';
+import * as Filters from 'lib/Filters';
 import Position from 'lib/Position';
 import React from 'react';
-import styles from 'components/BrowserFilter/BrowserFilter.scss';
-import Checkbox from 'components/Checkbox/Checkbox.react';
-import { List, Map } from 'immutable';
 
 const POPOVER_CONTENT_ID = 'browserFilterPopover';
 
 export default class BrowserFilter extends React.Component {
+  static contextType = CurrentApp;
+
   constructor(props) {
     super(props);
 
@@ -30,10 +34,13 @@ export default class BrowserFilter extends React.Component {
       open: false,
       editMode: true,
       filters: new List(),
-      confirmName: false,
       name: '',
       blacklistedFilters: Filters.BLACKLISTED_FILTERS.concat(props.blacklistedFilters),
       relativeDates: false,
+      showMore: false,
+      originalFilterName: '',
+      confirmDelete: false,
+      originalFilters: new List(), // Track original filters when entering edit mode
     };
     this.toggle = this.toggle.bind(this);
     this.wrapRef = React.createRef();
@@ -43,6 +50,303 @@ export default class BrowserFilter extends React.Component {
     if (props.className !== this.props.className) {
       this.setState({ open: false });
     }
+  }
+
+  isCurrentFilterSaved() {
+    // First check if there's a filterId in the URL (means we're definitely viewing a saved filter)
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterId = urlParams.get('filterId');
+
+    if (filterId) {
+      const preferences = ClassPreferences.getPreferences(
+        this.context.applicationId,
+        this.props.className
+      );
+
+      if (preferences.filters) {
+        // If filterId exists in saved filters, it's definitely a saved filter
+        const savedFilter = preferences.filters.find(filter => filter.id === filterId);
+        if (savedFilter) {
+          return true;
+        }
+      }
+      // If filterId is in URL but not found in saved filters, it's not saved
+      return false;
+    }
+
+    // Fallback only when no filterId in URL: Check if current filter structure matches any saved filter
+    // This is for legacy compatibility
+    const preferences = ClassPreferences.getPreferences(
+      this.context.applicationId,
+      this.props.className
+    );
+
+    if (!preferences.filters || this.props.filters.size === 0) {
+      return false;
+    }
+
+    const currentFiltersString = JSON.stringify(this.props.filters.toJS());
+
+    return preferences.filters.some(savedFilter => {
+      try {
+        const savedFiltersString = JSON.stringify(JSON.parse(savedFilter.filter));
+        return savedFiltersString === currentFiltersString;
+      } catch {
+        return false;
+      }
+    });
+  }  getCurrentFilterInfo() {
+    // Extract filterId from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterId = urlParams.get('filterId');
+
+    if (filterId) {
+      const preferences = ClassPreferences.getPreferences(
+        this.context.applicationId,
+        this.props.className
+      );
+
+      if (preferences.filters) {
+        const savedFilter = preferences.filters.find(filter => filter.id === filterId);
+        if (savedFilter) {
+          // Check if the filter has relative dates
+          let hasRelativeDates = false;
+          try {
+            const filterData = JSON.parse(savedFilter.filter);
+            hasRelativeDates = filterData.some(filter =>
+              filter.compareTo && filter.compareTo.__type === 'RelativeDate'
+            );
+          } catch (error) {
+            // Log parsing errors for debugging
+            console.warn('Failed to parse saved filter:', error);
+            hasRelativeDates = false;
+          }
+
+          return {
+            id: savedFilter.id,
+            name: savedFilter.name,
+            isApplied: true,
+            hasRelativeDates: hasRelativeDates
+          };
+        }
+      }
+    }
+
+    return {
+      id: null,
+      name: '',
+      isApplied: false,
+      hasRelativeDates: false
+    };
+  }
+
+  toggleMore() {
+    const currentFilter = this.getCurrentFilterInfo();
+
+    this.setState(prevState => {
+      let filtersToUse;
+      let originalFiltersToStore = prevState.originalFilters;
+
+      if (!prevState.showMore) {
+        // Entering edit mode
+        // Store the original applied filters for comparison
+        originalFiltersToStore = this.props.filters;
+
+        // If we already have filters in state (e.g., user added fields), use those but convert only Parse dates
+        // Otherwise, convert the props filters for display (preserving RelativeDate objects)
+        if (prevState.filters.size > 0) {
+          filtersToUse = this.convertDatesForDisplay(prevState.filters);
+        } else {
+          filtersToUse = this.convertDatesForDisplay(this.props.filters);
+        }
+      } else {
+        // Exiting edit mode - preserve current state filters
+        filtersToUse = prevState.filters;
+      }
+
+      return {
+        showMore: !prevState.showMore,
+        name: prevState.showMore ? prevState.name : currentFilter.name,
+        originalFilterName: currentFilter.name,
+        relativeDates: currentFilter.hasRelativeDates,
+        filters: filtersToUse,
+        originalFilters: originalFiltersToStore,
+      };
+    });
+  }
+
+  isFilterNameExists(name) {
+    const preferences = ClassPreferences.getPreferences(
+      this.context.applicationId,
+      this.props.className
+    );
+
+    if (preferences.filters && name) {
+      return preferences.filters.some(filter =>
+        filter.name === name && filter.id !== this.getCurrentFilterInfo().id
+      );
+    }
+    return false;
+  }
+
+  // Helper method to normalize filters for comparison
+  // Converts all date formats to a consistent format for comparison
+  normalizeFiltersForComparison(filters) {
+    return filters.map(filter => {
+      const compareTo = filter.get('compareTo');
+      if (!compareTo) {
+        return filter;
+      }
+
+      // Convert all date types to ISO string for consistent comparison
+      if (compareTo instanceof Date) {
+        return filter.set('compareTo', compareTo.toISOString());
+      } else if (compareTo.__type === 'Date') {
+        return filter.set('compareTo', compareTo.iso);
+      } else if (compareTo.__type === 'RelativeDate') {
+        // Convert RelativeDate to ISO string
+        const now = new Date();
+        const date = new Date(now.getTime() + compareTo.value * 1000);
+        return filter.set('compareTo', date.toISOString());
+      }
+      return filter;
+    });
+  }
+
+  hasFilterContentChanged() {
+    // If we're not in showMore mode (editing a saved filter), return false
+    if (!this.state.showMore) {
+      return false;
+    }
+
+    // Compare current state filters with the original filters stored when entering edit mode
+    const currentFilters = this.normalizeFiltersForComparison(this.state.filters);
+    const originalFilters = this.normalizeFiltersForComparison(this.state.originalFilters);
+
+    // If the sizes are different, content has changed
+    if (currentFilters.size !== originalFilters.size) {
+      return true;
+    }
+
+    // Compare each filter
+    for (let i = 0; i < currentFilters.size; i++) {
+      const currentFilter = currentFilters.get(i);
+      const originalFilter = originalFilters.get(i);
+
+      // Compare each property of the filter
+      const currentClass = currentFilter.get('class');
+      const currentField = currentFilter.get('field');
+      const currentConstraint = currentFilter.get('constraint');
+      const currentCompareTo = currentFilter.get('compareTo');
+
+      const originalClass = originalFilter.get('class');
+      const originalField = originalFilter.get('field');
+      const originalConstraint = originalFilter.get('constraint');
+      const originalCompareTo = originalFilter.get('compareTo');
+
+      // Check all properties for equality
+      if (currentClass !== originalClass ||
+          currentField !== originalField ||
+          currentConstraint !== originalConstraint ||
+          currentCompareTo !== originalCompareTo) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Helper method to convert Parse Date objects, date strings, and RelativeDate objects to JavaScript Date objects
+  // This ensures all UI components receive proper JavaScript Date objects
+  convertDatesForDisplay(filters) {
+    const result = filters.map(filter => {
+      const compareTo = filter.get('compareTo');
+      if (compareTo && compareTo.__type === 'RelativeDate') {
+        // Convert RelativeDate to JavaScript Date for UI display
+        const now = new Date();
+        const date = new Date(now.getTime() + compareTo.value * 1000);
+        return filter.set('compareTo', date);
+      } else if (compareTo && compareTo.__type === 'Date') {
+        // Convert Parse Date to JavaScript Date
+        const date = new Date(compareTo.iso);
+        return filter.set('compareTo', date);
+      } else if (typeof compareTo === 'string' && !isNaN(Date.parse(compareTo))) {
+        // Convert date string to JavaScript Date
+        const date = new Date(compareTo);
+        return filter.set('compareTo', date);
+      }
+      // Leave JavaScript Date objects and other types unchanged
+      return filter;
+    });
+    return result;
+  }  // Helper method to convert RelativeDate objects to Parse Date format for saving
+  convertRelativeDatesToParseFormat(filters) {
+    return filters.map(filter => {
+      const compareTo = filter.get('compareTo');
+      if (compareTo && compareTo.__type === 'RelativeDate') {
+        // Convert RelativeDate to Parse Date format that Parse._decode can handle
+        const now = new Date();
+        const date = new Date(now.getTime() + compareTo.value * 1000);
+        return filter.set('compareTo', {
+          __type: 'Date',
+          iso: date.toISOString(),
+        });
+      }
+      return filter;
+    });
+  }
+
+  deleteCurrentFilter() {
+    const currentFilterInfo = this.getCurrentFilterInfo();
+    if (!currentFilterInfo.id) {
+      this.setState({ confirmDelete: false });
+      return;
+    }
+
+    // Delete the filter from ClassPreferences
+    const preferences = ClassPreferences.getPreferences(
+      this.context.applicationId,
+      this.props.className
+    );
+
+    if (preferences.filters) {
+      const updatedFilters = preferences.filters.filter(filter => filter.id !== currentFilterInfo.id);
+      ClassPreferences.updatePreferences(
+        this.context.applicationId,
+        this.props.className,
+        { ...preferences, filters: updatedFilters }
+      );
+    }
+
+    // Remove filterId from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete('filterId');
+    const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+
+    // Clear current filters and close dialog
+    this.props.onChange(new ImmutableMap());
+    this.setState({ confirmDelete: false });
+    this.toggle();
+
+    // Call onDeleteFilter prop if provided
+    if (this.props.onDeleteFilter) {
+      this.props.onDeleteFilter(currentFilterInfo.id);
+    }
+  }
+
+  copyCurrentFilter() {
+    // Remove filterId from URL so when saving it will create a new filter instead of updating
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.delete('filterId');
+    const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+
+    // Clear the filter name so user can enter a new name
+    this.setState({
+      name: '',
+      originalFilterName: ''
+    });
   }
 
   toggle() {
@@ -56,16 +360,19 @@ export default class BrowserFilter extends React.Component {
       );
       const { filterClass, filterField, filterConstraint } = Filters.getFilterDetails(available);
       filters = new List([
-        new Map({ class: filterClass, field: filterField, constraint: filterConstraint }),
+        new ImmutableMap({ class: filterClass, field: filterField, constraint: filterConstraint }),
       ]);
+    } else {
+      // Convert only Parse Date objects to JavaScript Date objects, preserve RelativeDate objects
+      filters = this.convertDatesForDisplay(filters);
     }
     this.setState(prevState => ({
       open: !prevState.open,
       filters: filters,
       name: '',
-      confirmName: false,
       editMode: this.props.filters.size === 0,
       relativeDates: false, // Reset relative dates state when opening/closing
+      showMore: false, // Reset showMore state when opening/closing
     }));
     this.props.setCurrent(null);
   }
@@ -80,14 +387,14 @@ export default class BrowserFilter extends React.Component {
     const { filterClass, filterField, filterConstraint } = Filters.getFilterDetails(available);
     this.setState(({ filters }) => ({
       filters: filters.push(
-        new Map({ class: filterClass, field: filterField, constraint: filterConstraint })
+        new ImmutableMap({ class: filterClass, field: filterField, constraint: filterConstraint })
       ),
       editMode: true,
     }));
   }
 
   clear() {
-    this.props.onChange(new Map());
+    this.props.onChange(new ImmutableMap());
   }
 
   apply() {
@@ -110,15 +417,75 @@ export default class BrowserFilter extends React.Component {
   }
 
   save() {
-    const formatted = this.state.filters.map(filter => {
+    // Store the original UI-friendly filters before any conversion
+    const originalUIFilters = this.state.filters;
+
+    let formatted = this.state.filters.map(filter => {
       const isComparable = Filters.Constraints[filter.get('constraint')].comparable;
       if (!isComparable) {
         return filter.delete('compareTo');
       }
       return filter;
     });
-    this.props.onSaveFilter(formatted, this.state.name, this.state.relativeDates);
-    this.toggle();
+
+    // If relativeDates checkbox is checked, convert for saving but don't update component state
+    if (this.state.relativeDates) {
+      formatted = formatted.map(filter => {
+        const compareTo = filter.get('compareTo');
+        if (compareTo instanceof Date) {
+          // Convert JavaScript Date back to RelativeDate format
+          const now = new Date();
+          const timeDiff = compareTo.getTime() - now.getTime();
+          const relativeDate = {
+            __type: 'RelativeDate',
+            value: Math.round(timeDiff / 1000) // Convert milliseconds to seconds
+          };
+          return filter.set('compareTo', relativeDate);
+        } else if (compareTo && compareTo.__type === 'Date') {
+          // Convert Parse Date to RelativeDate format
+          const parseDateObj = new Date(compareTo.iso);
+          const now = new Date();
+          const timeDiff = parseDateObj.getTime() - now.getTime();
+          const relativeDate = {
+            __type: 'RelativeDate',
+            value: Math.round(timeDiff / 1000) // Convert milliseconds to seconds
+          };
+          return filter.set('compareTo', relativeDate);
+        }
+        return filter;
+      });
+    }
+
+    // If we're in showMore mode, we're editing an existing filter
+    const currentFilterInfo = this.getCurrentFilterInfo();
+    const filterId = this.state.showMore ? currentFilterInfo.id : null;
+
+    const savedFilterId = this.props.onSaveFilter(formatted, this.state.name, this.state.relativeDates, filterId);
+
+    // Only close the dialog if we're not in edit mode (showMore)
+    if (!this.state.showMore) {
+      // For new filters, apply the saved filter and update URL
+      this.props.onChange(formatted);
+
+      // Update URL with the new filter ID if we got one back
+      if (savedFilterId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('filterId', savedFilterId);
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      this.toggle();
+    } else {
+      // In edit mode, update the original filter name but keep the original UI-friendly filters
+      // Convert any Parse Date objects in the UI filters to JavaScript Date objects for proper display
+      const uiFilters = this.convertDatesForDisplay(originalUIFilters);
+
+      this.setState({
+        originalFilterName: this.state.name,
+        filters: uiFilters, // Ensure UI stays with JavaScript Date objects
+      });
+    }
   }
 
   render() {
@@ -141,7 +508,11 @@ export default class BrowserFilter extends React.Component {
         this.state.filters
       );
 
-      const hasDateState = this.state.filters.some(filter => filter.get('compareTo')?.__type === 'Date');
+      const hasDateState = this.state.filters.some(filter => {
+        const compareTo = filter.get('compareTo');
+        return compareTo && (compareTo instanceof Date || compareTo.__type === 'Date' || compareTo.__type === 'RelativeDate');
+      });
+
       popover = (
         <Popover
           fixed={true}
@@ -184,66 +555,142 @@ export default class BrowserFilter extends React.Component {
                   />
                 )}
               />
-              {this.state.confirmName && (
+              {this.state.showMore && (
                 <>
                   <Field
-                    label={<Label text="Filter view name" />}
+                    label={<Label text="Filter name" />}
                     input={
                       <TextInput
-                        placeholder="Give it a good name..."
+                        placeholder="Enter filter name..."
                         value={this.state.name}
                         onChange={name => this.setState({ name })}
                       />
                     }
                   />
-                  {hasDateState &&
-                  <Field
-                    label={<Label text="Relative dates" />}
-                    input={
-                      <Checkbox
-                        checked={this.state.relativeDates}
-                        onChange={checked => this.setState({ relativeDates: checked })}
-                        className={styles.checkbox}
-                      />
-                    }
-                  />
-                  }
+                  {hasDateState && (
+                    <Field
+                      label={<Label text="Relative dates" />}
+                      input={
+                        <Checkbox
+                          checked={this.state.relativeDates}
+                          onChange={checked => this.setState({ relativeDates: checked })}
+                          className={styles.checkbox}
+                        />
+                      }
+                    />
+                  )}
                 </>
               )}
 
-              {this.state.confirmName && (
+              {this.state.confirmDelete && (
                 <div className={styles.footer}>
                   <Button
                     color="white"
-                    value="Back"
+                    value="Cancel"
                     width="120px"
-                    onClick={() => this.setState({ confirmName: false })}
+                    onClick={() => this.setState({ confirmDelete: false })}
                   />
                   <Button
-                    color="white"
-                    value="Confirm"
+                    color="red"
+                    value="Delete"
                     primary={true}
                     width="120px"
-                    onClick={() => this.save()}
+                    onClick={() => {
+                      this.deleteCurrentFilter();
+                    }}
                   />
                 </div>
               )}
-              {!this.state.confirmName && (
+              {!this.state.confirmDelete && (
                 <div className={styles.footer}>
+                  {this.state.showMore && (
+                    <div className={styles.btnFlex}>
+                      <span
+                        className={styles.iconButton}
+                        onClick={() => this.toggleMore()}
+                      >
+                        <Icon
+                          name="up-solid"
+                          width={20}
+                          height={20}
+                          fill="white"
+                        />
+                      </span>
+                      <div
+                        style={{
+                          width: '1px',
+                          height: '20px',
+                          backgroundColor: '#ffffff',
+                          opacity: 0.3,
+                          alignSelf: 'center'
+                        }}
+                      />
+                      <span
+                        className={this.state.name && (this.state.name !== this.state.originalFilterName || this.hasFilterContentChanged()) && !this.isFilterNameExists(this.state.name) ? styles.iconButton : styles.iconButtonDisabled}
+                        onClick={() => {
+                          if (this.state.name && (this.state.name !== this.state.originalFilterName || this.hasFilterContentChanged()) && !this.isFilterNameExists(this.state.name)) {
+                            this.save();
+                          }
+                        }}
+                      >
+                        <Icon
+                          name="check"
+                          width={20}
+                          height={20}
+                          fill={this.state.name && (this.state.name !== this.state.originalFilterName || this.hasFilterContentChanged()) && !this.isFilterNameExists(this.state.name) ? '#00db7c' : 'white'}
+                        />
+                      </span>
+                      {this.isCurrentFilterSaved() && (
+                        <>
+                          <span
+                            className={styles.iconButton}
+                            onClick={() => this.copyCurrentFilter()}
+                          >
+                            <Icon
+                              name="clone-icon"
+                              width={20}
+                              height={20}
+                              fill="white"
+                            />
+                          </span>
+                          <span
+                            className={styles.iconButton}
+                            onClick={() => this.setState({ confirmDelete: true })}
+                          >
+                            <Icon
+                              name="trash-solid"
+                              width={20}
+                              height={20}
+                              fill="white"
+                            />
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
                   <div className={styles.btnFlex}>
-                    <Button
-                      color="white"
-                      value="Save"
-                      width="120px"
-                      onClick={() => this.setState({ confirmName: true })}
-                    />
-                    <Button
-                      color="white"
-                      value="Clear"
-                      disabled={this.state.filters.size === 0}
-                      width="120px"
-                      onClick={() => this.clear()}
-                    />
+                    {!this.state.showMore && (
+                      <>
+                        <span
+                          className={styles.iconButton}
+                          onClick={() => this.toggleMore()}
+                        >
+                          <Icon
+                            name="down-solid"
+                            width={20}
+                            height={20}
+                            fill="white"
+                          />
+                        </span>
+                        <Button
+                          color="white"
+                          value="Clear"
+                          disabled={this.state.filters.size === 0}
+                          width="120px"
+                          onClick={() => this.clear()}
+                        />
+                      </>
+                    )}
                   </div>
                   <div className={styles.btnFlex}>
                     <Button
