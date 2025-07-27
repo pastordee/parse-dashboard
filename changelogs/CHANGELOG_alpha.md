@@ -1,3 +1,10 @@
+# [7.3.0-alpha.40](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.39...7.3.0-alpha.40) (2025-07-27)
+
+
+### Bug Fixes
+
+* Selected text in info panel cannot be copied using Ctrl+C ([#2951](https://github.com/parse-community/parse-dashboard/issues/2951)) ([0164c19](https://github.com/parse-community/parse-dashboard/commit/0164c1939cbb4ada991dc488ef2cd156913353d0))
+
 # [7.3.0-alpha.39](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.38...7.3.0-alpha.39) (2025-07-27)
 
 
