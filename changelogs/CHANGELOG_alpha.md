@@ -1,3 +1,10 @@
+# [7.3.0-alpha.37](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.36...7.3.0-alpha.37) (2025-07-27)
+
+
+### Bug Fixes
+
+* Saved legacy filter with classname in query cannot be deleted ([#2948](https://github.com/parse-community/parse-dashboard/issues/2948)) ([05ee5b3](https://github.com/parse-community/parse-dashboard/commit/05ee5b39e91737343ae4395cb63736802bd5c6cb))
+
 # [7.3.0-alpha.36](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.35...7.3.0-alpha.36) (2025-07-27)
 
 
