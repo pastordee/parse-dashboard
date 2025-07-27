@@ -1,3 +1,10 @@
+# [7.3.0-alpha.35](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.34...7.3.0-alpha.35) (2025-07-27)
+
+
+### Bug Fixes
+
+* Legacy filters without `filterId` cannot be deleted in data browser ([#2946](https://github.com/parse-community/parse-dashboard/issues/2946)) ([65df9d6](https://github.com/parse-community/parse-dashboard/commit/65df9d60c080d100fac45c7a81cae83104f150ea))
+
 # [7.3.0-alpha.34](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.33...7.3.0-alpha.34) (2025-07-26)
 
 
