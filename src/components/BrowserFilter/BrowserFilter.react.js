@@ -74,31 +74,37 @@ export default class BrowserFilter extends React.Component {
       return false;
     }
 
-    // Fallback only when no filterId in URL: Check if current filter structure matches any saved filter
-    // This is for legacy compatibility
-    const preferences = ClassPreferences.getPreferences(
-      this.context.applicationId,
-      this.props.className
-    );
+    // Check for legacy filters (filters parameter without filterId)
+    const filtersParam = urlParams.get('filters');
+    if (filtersParam && this.props.filters.size > 0) {
+      const preferences = ClassPreferences.getPreferences(
+        this.context.applicationId,
+        this.props.className
+      );
 
-    if (!preferences.filters || this.props.filters.size === 0) {
-      return false;
+      if (preferences.filters) {
+        // Try to find a saved filter that matches the current filter content
+        const currentFiltersString = JSON.stringify(this.props.filters.toJS());
+
+        const matchingFilter = preferences.filters.find(savedFilter => {
+          try {
+            const savedFiltersString = JSON.stringify(JSON.parse(savedFilter.filter));
+            return savedFiltersString === currentFiltersString;
+          } catch {
+            return false;
+          }
+        });
+
+        return !!matchingFilter;
+      }
     }
 
-    const currentFiltersString = JSON.stringify(this.props.filters.toJS());
-
-    return preferences.filters.some(savedFilter => {
-      try {
-        const savedFiltersString = JSON.stringify(JSON.parse(savedFilter.filter));
-        return savedFiltersString === currentFiltersString;
-      } catch {
-        return false;
-      }
-    });
+    return false;
   }  getCurrentFilterInfo() {
     // Extract filterId from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const filterId = urlParams.get('filterId');
+    const filtersParam = urlParams.get('filters');
 
     if (filterId) {
       const preferences = ClassPreferences.getPreferences(
@@ -132,11 +138,57 @@ export default class BrowserFilter extends React.Component {
       }
     }
 
+    // Check for legacy filters (filters parameter without filterId)
+    if (filtersParam && this.props.filters.size > 0) {
+      const preferences = ClassPreferences.getPreferences(
+        this.context.applicationId,
+        this.props.className
+      );
+
+      if (preferences.filters) {
+        // Try to find a saved filter that matches the current filter content
+        const currentFiltersString = JSON.stringify(this.props.filters.toJS());
+
+        const matchingFilter = preferences.filters.find(savedFilter => {
+          try {
+            const savedFiltersString = JSON.stringify(JSON.parse(savedFilter.filter));
+            const matches = savedFiltersString === currentFiltersString;
+            return matches;
+          } catch {
+            return false;
+          }
+        });
+
+        if (matchingFilter) {
+          // Check if the filter has relative dates
+          let hasRelativeDates = false;
+          try {
+            const filterData = JSON.parse(matchingFilter.filter);
+            hasRelativeDates = filterData.some(filter =>
+              filter.compareTo && filter.compareTo.__type === 'RelativeDate'
+            );
+          } catch (error) {
+            console.warn('Failed to parse saved filter:', error);
+            hasRelativeDates = false;
+          }
+
+          return {
+            id: matchingFilter.id || null, // Legacy filters might not have an id
+            name: matchingFilter.name,
+            isApplied: true,
+            hasRelativeDates: hasRelativeDates,
+            isLegacy: !matchingFilter.id // Mark as legacy if no id
+          };
+        }
+      }
+    }
+
     return {
       id: null,
       name: '',
       isApplied: false,
-      hasRelativeDates: false
+      hasRelativeDates: false,
+      isLegacy: false
     };
   }
 
@@ -182,9 +234,22 @@ export default class BrowserFilter extends React.Component {
     );
 
     if (preferences.filters && name) {
-      return preferences.filters.some(filter =>
-        filter.name === name && filter.id !== this.getCurrentFilterInfo().id
-      );
+      const currentFilterInfo = this.getCurrentFilterInfo();
+      return preferences.filters.some(filter => {
+        // For filters with the same name, check if it's not the current filter
+        if (filter.name === name) {
+          // If current filter has an ID, exclude it by ID
+          if (currentFilterInfo.id && filter.id === currentFilterInfo.id) {
+            return false;
+          }
+          // If current filter is legacy (no ID), exclude it by name match
+          if (currentFilterInfo.isLegacy && !filter.id && filter.name === currentFilterInfo.name) {
+            return false;
+          }
+          return true;
+        }
+        return false;
+      });
     }
     return false;
   }
@@ -298,29 +363,43 @@ export default class BrowserFilter extends React.Component {
 
   deleteCurrentFilter() {
     const currentFilterInfo = this.getCurrentFilterInfo();
-    if (!currentFilterInfo.id) {
-      this.setState({ confirmDelete: false });
-      return;
+
+    // Use parent's onDeleteFilter method which handles everything including force update
+    if (this.props.onDeleteFilter) {
+      // For legacy filters, we need to pass the entire filter object for the parent to match
+      if (currentFilterInfo.isLegacy) {
+        const preferences = ClassPreferences.getPreferences(this.context.applicationId, this.props.className);
+        if (preferences.filters) {
+          const currentFiltersString = JSON.stringify(this.props.filters.toJS());
+          const matchingFilter = preferences.filters.find(filter => {
+            if (!filter.id && filter.name === currentFilterInfo.name) {
+              try {
+                const savedFiltersString = JSON.stringify(JSON.parse(filter.filter));
+                return savedFiltersString === currentFiltersString;
+              } catch {
+                return false;
+              }
+            }
+            return false;
+          });
+
+          if (matchingFilter) {
+            this.props.onDeleteFilter(matchingFilter);
+          }
+        }
+      } else if (currentFilterInfo.id) {
+        // For modern filters with ID, just pass the ID
+        this.props.onDeleteFilter(currentFilterInfo.id);
+      }
     }
 
-    // Delete the filter from ClassPreferences
-    const preferences = ClassPreferences.getPreferences(
-      this.context.applicationId,
-      this.props.className
-    );
-
-    if (preferences.filters) {
-      const updatedFilters = preferences.filters.filter(filter => filter.id !== currentFilterInfo.id);
-      ClassPreferences.updatePreferences(
-        this.context.applicationId,
-        this.props.className,
-        { ...preferences, filters: updatedFilters }
-      );
-    }
-
-    // Remove filterId from URL
+    // Remove filterId from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     urlParams.delete('filterId');
+    // For legacy filters, also remove the filters parameter
+    if (currentFilterInfo.isLegacy) {
+      urlParams.delete('filters');
+    }
     const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
 
@@ -328,11 +407,6 @@ export default class BrowserFilter extends React.Component {
     this.props.onChange(new ImmutableMap());
     this.setState({ confirmDelete: false });
     this.toggle();
-
-    // Call onDeleteFilter prop if provided
-    if (this.props.onDeleteFilter) {
-      this.props.onDeleteFilter(currentFilterInfo.id);
-    }
   }
 
   copyCurrentFilter() {
@@ -458,7 +532,13 @@ export default class BrowserFilter extends React.Component {
 
     // If we're in showMore mode, we're editing an existing filter
     const currentFilterInfo = this.getCurrentFilterInfo();
-    const filterId = this.state.showMore ? currentFilterInfo.id : null;
+    let filterId = this.state.showMore ? currentFilterInfo.id : null;
+
+    // For legacy filters (no ID), pass a special identifier so the save handler can convert them
+    if (this.state.showMore && currentFilterInfo.isLegacy && !filterId) {
+      // Pass the filter name as a special legacy identifier
+      filterId = `legacy:${currentFilterInfo.name}`;
+    }
 
     const savedFilterId = this.props.onSaveFilter(formatted, this.state.name, this.state.relativeDates, filterId);
 
