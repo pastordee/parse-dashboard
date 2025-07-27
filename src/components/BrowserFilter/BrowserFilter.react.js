@@ -47,10 +47,50 @@ export default class BrowserFilter extends React.Component {
     this.wrapRef = React.createRef();
   }
 
+  getClassNameFromURL() {
+    const pathParts = window.location.pathname.split('/');
+    const browserIndex = pathParts.indexOf('browser');
+    return browserIndex >= 0 && pathParts[browserIndex + 1]
+      ? pathParts[browserIndex + 1]
+      : this.props.className;
+  }
+
+  initializeEditFilterMode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEditFilterMode = urlParams.get('editFilter') === 'true';
+
+    if (isEditFilterMode && !this.state.open) {
+      const currentFilter = this.getCurrentFilterInfo();
+      let filtersToDisplay = this.props.filters;
+      if (this.props.filters.size === 0) {
+        filtersToDisplay = this.loadFiltersFromURL();
+      }
+
+      const filters = this.convertDatesForDisplay(filtersToDisplay);
+      this.setState({
+        open: true,
+        showMore: true,
+        filters: filters,
+        editMode: true,
+        name: currentFilter.name || '',
+        originalFilterName: currentFilter.name || '',
+        relativeDates: currentFilter.hasRelativeDates || false,
+        originalRelativeDates: currentFilter.hasRelativeDates || false,
+        originalFilters: filtersToDisplay,
+      });
+    }
+  }
+
   componentWillReceiveProps(props) {
     if (props.className !== this.props.className) {
       this.setState({ open: false });
     }
+
+    this.initializeEditFilterMode();
+  }
+
+  componentDidMount() {
+    this.initializeEditFilterMode();
   }
 
   isCurrentFilterSaved() {
@@ -58,10 +98,12 @@ export default class BrowserFilter extends React.Component {
     const urlParams = new URLSearchParams(window.location.search);
     const filterId = urlParams.get('filterId');
 
+    const urlClassName = this.getClassNameFromURL();
+
     if (filterId) {
       const preferences = ClassPreferences.getPreferences(
         this.context.applicationId,
-        this.props.className
+        urlClassName
       );
 
       if (preferences.filters) {
@@ -77,22 +119,30 @@ export default class BrowserFilter extends React.Component {
 
     // Check for legacy filters (filters parameter without filterId)
     const filtersParam = urlParams.get('filters');
-    if (filtersParam && this.props.filters.size > 0) {
+    if (filtersParam) {
       const preferences = ClassPreferences.getPreferences(
         this.context.applicationId,
-        this.props.className
+        urlClassName
       );
 
       if (preferences.filters) {
-        // Normalize current filters for comparison (remove class property if it matches current className)
-        const currentFilters = this.props.filters.toJS().map(filter => {
+        // Parse the URL filters parameter to get the actual filter data
+        let urlFilters;
+        try {
+          urlFilters = JSON.parse(filtersParam);
+        } catch {
+          return false;
+        }
+
+        // Normalize URL filters for comparison (remove class property if it matches current className)
+        const normalizedUrlFilters = urlFilters.map(filter => {
           const normalizedFilter = { ...filter };
-          if (normalizedFilter.class === this.props.className) {
+          if (normalizedFilter.class === urlClassName) {
             delete normalizedFilter.class;
           }
           return normalizedFilter;
         });
-        const currentFiltersString = JSON.stringify(currentFilters);
+        const urlFiltersString = JSON.stringify(normalizedUrlFilters);
 
         const matchingFilter = preferences.filters.find(savedFilter => {
           try {
@@ -100,13 +150,13 @@ export default class BrowserFilter extends React.Component {
             // Normalize saved filters for comparison (remove class property if it matches current className)
             const normalizedSavedFilters = savedFilters.map(filter => {
               const normalizedFilter = { ...filter };
-              if (normalizedFilter.class === this.props.className) {
+              if (normalizedFilter.class === urlClassName) {
                 delete normalizedFilter.class;
               }
               return normalizedFilter;
             });
             const savedFiltersString = JSON.stringify(normalizedSavedFilters);
-            return savedFiltersString === currentFiltersString;
+            return savedFiltersString === urlFiltersString;
           } catch {
             return false;
           }
@@ -117,16 +167,20 @@ export default class BrowserFilter extends React.Component {
     }
 
     return false;
-  }  getCurrentFilterInfo() {
+  }
+
+  getCurrentFilterInfo() {
     // Extract filterId from URL if present
     const urlParams = new URLSearchParams(window.location.search);
     const filterId = urlParams.get('filterId');
     const filtersParam = urlParams.get('filters');
 
+    const urlClassName = this.getClassNameFromURL();
+
     if (filterId) {
       const preferences = ClassPreferences.getPreferences(
         this.context.applicationId,
-        this.props.className
+        urlClassName
       );
 
       if (preferences.filters) {
@@ -156,22 +210,37 @@ export default class BrowserFilter extends React.Component {
     }
 
     // Check for legacy filters (filters parameter without filterId)
-    if (filtersParam && this.props.filters.size > 0) {
+    if (filtersParam) {
       const preferences = ClassPreferences.getPreferences(
         this.context.applicationId,
-        this.props.className
+        urlClassName
       );
 
       if (preferences.filters) {
-        // Normalize current filters for comparison (remove class property if it matches current className)
-        const currentFilters = this.props.filters.toJS().map(filter => {
+        // Parse the URL filters parameter to get the actual filter data
+        let urlFilters;
+        try {
+          urlFilters = JSON.parse(filtersParam);
+        } catch (error) {
+          console.warn('Failed to parse URL filters:', error);
+          return {
+            id: null,
+            name: '',
+            isApplied: false,
+            hasRelativeDates: false,
+            isLegacy: false
+          };
+        }
+
+        // Normalize URL filters for comparison (remove class property if it matches current className)
+        const normalizedUrlFilters = urlFilters.map(filter => {
           const normalizedFilter = { ...filter };
-          if (normalizedFilter.class === this.props.className) {
+          if (normalizedFilter.class === urlClassName) {
             delete normalizedFilter.class;
           }
           return normalizedFilter;
         });
-        const currentFiltersString = JSON.stringify(currentFilters);
+        const urlFiltersString = JSON.stringify(normalizedUrlFilters);
 
         const matchingFilter = preferences.filters.find(savedFilter => {
           try {
@@ -179,13 +248,13 @@ export default class BrowserFilter extends React.Component {
             // Normalize saved filters for comparison (remove class property if it matches current className)
             const normalizedSavedFilters = savedFilters.map(filter => {
               const normalizedFilter = { ...filter };
-              if (normalizedFilter.class === this.props.className) {
+              if (normalizedFilter.class === urlClassName) {
                 delete normalizedFilter.class;
               }
               return normalizedFilter;
             });
             const savedFiltersString = JSON.stringify(normalizedSavedFilters);
-            return savedFiltersString === currentFiltersString;
+            return savedFiltersString === urlFiltersString;
           } catch {
             return false;
           }
@@ -222,6 +291,52 @@ export default class BrowserFilter extends React.Component {
       hasRelativeDates: false,
       isLegacy: false
     };
+  }
+
+  loadFiltersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const filtersParam = urlParams.get('filters');
+    const filterId = urlParams.get('filterId');
+
+    const urlClassName = this.getClassNameFromURL();
+
+    // If we have a filterId, load from saved filters
+    if (filterId) {
+      const preferences = ClassPreferences.getPreferences(
+        this.context.applicationId,
+        urlClassName
+      );
+
+      if (preferences.filters) {
+        const savedFilter = preferences.filters.find(filter => filter.id === filterId);
+        if (savedFilter) {
+          try {
+            const filterData = JSON.parse(savedFilter.filter);
+            return new List(filterData.map(filter => {
+              const processedFilter = { ...filter, class: filter.class || urlClassName };
+              return new ImmutableMap(processedFilter);
+            }));
+          } catch (error) {
+            console.warn('Failed to parse saved filter:', error);
+          }
+        }
+      }
+    }
+
+    // If we have filters in URL but no filterId, parse them directly
+    if (filtersParam) {
+      try {
+        const queryFilters = JSON.parse(filtersParam);
+        return new List(queryFilters.map(filter => {
+          const processedFilter = { ...filter, class: filter.class || urlClassName };
+          return new ImmutableMap(processedFilter);
+        }));
+      } catch (error) {
+        console.warn('Failed to parse URL filters:', error);
+      }
+    }
+
+    return new List();
   }
 
   toggleMore() {
@@ -261,9 +376,11 @@ export default class BrowserFilter extends React.Component {
   }
 
   isFilterNameExists(name) {
+    const urlClassName = this.getClassNameFromURL();
+
     const preferences = ClassPreferences.getPreferences(
       this.context.applicationId,
-      this.props.className
+      urlClassName
     );
 
     if (preferences.filters && name) {
@@ -496,6 +613,17 @@ export default class BrowserFilter extends React.Component {
       // Convert only Parse Date objects to JavaScript Date objects, preserve RelativeDate objects
       filters = this.convertDatesForDisplay(filters);
     }
+
+    // If closing the dialog and we're in edit filter mode, remove the editFilter parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEditFilterMode = urlParams.get('editFilter') === 'true';
+
+    if (this.state.open && isEditFilterMode) {
+      urlParams.delete('editFilter');
+      const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
     this.setState(prevState => ({
       open: !prevState.open,
       filters: filters,
