@@ -1,3 +1,10 @@
+# [7.3.0-alpha.41](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.40...7.3.0-alpha.41) (2025-07-28)
+
+
+### Features
+
+* Add support for `Image` type in View table to display images ([#2952](https://github.com/parse-community/parse-dashboard/issues/2952)) ([6a6b1f0](https://github.com/parse-community/parse-dashboard/commit/6a6b1f02d546a3271493d4088bf356543b2c0394))
+
 # [7.3.0-alpha.40](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.39...7.3.0-alpha.40) (2025-07-27)
 
 
