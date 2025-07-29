@@ -1,3 +1,10 @@
+# [7.3.0-alpha.42](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.41...7.3.0-alpha.42) (2025-07-29)
+
+
+### Features
+
+* Add AI agent for natural language interaction with Parse Server ([#2954](https://github.com/parse-community/parse-dashboard/issues/2954)) ([32bd6e8](https://github.com/parse-community/parse-dashboard/commit/32bd6e855c67e3d4aa2fa4d8e8c3e076969486d0))
+
 # [7.3.0-alpha.41](https://github.com/parse-community/parse-dashboard/compare/7.3.0-alpha.40...7.3.0-alpha.41) (2025-07-28)
 
 
