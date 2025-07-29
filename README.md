@@ -74,10 +74,14 @@ Parse Dashboard is a standalone dashboard for managing your [Parse Server](https
         - [Panel Item](#panel-item)
       - [Prefetching](#prefetching)
     - [Freeze Columns](#freeze-columns)
-  - [Browse as User](#browse-as-user)
-  - [Change Pointer Key](#change-pointer-key)
-    - [Limitations](#limitations)
-  - [CSV Export](#csv-export)
+    - [Browse as User](#browse-as-user)
+    - [Change Pointer Key](#change-pointer-key)
+      - [Limitations](#limitations)
+    - [CSV Export](#csv-export)
+  - [AI Agent](#ai-agent)
+    - [Configuration](#configuration)
+    - [Providers](#providers)
+      - [OpenAI](#openai)
   - [Views](#views)
     - [Data Sources](#data-sources)
       - [Aggregation Pipeline](#aggregation-pipeline)
@@ -1231,7 +1235,7 @@ Prefetching is particularly useful when navigating through lists of objects. To 
 
 Right-click on a table column header to freeze columns from the left up to the clicked column in the data browser. When scrolling horizontally, the frozen columns remain visible while the other columns scroll underneath.
 
-## Browse as User
+### Browse as User
 
 ▶️ *Core > Browser > Browse*
 
@@ -1239,26 +1243,104 @@ This feature allows you to use the data browser as another user, respecting that
 
 > ⚠️ Logging in as another user will trigger the same Cloud Triggers as if the user logged in themselves using any other login method. Logging in as another user requires to enter that user's password.
 
-## Change Pointer Key
+### Change Pointer Key
 
 ▶️ *Core > Browser > Edit > Change pointer key*
 
 This feature allows you to change how a pointer is represented in the browser. By default, a pointer is represented by the `objectId` of the linked object. You can change this to any other column of the object class. For example, if class `Installation` has a field that contains a pointer to class `User`, the pointer will show the `objectId` of the user by default. You can change this to display the field `email` of the user, so that a pointer displays the user's email address instead.
 
-### Limitations
+#### Limitations
 
 - This does not work for an array of pointers; the pointer will always display the `objectId`.
 - System columns like `createdAt`, `updatedAt`, `ACL` cannot be set as pointer key.
 - This feature uses browser storage; switching to a different browser resets the pointer key to `objectId`.
 
 > ⚠️ For each custom pointer key in each row, a server request is triggered to resolve the custom pointer key. For example, if the browser shows a class with 50 rows and each row contains 3 custom pointer keys, a total of 150 separate server requests are triggered.
-## CSV Export
+
+### CSV Export
 
 ▶️ *Core > Browser > Export*
 
 This feature will take either selected rows or all rows of an individual class and saves them to a CSV file, which is then downloaded. CSV headers are added to the top of the file matching the column names.
 
 > ⚠️ There is currently a 10,000 row limit when exporting all data. If more than 10,000 rows are present in the class, the CSV file will only contain 10,000 rows.
+
+## AI Agent
+
+The Parse Dashboard includes an AI agent that can help manage your Parse Server data through natural language commands. The agent can perform operations like creating classes, adding data, querying records, and more.
+
+> [!Caution]
+> The AI agent has full access to your database using the master key. It can read, modify, and delete any data. This feature is highly recommended for development environments only. Always back up important data before using the AI agent.
+
+### Configuration
+
+To configure the AI agent for your dashboard, you need to add the `agent` configuration to your Parse Dashboard config:
+
+```json
+{
+  "apps": [
+    // ...
+  ],
+  "agent": {
+    "models": [
+      {
+        "name": "ChatGPT 4.1",
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "apiKey": "YOUR_OPENAI_API_KEY"
+      },
+    ]
+  }
+}
+```
+
+| Parameter                   | Type   | Required | Description                                                                    |
+|-----------------------------|--------|----------|--------------------------------------------------------------------------------|
+| `agent`                     | Object | Yes      | The AI agent configuration object.                                             |
+| `agent.models`              | Array  | Yes      | Array of AI model configurations available to the agent.                      |
+| `agent.models[*].name`      | String | Yes      | The display name for the model (e.g., `ChatGPT 4.1`).                   |
+| `agent.models[*].provider`  | String | Yes      | The AI provider identifier (e.g., "openai").                     |
+| `agent.models[*].model`     | String | Yes      | The specific model name from the provider (e.g., `gpt-4.1`).   |
+| `agent.models[*].apiKey`    | String | Yes      | The API key for authenticating with the AI provider.                     |
+
+The agent will use the configured models to process natural language commands and perform database operations using the master key from your app configuration.
+
+### Providers
+
+> [!Note]
+> Currently, only OpenAI models are supported. Support for additional providers may be added in future releases.
+
+#### OpenAI
+
+To get an OpenAI API key for use with the AI agent:
+
+1. **Create an OpenAI account**: Visit [platform.openai.com](https://platform.openai.com) and sign up for an account if you don't already have one.
+
+2. **Access the API section**: Once logged in, navigate to the API section of your OpenAI dashboard.
+
+3. **Create a new project**: 
+   - Go to the "Projects" section
+   - Click "Create project"
+   - Name your project "Parse-Dashboard" (or any descriptive name)
+   - Complete the project setup
+
+4. **Configure model access**:
+   - In your project, navigate to "Limits > Model Usage"
+   - Select the AI models you want to use (e.g., `gpt-4`, `gpt-3.5-turbo`)
+   - These model names will be used as the `agent.models[*].model` parameter in your dashboard configuration
+
+5. **Generate an API key**: 
+   - Go to the "API Keys" page in your project settings
+   - Click "Create new secret key"
+   - Give your key a descriptive name (e.g., "Parse Dashboard Agent")
+   - Copy the generated API key immediately (you won't be able to see it again)
+
+6. **Set up billing**: Make sure you have a valid payment method added to your OpenAI account, as API usage incurs charges.
+
+7. **Configure the dashboard**: Add the API key to your Parse Dashboard configuration as shown in the example above.
+
+> [!Important]
+> Keep your API key secure and never commit it to version control. Consider using environment variables or secure configuration management for production deployments.
 
 ## Views
 

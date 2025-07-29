@@ -34,6 +34,7 @@ export default class DashboardView extends React.Component {
   onRouteChanged() {
     const path = this.props.location?.pathname ?? window.location.pathname;
     const route = path.split('apps')[1].split('/')[2];
+
     if (route !== this.state.route) {
       this.setState({ route });
     }
@@ -79,6 +80,12 @@ export default class DashboardView extends React.Component {
     coreSubsections.push({
       name: 'Views',
       link: '/views',
+    });
+
+    coreSubsections.push({
+      name: 'Agent',
+      link: '/agent',
+      icon: 'sparkle-solid',
     });
 
     //webhooks requires removal of heroku link code, then it should work.
