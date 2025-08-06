@@ -32,6 +32,9 @@ export default class AnalyticsDashboard extends DashboardView {
       performanceData: {},
       errorData: {},
       dateRange: 'last_7_days',
+      apiUsageData: [],
+      topEvents: [],
+      recentActivity: [],
     };
     
     this.handleDateRangeChange = this.handleDateRangeChange.bind(this);
@@ -57,9 +60,23 @@ export default class AnalyticsDashboard extends DashboardView {
   }
 
   loadAnalytics() {
-    // Simulate loading analytics data
-    // In a real implementation, this would fetch from Parse Server analytics endpoints
+    // Simulate loading analytics data with more comprehensive mock data
     setTimeout(() => {
+      const currentDate = new Date();
+      const pastDays = 30;
+      const apiUsageData = [];
+      
+      // Generate mock API usage data for the chart
+      for (let i = pastDays - 1; i >= 0; i--) {
+        const date = new Date(currentDate);
+        date.setDate(date.getDate() - i);
+        apiUsageData.push({
+          date: yearMonthDayFormatter(date),
+          requests: Math.floor(Math.random() * 5000) + 1000,
+          errors: Math.floor(Math.random() * 100) + 10,
+        });
+      }
+
       this.setState({
         loading: false,
         audienceData: {
@@ -75,19 +92,37 @@ export default class AnalyticsDashboard extends DashboardView {
           pushNotifications: 1234,
           cloudCodeExecution: 567,
           fileUploads: 123,
+          customEvents: 2345,
         },
         performanceData: {
           avgResponseTime: 245,
           errorRate: 0.23,
           successfulRequests: 45200,
           failedRequests: 423,
+          p95ResponseTime: 450,
+          p99ResponseTime: 780,
         },
         errorData: {
           '4xx': 234,
           '5xx': 189,
           timeouts: 45,
           other: 12,
-        }
+        },
+        apiUsageData,
+        topEvents: [
+          { name: 'user_login', count: 3421, trend: 12.5 },
+          { name: 'item_purchase', count: 2187, trend: -3.2 },
+          { name: 'page_view', count: 8934, trend: 23.1 },
+          { name: 'user_signup', count: 456, trend: 45.6 },
+          { name: 'share_content', count: 1234, trend: 8.9 },
+        ],
+        recentActivity: [
+          { time: '2 minutes ago', event: 'New user registered', type: 'user', severity: 'info' },
+          { time: '5 minutes ago', event: 'API rate limit exceeded', type: 'error', severity: 'warning' },
+          { time: '8 minutes ago', event: 'Push notification sent to 1,245 devices', type: 'push', severity: 'success' },
+          { time: '12 minutes ago', event: 'Cloud function execution completed', type: 'function', severity: 'info' },
+          { time: '15 minutes ago', event: 'Database query slow (>500ms)', type: 'performance', severity: 'warning' },
+        ]
       });
     }, 1000);
   }
@@ -131,11 +166,11 @@ export default class AnalyticsDashboard extends DashboardView {
   }
 
   renderUserEngagement() {
-    const { audienceData } = this.state;
+    const { audienceData = {} } = this.state;
     
     const engagementData = [
-      { label: 'New Users', value: audienceData.newUsers, color: '#5298FC' },
-      { label: 'Returning Users', value: audienceData.returningUsers, color: '#61C354' },
+      { label: 'New Users', value: audienceData.newUsers || 0, color: '#5298FC' },
+      { label: 'Returning Users', value: audienceData.returningUsers || 0, color: '#61C354' },
     ];
 
     return this.renderChartSection('User Engagement', (
@@ -162,13 +197,13 @@ export default class AnalyticsDashboard extends DashboardView {
   }
 
   renderErrorDistribution() {
-    const { errorData } = this.state;
+    const { errorData = {} } = this.state;
     
     const errorChartData = [
-      { label: '4xx Errors', value: errorData['4xx'], color: '#FF6B6B' },
-      { label: '5xx Errors', value: errorData['5xx'], color: '#FF8E8E' },
-      { label: 'Timeouts', value: errorData.timeouts, color: '#FFB3B3' },
-      { label: 'Other', value: errorData.other, color: '#FFD6D6' },
+      { label: '4xx Errors', value: errorData['4xx'] || 0, color: '#FF6B6B' },
+      { label: '5xx Errors', value: errorData['5xx'] || 0, color: '#FF8E8E' },
+      { label: 'Timeouts', value: errorData.timeouts || 0, color: '#FFB3B3' },
+      { label: 'Other', value: errorData.other || 0, color: '#FFD6D6' },
     ];
 
     return this.renderChartSection('Error Distribution', (
@@ -194,40 +229,238 @@ export default class AnalyticsDashboard extends DashboardView {
     ));
   }
 
-  renderContent() {
-    return (
-      <div style={{padding: '20px'}}>
-        <h1 style={{color: '#333', marginBottom: '20px'}}>Analytics Dashboard</h1>
-        <div style={{
-          padding: '20px', 
-          backgroundColor: '#f8f9fa', 
-          border: '1px solid #dee2e6',
-          borderRadius: '8px',
-          margin: '20px 0'
-        }}>
-          <h2 style={{color: '#28a745', marginBottom: '16px'}}>✅ Dashboard is Working!</h2>
-          <p style={{fontSize: '16px', lineHeight: '1.5', color: '#6c757d'}}>
-            The analytics dashboard component is now rendering successfully. This confirms that:
-          </p>
-          <ul style={{color: '#6c757d', lineHeight: '1.8', marginTop: '12px'}}>
-            <li>The React component is loading without errors</li>
-            <li>The routing is configured correctly</li>
-            <li>The sidebar integration is functioning</li>
-            <li>The mock server API connection is working</li>
-          </ul>
-          
-          <div style={{
-            marginTop: '24px',
-            padding: '16px',
-            backgroundColor: '#e7f3ff',
-            border: '1px solid #b3d9ff',
-            borderRadius: '4px'
-          }}>
-            <h3 style={{color: '#0066cc', marginBottom: '8px'}}>Next Steps:</h3>
-            <p style={{color: '#004499', margin: '0'}}>
-              You can now enhance this dashboard with charts, metrics, and real-time data visualization.
-            </p>
+  renderApiUsageChart() {
+    const { apiUsageData } = this.state;
+    const safeApiUsageData = Array.isArray(apiUsageData) ? apiUsageData : [];
+    
+    if (!safeApiUsageData.length) return null;
+
+    const chartData = {
+      datasets: [
+        {
+          label: 'API Requests',
+          data: safeApiUsageData.map(d => ({ x: d.date, y: d.requests })),
+          borderColor: '#5298FC',
+          backgroundColor: 'rgba(82, 152, 252, 0.1)',
+          fill: true,
+        },
+        {
+          label: 'Errors',
+          data: safeApiUsageData.map(d => ({ x: d.date, y: d.errors })),
+          borderColor: '#FF6B6B',
+          backgroundColor: 'rgba(255, 107, 107, 0.1)',
+          fill: true,
+        }
+      ]
+    };
+
+    return this.renderChartSection('API Usage Over Time', (
+      <Chart
+        data={chartData}
+        width={800}
+        height={300}
+        formatter={(value) => prettyNumber(value)}
+      />
+    ));
+  }
+
+  renderTopEvents() {
+    const { topEvents } = this.state;
+    const safeTopEvents = Array.isArray(topEvents) ? topEvents : [];
+    
+    if (!safeTopEvents.length) {
+      return this.renderChartSection('Top Events', (
+        <div className={styles.topEventsList}>
+          <div>No events data available</div>
+        </div>
+      ));
+    }
+    
+    return this.renderChartSection('Top Events', (
+      <div className={styles.topEventsList}>
+        {safeTopEvents.map((event, index) => (
+          <div key={index} className={styles.eventItem}>
+            <div className={styles.eventRank}>#{index + 1}</div>
+            <div className={styles.eventDetails}>
+              <div className={styles.eventName}>{event.name || 'Unknown Event'}</div>
+              <div className={styles.eventCount}>{prettyNumber(event.count || 0)} events</div>
+            </div>
+            <div className={styles.eventTrend}>
+              <span className={(event.trend || 0) > 0 ? styles.trendUp : styles.trendDown}>
+                {(event.trend || 0) > 0 ? '+' : ''}{event.trend || 0}%
+              </span>
+            </div>
           </div>
+        ))}
+      </div>
+    ));
+  }
+
+  renderPerformanceMetrics() {
+    const { performanceData = {} } = this.state;
+    
+    const performanceChartData = [
+      { label: 'Average', value: performanceData.avgResponseTime || 0, color: '#5298FC' },
+      { label: '95th Percentile', value: performanceData.p95ResponseTime || 0, color: '#FFB020' },
+      { label: '99th Percentile', value: performanceData.p99ResponseTime || 0, color: '#FF6B6B' },
+    ];
+
+    return this.renderChartSection('Response Time Distribution', (
+      <div className={styles.performanceGrid}>
+        <div className={styles.performanceChart}>
+          <DonutChart 
+            data={performanceChartData.map(item => ({ ...item, value: item.value }))}
+            width={180}
+            height={180}
+            formatter={(value) => value + 'ms'}
+          />
+        </div>
+        <div className={styles.performanceStats}>
+          {performanceChartData.map((item, index) => (
+            <div key={index} className={styles.performanceStat}>
+              <div 
+                className={styles.performanceColor} 
+                style={{ backgroundColor: item.color }}
+              />
+              <span className={styles.performanceLabel}>{item.label}</span>
+              <span className={styles.performanceValue}>{item.value}ms</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ));
+  }
+
+  renderActivityFeed() {
+    const { recentActivity } = this.state;
+    const safeRecentActivity = Array.isArray(recentActivity) ? recentActivity : [];
+    
+    if (!safeRecentActivity.length) {
+      return this.renderChartSection('Real-time Activity', (
+        <div className={styles.activityFeed}>
+          <div>No activity data available</div>
+        </div>
+      ));
+    }
+    
+    return this.renderChartSection('Real-time Activity', (
+      <div className={styles.activityFeed}>
+        {safeRecentActivity.map((activity, index) => (
+          <div key={index} className={styles.activityItem}>
+            <div className={styles.activityIcon}>
+              <Icon 
+                name={this.getActivityIcon(activity.type || 'default')} 
+                width={16} 
+                height={16} 
+              />
+            </div>
+            <div className={styles.activityDetails}>
+              <div className={styles.activityEvent}>{activity.event || 'Unknown Activity'}</div>
+              <div className={styles.activityTime}>{activity.time || 'Unknown Time'}</div>
+            </div>
+            <div className={`${styles.activitySeverity} ${styles[activity.severity || 'info']}`}>
+              {activity.severity || 'info'}
+            </div>
+          </div>
+        ))}
+      </div>
+    ));
+  }
+
+  getActivityIcon(type) {
+    const icons = {
+      user: 'person-outline',
+      error: 'warning-outline',
+      push: 'notifications-outline',
+      function: 'code-outline',
+      performance: 'speedometer-outline',
+    };
+    return icons[type] || 'information-outline';
+  }
+
+  renderContent() {
+    const { loading, audienceData = {}, eventData = {}, performanceData = {} } = this.state;
+    
+    if (loading) {
+      return (
+        <LoaderContainer loading={true}>
+          <div className={styles.dashboardContainer}>
+            Loading analytics data...
+          </div>
+        </LoaderContainer>
+      );
+    }
+
+    return (
+      <div className={styles.dashboardContainer}>
+        <Toolbar>
+          <div className={styles.toolbar}>
+            <div className={styles.toolbarTitle}>
+              <Icon name='analytics-outline' width={24} height={24} />
+              Analytics Dashboard
+            </div>
+            <div className={styles.toolbarActions}>
+              <select 
+                className={styles.dateRangePicker}
+                value={this.state.dateRange}
+                onChange={(e) => this.handleDateRangeChange(e.target.value)}
+              >
+                <option value="today">Today</option>
+                <option value="last_7_days">Last 7 days</option>
+                <option value="last_30_days">Last 30 days</option>
+                <option value="last_90_days">Last 90 days</option>
+              </select>
+              <Button 
+                value="Refresh" 
+                onClick={this.refreshData}
+                primary={false}
+              />
+            </div>
+          </div>
+        </Toolbar>
+
+        {/* Key Metrics Grid */}
+        <div className={styles.metricsGrid}>
+          {this.renderMetricCard('Total Users', audienceData.totalUsers || 0, 'All time', 'users-outline', 12.5)}
+          {this.renderMetricCard('Daily Active', audienceData.dailyActiveUsers || 0, 'Last 24 hours', 'pulse-outline', 8.2)}
+          {this.renderMetricCard('Weekly Active', audienceData.weeklyActiveUsers || 0, 'Last 7 days', 'trending-up-outline', 15.3)}
+          {this.renderMetricCard('Monthly Active', audienceData.monthlyActiveUsers || 0, 'Last 30 days', 'calendar-outline', 6.7)}
+          {this.renderMetricCard('API Requests', eventData.apiRequests || 0, 'Today', 'flash-outline', -2.1)}
+          {this.renderMetricCard('Avg Response', (performanceData.avgResponseTime || 0) + 'ms', 'Last hour', 'speedometer-outline', -5.4)}
+          {this.renderMetricCard('Error Rate', (performanceData.errorRate || 0) + '%', 'Today', 'warning-outline', 12.3)}
+          {this.renderMetricCard('Push Sent', eventData.pushNotifications || 0, 'Today', 'notifications-outline', 45.2)}
+        </div>
+
+        {/* Charts Section */}
+        <div className={styles.chartsSection}>
+          <div className={styles.chartsRow}>
+            <div className={styles.chartColumn}>
+              {this.renderUserEngagement()}
+            </div>
+            <div className={styles.chartColumn}>
+              {this.renderErrorDistribution()}
+            </div>
+          </div>
+          
+          <div className={styles.chartsRow}>
+            <div className={styles.fullWidthChart}>
+              {this.renderApiUsageChart()}
+            </div>
+          </div>
+          
+          <div className={styles.chartsRow}>
+            <div className={styles.chartColumn}>
+              {this.renderTopEvents()}
+            </div>
+            <div className={styles.chartColumn}>
+              {this.renderPerformanceMetrics()}
+            </div>
+          </div>
+        </div>
+
+        {/* Real-time Activity Feed */}
+        <div className={styles.activitySection}>
+          {this.renderActivityFeed()}
         </div>
       </div>
     );

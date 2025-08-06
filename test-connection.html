@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parse Server Test</title>
+    <script>
+        async function testConnection() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Testing connection...<br>';
+            
+            try {
+                // Test serverInfo
+                const serverInfo = await fetch('http://localhost:1338/parse/serverInfo', {
+                    headers: {
+                        'X-Parse-Application-Id': 'mock-app-id',
+                        'X-Parse-Master-Key': 'mock-master-key'
+                    }
+                });
+                const serverInfoData = await serverInfo.json();
+                results.innerHTML += `✅ Server Info: ${JSON.stringify(serverInfoData)}<br><br>`;
+                
+                // Test schemas
+                const schemas = await fetch('http://localhost:1338/parse/schemas', {
+                    headers: {
+                        'X-Parse-Application-Id': 'mock-app-id',
+                        'X-Parse-Master-Key': 'mock-master-key'
+                    }
+                });
+                const schemasData = await schemas.json();
+                results.innerHTML += `✅ Schemas: Found ${schemasData.results.length} schemas<br><br>`;
+                
+                // Test config
+                const config = await fetch('http://localhost:1338/parse/config', {
+                    headers: {
+                        'X-Parse-Application-Id': 'mock-app-id',
+                        'X-Parse-Master-Key': 'mock-master-key'
+                    }
+                });
+                const configData = await config.json();
+                results.innerHTML += `✅ Config: ${JSON.stringify(configData)}<br><br>`;
+                
+                results.innerHTML += `✅ All tests passed! Mock server is working correctly.`;
+                
+            } catch (error) {
+                results.innerHTML += `❌ Error: ${error.message}<br>`;
+                console.error('Test failed:', error);
+            }
+        }
+        
+        window.onload = testConnection;
+    </script>
+</head>
+<body>
+    <h1>Parse Mock Server Test</h1>
+    <div id="results">Loading...</div>
+    
+    <h2>Dashboard Links</h2>
+    <p><a href="http://localhost:4040" target="_blank">Open Parse Dashboard</a></p>
+    <p><a href="http://localhost:1338" target="_blank">Mock Server Info</a></p>
+</body>
+</html>

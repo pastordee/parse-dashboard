@@ -4,18 +4,18 @@
       "serverURL": "http://localhost:1338/parse",
       "appId": "mock-app-id",
       "masterKey": "mock-master-key",
-      "appName": "Parse Dashboard Analytics Demo",
-      "appNameForURL": "mock-app-id",
-      "iconName": "",
+      "appName": "Mock Parse Server Test",
+      "iconName": "🚀",
       "primaryBackgroundColor": "#169CEE",
-      "secondaryBackgroundColor": "#0F5B8A"
+      "secondaryBackgroundColor": "#FF5722"
     }
   ],
   "users": [
     {
       "user": "admin",
-      "pass": "password"
+      "pass": "password",
+      "apps": [{"appId": "mock-app-id"}]
     }
   ],
-  "iconsFolder": "icons"
+  "useEncryptedPasswords": false
 }

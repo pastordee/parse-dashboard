@@ -1,5 +1,424 @@
 @import 'stylesheets/globals.scss';
 
+$primaryBlue: #5298fc;
+$successGreen: #61c354;
+$warningYellow: #ffb020;
+$dangerRed: #ff6b6b;
+$lightGray: #f5f6fa;
+$darkGray: #2c3e50;
+$mediumGray: #7f8c8d;
+
+.dashboardContainer {
+  padding: 16px 20px;
+  background-color: $lightGray;
+  min-height: 100vh;
+
+  .dashboardHeader {
+    margin-bottom: 24px;
+    
+    h1 {
+      margin: 0;
+      color: $darkGray;
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .dateRange {
+      color: $mediumGray;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+  }
+
+  // KPI Metrics Grid
+  .metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .metricCard {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .metricIcon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      opacity: 0.1;
+    }
+
+    .metricValue {
+      font-size: 28px;
+      font-weight: 700;
+      color: $darkGray;
+      margin-bottom: 4px;
+    }
+
+    .metricTitle {
+      font-size: 14px;
+      font-weight: 600;
+      color: $mediumGray;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .metricSubtitle {
+      font-size: 12px;
+      color: $mediumGray;
+    }
+  }
+
+  // Chart Sections
+  .chartsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .chartSection {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+
+    .chartTitle {
+      font-size: 18px;
+      font-weight: 600;
+      color: $darkGray;
+      margin-bottom: 20px;
+    }
+
+    .chartContent {
+      min-height: 200px;
+
+      canvas {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+    }
+  }
+
+  // User Engagement Styles
+  .engagementGrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .engagementStats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .engagementStat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .engagementColor {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .engagementLabel {
+      font-size: 14px;
+      color: $mediumGray;
+      flex: 1;
+    }
+
+    .engagementValue {
+      font-weight: 600;
+      color: $darkGray;
+    }
+  }
+
+  // Error Distribution Styles
+  .errorGrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .errorStats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .errorStat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .errorColor {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .errorLabel {
+      font-size: 14px;
+      color: $mediumGray;
+      flex: 1;
+    }
+
+    .errorValue {
+      font-weight: 600;
+      color: $darkGray;
+    }
+  }
+
+  // Top Events Styles
+  .topEventsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .eventItem {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: rgba(82, 152, 252, 0.03);
+    border-radius: 6px;
+    border: 1px solid rgba(82, 152, 252, 0.1);
+
+    .eventRank {
+      font-size: 16px;
+      font-weight: 700;
+      color: $primaryBlue;
+      width: 32px;
+      text-align: center;
+    }
+
+    .eventDetails {
+      .eventName {
+        font-weight: 600;
+        color: $darkGray;
+        font-size: 14px;
+      }
+
+      .eventCount {
+        font-size: 12px;
+        color: $mediumGray;
+        margin-top: 2px;
+      }
+    }
+
+    .eventTrend {
+      font-size: 12px;
+      font-weight: 600;
+
+      .trendUp {
+        color: $successGreen;
+      }
+
+      .trendDown {
+        color: $dangerRed;
+      }
+    }
+  }
+
+  // Performance Metrics Styles
+  .performanceGrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .performanceStats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .performanceStat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .performanceColor {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+
+    .performanceLabel {
+      font-size: 14px;
+      color: $mediumGray;
+      flex: 1;
+    }
+
+    .performanceValue {
+      font-weight: 600;
+      color: $darkGray;
+    }
+  }
+
+  // Activity Feed Styles
+  .activityFeed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .activityItem {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .activityIcon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(82, 152, 252, 0.1);
+      border-radius: 50%;
+      color: $primaryBlue;
+    }
+
+    .activityDetails {
+      .activityEvent {
+        font-size: 14px;
+        color: $darkGray;
+        font-weight: 500;
+      }
+
+      .activityTime {
+        font-size: 12px;
+        color: $mediumGray;
+        margin-top: 2px;
+      }
+    }
+
+    .activitySeverity {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+
+      &.info {
+        background-color: rgba(82, 152, 252, 0.1);
+        color: $primaryBlue;
+      }
+
+      &.warning {
+        background-color: rgba(255, 176, 32, 0.1);
+        color: $warningYellow;
+      }
+
+      &.error {
+        background-color: rgba(255, 107, 107, 0.1);
+        color: $dangerRed;
+      }
+
+      &.success {
+        background-color: rgba(97, 195, 84, 0.1);
+        color: $successGreen;
+      }
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+
+    .metricsGrid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .chartsGrid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .chartSection {
+      padding: 16px;
+    }
+
+    .metricCard {
+      padding: 16px;
+    }
+
+    .engagementGrid,
+    .errorGrid,
+    .performanceGrid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .eventItem {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .activityItem {
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+
+      .activitySeverity {
+        grid-column: 2;
+        justify-self: end;
+      }
+    }
+  }
+}
+
+// Loading States
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: $mediumGray;
+  font-size: 16px;
+}
+
+// Legacy analytics styles for backwards compatibility
 .analytics {
   padding: 20px;
   background: $lightGrey;
@@ -28,27 +447,6 @@
   &:focus {
     outline: none;
     border-color: $blue;
-  }
-}
-
-/* Metrics Grid */
-.metricsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.metricCard {
-  background: $white;
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid $borderGrey;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.2s ease;
-  
-  &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
   }
 }
 

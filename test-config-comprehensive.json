@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "serverURL": "http://localhost:1339/parse",
+      "serverURL": "http://localhost:1338/parse",
       "appId": "mock-app-id",
       "masterKey": "mock-master-key",
       "appName": "Analytics Demo"
