@@ -134,12 +134,6 @@ export default class DashboardView extends React.Component {
         name: 'API Console',
         link: '/api_console',
       });
-      
-      // Add Analytics section
-      coreSubsections.push({
-        name: 'Analytics',
-        link: '/analytics/dashboard',
-      });
     }
 
     if (this.context.migration) {
@@ -171,57 +165,38 @@ export default class DashboardView extends React.Component {
       });
     }
 
-    // Removed standalone Analytics section to avoid duplicate
-    // Only keeping Analytics under Core section
-    /*
     const analyticsSidebarSections = [];
 
-    // Add the main analytics dashboard
+    // Add all analytics subsections
     analyticsSidebarSections.push({
-      name: 'Analytics Dashboard',
+      name: 'Dashboard',
       link: '/analytics/dashboard'
     });
-    */
 
-    //These analytics pages may never make it into parse server
-    /*
-    if (...) {
-      analyticsSidebarSections.push({
-        name: 'Overview',
-        link: '/analytics/overview'
-      });
-    }
+    analyticsSidebarSections.push({
+      name: 'Overview',
+      link: '/analytics/overview'
+    });
 
-    if (...) {
-      analyticsSidebarSections.push({
-        name: 'Explorer',
-        link: '/analytics/explorer'
-      });
-    }*/
+    analyticsSidebarSections.push({
+      name: 'Explorer',
+      link: '/analytics/explorer'
+    });
 
-    //These ones might, but require some endpoints to added to Parse Server
-    /*
-    if (features.analytics && features.analytics.retentionAnalysis) {
-      analyticsSidebarSections.push({
-        name: 'Retention',
-        link: '/analytics/retention'
-      });
-    }
+    analyticsSidebarSections.push({
+      name: 'Performance',
+      link: '/analytics/performance'
+    });
 
-    if (features.analytics && features.analytics.performanceAnalysis) {
-      analyticsSidebarSections.push({
-        name: 'Performance',
-        link: '/analytics/performance'
-      });
-    }
+    analyticsSidebarSections.push({
+      name: 'Retention',
+      link: '/analytics/retention'
+    });
 
-    if (features.analytics && features.analytics.slowQueries) {
-      analyticsSidebarSections.push({
-        name: 'Slow Queries',
-        link: '/analytics/slow_queries'
-      });
-    }
-    */
+    analyticsSidebarSections.push({
+      name: 'Slow Queries',
+      link: '/analytics/slow_queries'
+    });
 
     const settingsSections = [
       {
@@ -295,8 +270,6 @@ export default class DashboardView extends React.Component {
       });
     }
 
-    // Removed standalone Analytics section - keeping only Core Analytics
-    /*
     if (analyticsSidebarSections.length > 0) {
       appSidebarSections.push({
         name: 'Analytics',
@@ -305,7 +278,6 @@ export default class DashboardView extends React.Component {
         subsections: analyticsSidebarSections,
       });
     }
-    */
 
     if (settingsSections.length > 0) {
       appSidebarSections.push({

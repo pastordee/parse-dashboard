@@ -67,10 +67,18 @@ class Explorer extends DashboardView {
 
   componentDidMount() {
     const display = this.displayRef.current;
-    this.displaySize = {
-      width: display.offsetWidth,
-      height: display.offsetHeight,
-    };
+    if (display) {
+      this.displaySize = {
+        width: display.offsetWidth,
+        height: display.offsetHeight,
+      };
+    } else {
+      // Fallback dimensions if ref is not available
+      this.displaySize = {
+        width: 800,
+        height: 400,
+      };
+    }
   }
 
   componentWillMount() {
@@ -176,6 +184,12 @@ class Explorer extends DashboardView {
             point[1],
           ]);
           this.setState({ activeQueries });
+        }).catch(error => {
+          console.warn('Analytics API request failed:', error);
+          // Set empty result for failed queries
+          const activeQueries = this.state.activeQueries;
+          activeQueries[i].result = [];
+          this.setState({ activeQueries });
         });
         xhr = abortableRequest.xhr;
       } else {
@@ -211,6 +225,12 @@ class Explorer extends DashboardView {
 
           // Trigger rendering pipeline
           this.setState({ activeQueries });
+        }).catch(error => {
+          console.warn('Custom query request failed:', error);
+          // Set empty results for failed queries
+          const activeQueries = this.state.activeQueries;
+          activeQueries[i].result = [];
+          this.setState({ activeQueries });
         });
       }
 
@@ -222,7 +242,13 @@ class Explorer extends DashboardView {
         loading: false,
         mutated: false,
       })
-    );
+    ).catch(error => {
+      console.warn('Some queries failed to load:', error);
+      this.setState({
+        loading: false,
+        mutated: false,
+      });
+    });
   }
 
   handleDownload() {

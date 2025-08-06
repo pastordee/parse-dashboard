@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "serverURL": "http://localhost:1339/parse",
+      "appId": "analytics-demo-app",
+      "masterKey": "your-master-key-here",
+      "appName": "Analytics Demo",
+      "supportedPushLocales": ["en", "es", "fr"],
+      "analytics": true
+    }
+  ],
+  "users": [
+    {
+      "user": "admin",
+      "pass": "password",
+      "apps": [{"appId": "analytics-demo-app"}]
+    }
+  ],
+  "useEncryptedPasswords": false,
+  "trustProxy": false
+}

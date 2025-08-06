@@ -25,12 +25,38 @@ export default class AnalyticsDashboard extends DashboardView {
     this.section = 'Analytics';
     this.subsection = 'Dashboard';
     
+    // Initialize with safe defaults to prevent any undefined array access
     this.state = {
       loading: true,
-      audienceData: {},
-      eventData: {},
-      performanceData: {},
-      errorData: {},
+      audienceData: {
+        totalUsers: 0,
+        dailyActiveUsers: 0,
+        weeklyActiveUsers: 0,
+        monthlyActiveUsers: 0,
+        newUsers: 0,
+        returningUsers: 0,
+      },
+      eventData: {
+        apiRequests: 0,
+        pushNotifications: 0,
+        cloudCodeExecution: 0,
+        fileUploads: 0,
+        customEvents: 0,
+      },
+      performanceData: {
+        avgResponseTime: 0,
+        errorRate: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
+        p95ResponseTime: 0,
+        p99ResponseTime: 0,
+      },
+      errorData: {
+        '4xx': 0,
+        '5xx': 0,
+        timeouts: 0,
+        other: 0,
+      },
       dateRange: 'last_7_days',
       apiUsageData: [],
       topEvents: [],
@@ -173,12 +199,14 @@ export default class AnalyticsDashboard extends DashboardView {
       { label: 'Returning Users', value: audienceData.returningUsers || 0, color: '#61C354' },
     ];
 
+    // DonutChart expects segments (array of numbers), not data objects
+    const engagementSegments = engagementData.map(item => item.value);
+
     return this.renderChartSection('User Engagement', (
       <div className={styles.engagementGrid}>
         <DonutChart 
-          data={engagementData}
-          width={200}
-          height={200}
+          segments={engagementSegments}
+          diameter={200}
         />
         <div className={styles.engagementStats}>
           {engagementData.map((item, index) => (
@@ -206,12 +234,14 @@ export default class AnalyticsDashboard extends DashboardView {
       { label: 'Other', value: errorData.other || 0, color: '#FFD6D6' },
     ];
 
+    // DonutChart expects segments (array of numbers), not data objects
+    const errorSegments = errorChartData.map(item => item.value);
+
     return this.renderChartSection('Error Distribution', (
       <div className={styles.errorGrid}>
         <DonutChart 
-          data={errorChartData}
-          width={200}
-          height={200}
+          segments={errorSegments}
+          diameter={200}
         />
         <div className={styles.errorStats}>
           {errorChartData.map((item, index) => (
@@ -235,23 +265,16 @@ export default class AnalyticsDashboard extends DashboardView {
     
     if (!safeApiUsageData.length) return null;
 
+    // Chart expects data format: { datasetName: { points: [[x,y], ...], color: 'color' } }
     const chartData = {
-      datasets: [
-        {
-          label: 'API Requests',
-          data: safeApiUsageData.map(d => ({ x: d.date, y: d.requests })),
-          borderColor: '#5298FC',
-          backgroundColor: 'rgba(82, 152, 252, 0.1)',
-          fill: true,
-        },
-        {
-          label: 'Errors',
-          data: safeApiUsageData.map(d => ({ x: d.date, y: d.errors })),
-          borderColor: '#FF6B6B',
-          backgroundColor: 'rgba(255, 107, 107, 0.1)',
-          fill: true,
-        }
-      ]
+      'API Requests': {
+        points: safeApiUsageData.map(d => [new Date(d.date).getTime(), d.requests]),
+        color: '#5298FC'
+      },
+      'Errors': {
+        points: safeApiUsageData.map(d => [new Date(d.date).getTime(), d.errors]),
+        color: '#FF6B6B'
+      }
     };
 
     return this.renderChartSection('API Usage Over Time', (
@@ -305,14 +328,16 @@ export default class AnalyticsDashboard extends DashboardView {
       { label: '99th Percentile', value: performanceData.p99ResponseTime || 0, color: '#FF6B6B' },
     ];
 
+    // DonutChart expects segments (array of numbers), not data objects
+    const performanceSegments = performanceChartData.map(item => item.value);
+
     return this.renderChartSection('Response Time Distribution', (
       <div className={styles.performanceGrid}>
         <div className={styles.performanceChart}>
           <DonutChart 
-            data={performanceChartData.map(item => ({ ...item, value: item.value }))}
-            width={180}
-            height={180}
-            formatter={(value) => value + 'ms'}
+            segments={performanceSegments}
+            diameter={180}
+            printPercentage={false}
           />
         </div>
         <div className={styles.performanceStats}>
@@ -466,6 +491,9 @@ export default class AnalyticsDashboard extends DashboardView {
     );
   }
 
+  // Remove renderSidebar() to show main dashboard navigation instead of analytics-specific categories
+  // This allows the default DashboardView sidebar with Core, Views, Agent, API Console, Analytics, App Settings
+  /*
   renderSidebar() {
     const current = this.subsection;
     return (
@@ -479,4 +507,5 @@ export default class AnalyticsDashboard extends DashboardView {
       ]} />
     );
   }
+  */
 }
