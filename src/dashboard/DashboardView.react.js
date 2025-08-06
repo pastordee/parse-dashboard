@@ -54,7 +54,7 @@ export default class DashboardView extends React.Component {
       );
     }
 
-    const features = this.context.serverInfo.features;
+    const features = this.context.serverInfo.features || {};
 
     const coreSubsections = [];
     if (
@@ -134,6 +134,12 @@ export default class DashboardView extends React.Component {
         name: 'API Console',
         link: '/api_console',
       });
+      
+      // Add Analytics section
+      coreSubsections.push({
+        name: 'Analytics',
+        link: '/analytics/dashboard',
+      });
     }
 
     if (this.context.migration) {
@@ -165,7 +171,17 @@ export default class DashboardView extends React.Component {
       });
     }
 
+    // Removed standalone Analytics section to avoid duplicate
+    // Only keeping Analytics under Core section
+    /*
     const analyticsSidebarSections = [];
+
+    // Add the main analytics dashboard
+    analyticsSidebarSections.push({
+      name: 'Analytics Dashboard',
+      link: '/analytics/dashboard'
+    });
+    */
 
     //These analytics pages may never make it into parse server
     /*
@@ -279,6 +295,8 @@ export default class DashboardView extends React.Component {
       });
     }
 
+    // Removed standalone Analytics section - keeping only Core Analytics
+    /*
     if (analyticsSidebarSections.length > 0) {
       appSidebarSections.push({
         name: 'Analytics',
@@ -287,6 +305,7 @@ export default class DashboardView extends React.Component {
         subsections: analyticsSidebarSections,
       });
     }
+    */
 
     if (settingsSections.length > 0) {
       appSidebarSections.push({
@@ -313,9 +332,13 @@ export default class DashboardView extends React.Component {
     );
 
     let content = <div className={styles.content}>{this.renderContent()}</div>;
-    const canRoute = [...coreSubsections, ...pushSubsections, ...settingsSections]
-      .map(({ link }) => link.split('/')[1])
-      .includes(this.state.route);
+    const allSubsections = [...coreSubsections, ...pushSubsections, ...settingsSections];
+    const allowedRoutes = allSubsections.map(({ link }) => link.split('/')[1]);
+    
+    // Special handling for nested analytics routes
+    const currentRoute = this.state.route;
+    const isAnalyticsRoute = currentRoute === 'analytics';
+    const canRoute = allowedRoutes.includes(currentRoute) || isAnalyticsRoute;
 
     if (!canRoute) {
       content = (

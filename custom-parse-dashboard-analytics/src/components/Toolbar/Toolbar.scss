@@ -1,0 +1,155 @@
+/*
+ * Copyright (c) 2016-present, Parse, LLC
+ * All rights reserved.
+ *
+ * This source code is licensed under the license found in the LICENSE file in
+ * the root directory of this source tree.
+ */
+@import "stylesheets/globals.scss";
+
+.toolbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 300px;
+  background: #353446;
+  height: 96px;
+  color: white;
+  z-index: 5;
+}
+
+body:global(.expanded) {
+  .toolbar {
+    left: $sidebarCollapsedWidth;
+  }
+}
+
+.objectPickerContent {
+  .toolbar {
+    background: #00db7c;
+    height: 80px;
+    right: 135px;
+
+    .nav {
+      display: none;
+    }
+
+    .titleText {
+      display: none;
+    }
+  }
+}
+
+.title {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+}
+
+.nav {
+  display: inline-block;
+}
+
+.iconButton {
+  display: block;
+  padding-top: 10px;
+  padding-right: 10px;
+  cursor: pointer;
+}
+
+.titleText {
+  display: inline-block;
+}
+
+.section {
+  @include DosisFont;
+  color: #757985;
+  text-transform: uppercase;
+  font-size: 8px;
+  letter-spacing: 1.6px;
+}
+
+.subsection {
+  font-size: 18px;
+  vertical-align: bottom;
+  margin-right: 10px;
+}
+
+.details {
+  color: #80848f;
+  font-size: 12px;
+}
+
+.actions {
+  position: absolute;
+  right: 14px;
+  top: 4px;
+}
+
+.stats {
+  position: absolute;
+  right: 20px;
+  bottom: 10px;
+  background: $blue;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 14px;
+  color: white;
+  box-shadow: none;
+  border: none;
+}
+
+.stats_popover_container {
+  display: flex;
+  flex-direction: column;
+  background: $blue;
+  border-radius: 3px;
+  margin-top: 1px;
+  gap: 2px;
+  padding: 2px 0px;
+  font-size: 14px;
+  color: white;
+}
+
+.stats_popover_item {
+  cursor: pointer;
+  padding: 0px 6px;
+
+  &:hover {
+    color: $blue;
+    background-color: white;
+  }
+}
+
+.active {
+  color: $blue;
+  background-color: white;
+}
+
+.btn {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  border: none;
+  padding: 6px 3px;
+  width: 110px;
+  background: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+
+  svg {
+
+    &:hover {
+      fill: #ffffff;
+    }
+  }
+
+  &:hover {
+    svg {
+      fill: #ffffff;
+    }
+  }
+}

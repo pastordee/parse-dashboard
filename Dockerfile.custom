@@ -1,0 +1,17 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm install --only=production
+
+# Copy built dashboard
+COPY Parse-Dashboard ./Parse-Dashboard
+
+# Create config directory
+RUN mkdir -p /app/config
+
+EXPOSE 4040
+
+CMD ["node", "Parse-Dashboard/index.js", "--config", "/app/config/parse-dashboard-config.json"]

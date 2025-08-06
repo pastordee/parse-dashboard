@@ -1,0 +1,40 @@
+# Development files
+src/
+webpack/
+testing/
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+create-custom-package*.sh
+
+# Build artifacts
+node_modules/
+npm-debug.log*
+.npm/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment
+.env*
+
+# Other
+*.orig
+*.rej
+*~

@@ -1,0 +1,156 @@
+/*
+ * Copyright (c) 2016-present, Parse, LLC
+ * All rights reserved.
+ *
+ * This source code is licensed under the license found in the LICENSE file in
+ * the root directory of this source tree.
+ */
+@import 'stylesheets/globals.scss';
+
+.class_list {
+  position: relative;
+  margin-bottom: 5px;
+  border-left: 1px solid #3e87b2;
+
+  a {
+    display: block;
+    padding-left: 12px;
+    height: 20px;
+    line-height: 20px;
+    color: #8fb9cf;
+    font-size: 12px;
+
+    &.active {
+      color: white;
+    }
+
+    &:hover{
+      color: white;
+    }
+
+    span {
+      display: block;
+
+      &:first-of-type {
+        @include DosisFont;
+        float: right;
+        width: 50px;
+        text-align: right;
+      }
+      &:last-of-type {
+        margin-right: 50px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+.highlight {
+  position: absolute;
+  width: 1px;
+  height: 20px;
+  background: white;
+  transition: top 0.2s cubic-bezier(1, 0, 0, 1);
+}
+
+.separator {
+  margin: 6px 0 6px 12px;
+  background-color: #3e87b2;
+  border: 0;
+  height: 1px;
+}
+
+.close {
+  font-size: 20px !important;
+  font-weight: bold !important;
+}
+.expand {
+  display: flex !important;
+  align-items: center;
+  cursor: pointer;
+  width: 0px;
+  margin-right: 20px;
+  padding-left: 0px !important;
+  &:after {
+    @include arrow('down', 10px, 7px, #8fb9cf);
+    content: '';
+    margin-left: 6px;
+  }
+}
+.link {
+  display: flex;
+  a {
+    &:first-of-type {
+      flex-grow: 1
+    }
+  }
+  .count {
+    @include DosisFont;
+    color: #8fb9cf;
+    font-size: 12px;
+    margin-left: auto;
+    margin-right: 4px;
+    min-width: 20px;
+    text-align: right;
+  }
+  .edit {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    svg {
+      fill: #8fb9cf;
+    }
+    &:hover {
+      svg {
+        fill: white;
+      }
+    }
+  }
+  
+  &:hover .edit {
+    opacity: 1;
+  }
+}
+
+.childLink {
+  display: flex;
+  a {
+    &:first-of-type {
+      flex-grow: 1;
+      display: flex;
+      margin-right: 6px;
+    }
+    span {
+      text-align: left !important;
+      margin-left: 14px;
+      margin-right: 0px !important;
+      font-family: Dosis, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      flex-grow: 1;
+    }
+  }
+  .editFilter {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    svg {
+      fill: #8fb9cf;
+    }
+    &:hover {
+      svg {
+        fill: white;
+      }
+    }
+  }
+  
+  &:hover .editFilter {
+    opacity: 1;
+  }
+}

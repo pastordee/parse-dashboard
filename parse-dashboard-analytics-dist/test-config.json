@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "serverURL": "http://localhost:1337/parse",
+      "appId": "mock-app-id", 
+      "masterKey": "mock-master-key",
+      "appName": "Analytics Demo",
+      "iconName": "",
+      "primaryBackgroundColor": "#2196F3",
+      "secondaryBackgroundColor": "#1976D2"
+    }
+  ],
+  "iconsFolder": "icons",
+  "allowInsecureHTTP": true
+}

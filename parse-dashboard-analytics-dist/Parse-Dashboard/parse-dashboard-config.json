@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "serverURL": "YOUR_PARSE_SERVER_URL/parse",
+      "appId": "YOUR_APP_ID",
+      "masterKey": "YOUR_MASTER_KEY",
+      "appName": "Your App Name",
+      "iconName": "",
+      "primaryBackgroundColor": "",
+      "secondaryBackgroundColor": ""
+    }
+  ],
+  "iconsFolder": "icons"
+}

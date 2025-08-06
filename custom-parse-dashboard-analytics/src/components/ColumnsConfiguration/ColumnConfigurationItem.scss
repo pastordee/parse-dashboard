@@ -1,0 +1,29 @@
+.columnConfigItem {
+  padding: 8px 10px;
+  display: flex;
+  border-radius: 5px;
+  cursor: grab;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  height: 24px;
+}
+
+.visibilityIcon {
+  cursor: pointer;
+  width: 30px;
+}
+
+.columnConfigItemName {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  line-height: 24px;
+}
+
+.columnIcon {
+  width: auto;
+  flex-grow: 1;
+  justify-content: end;
+}

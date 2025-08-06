@@ -1,0 +1,120 @@
+/*
+ * Copyright (c) 2016-present, Parse, LLC
+ * All rights reserved.
+ *
+ * This source code is licensed under the license found in the LICENSE file in
+ * the root directory of this source tree.
+ */
+@import 'stylesheets/globals.scss';
+
+.bar {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  height: 0;
+  background: #66637a;
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 100%;
+  // to resolve rendering issue with retina displays
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+.wrap {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.addColumn {
+  display: inline-block;
+  height: 30px;
+  vertical-align: top;
+  padding: 0 25px;
+}
+
+.addColumnButton {
+  @include buttonReset($bg: #343445);
+  display: inline-block;
+  height: 20px;
+  width: 130px;
+  text-align: center;
+  line-height: 20px;
+  margin-top: 5px;
+  color: white;
+  border-radius: 5px;
+  vertical-align: top;
+  font-size: 12px;
+}
+
+.check {
+  line-height: 30px;
+  height: 30px;
+  vertical-align: top;
+  text-align: center;
+  width: 30px;
+  background: rgb(114, 111, 133);
+}
+
+.rowNumber {
+  line-height: 30px;
+  height: 30px;
+  vertical-align: top;
+  text-align: center;
+  background: rgb(114, 111, 133);
+  color: #A2A6B1;
+  font-size: 12px;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.handle {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 30px;
+  margin: 0 -4px;
+  cursor: ew-resize;
+}
+
+.pickerPointer {
+  .check {
+    input {
+      display: none;
+    }
+  }
+}
+
+.preventSort {
+  :hover {
+    cursor: not-allowed;
+  }
+}
+
+.skeleton {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 30px;
+}
+
+.skeletonRow {
+  border-top: 1px solid #e3e3ea;
+  border-bottom: 1px solid #e3e3ea;
+  height: 30px;
+  width: 100%;
+  vertical-align: middle;
+  padding-left: 2px;
+  margin-top: 30px;
+  line-height: 31px;
+  animation: skeleton-loading 1s linear infinite alternate;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-color: #ffffff;
+  }
+  100% {
+    background-color: #e3e3ea;
+  }
+}

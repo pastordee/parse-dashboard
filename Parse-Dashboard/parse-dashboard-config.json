@@ -2,12 +2,13 @@
   "apps": [
     {
       "serverURL": "http://localhost:1337/parse",
-      "appId": "hello",
-      "masterKey": "world",
-      "appName": "",
+      "appId": "mock-app-id",
+      "masterKey": "mock-master-key",
+      "appName": "Parse Dashboard Analytics Demo",
+      "appNameForURL": "mock-app-id",
       "iconName": "",
-      "primaryBackgroundColor": "",
-      "secondaryBackgroundColor": ""
+      "primaryBackgroundColor": "#169CEE",
+      "secondaryBackgroundColor": "#0F5B8A"
     }
   ],
   "iconsFolder": "icons"

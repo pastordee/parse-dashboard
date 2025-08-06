@@ -1,0 +1,18 @@
+{
+  "apps": [
+    {
+      "serverURL": "http://localhost:1339/parse",
+      "appId": "mock-app-id",
+      "masterKey": "mock-master-key",
+      "appName": "Analytics Demo"
+    }
+  ],
+  "users": [
+    {
+      "user": "admin",
+      "pass": "password"
+    }
+  ],
+  "useEncryptedPasswords": false,
+  "trustProxy": 1
+}

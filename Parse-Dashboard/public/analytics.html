@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f6fa;
+            color: #333;
+        }
+        
+        .analytics-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .analytics-header {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .analytics-header h1 {
+            margin: 0 0 8px 0;
+            color: #169CEE;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .analytics-header p {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .metric-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #169CEE;
+            margin-bottom: 8px;
+        }
+        
+        .metric-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .metric-change.positive {
+            color: #28a745;
+        }
+        
+        .metric-change.negative {
+            color: #dc3545;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        
+        .chart-placeholder {
+            height: 200px;
+            background: linear-gradient(135deg, #169CEE 0%, #4facfe 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: #169CEE;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .back-button:hover {
+            background: #1385c7;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .back-button svg {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-container">
+        <a href="#" onclick="history.back()" class="back-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15,18 9,12 15,6"></polyline>
+            </svg>
+            Back to Dashboard
+        </a>
+        
+        <div class="analytics-header">
+            <h1>Analytics Dashboard</h1>
+            <p>Real-time insights and metrics for your Parse application</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">1,247</div>
+                <div class="metric-label">Total Users</div>
+                <div class="metric-change positive">+12% from last month</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">3,891</div>
+                <div class="metric-label">Total Objects</div>
+                <div class="metric-change positive">+8% from last month</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">156</div>
+                <div class="metric-label">API Calls (Today)</div>
+                <div class="metric-change negative">-3% from yesterday</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">23</div>
+                <div class="metric-label">Active Sessions</div>
+                <div class="metric-change positive">+5% from last hour</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">User Growth Over Time</div>
+                <div class="chart-placeholder">Interactive Chart Coming Soon</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">API Usage Distribution</div>
+                <div class="chart-placeholder">Donut Chart Coming Soon</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">Error Rate Trends</div>
+                <div class="chart-placeholder">Line Chart Coming Soon</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">Popular Features</div>
+                <div class="chart-placeholder">Bar Chart Coming Soon</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Add some dynamic behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate real-time updates
+            setInterval(function() {
+                const sessionElement = document.querySelector('.metric-card:last-child .metric-value');
+                const currentValue = parseInt(sessionElement.textContent);
+                const newValue = Math.max(1, currentValue + Math.floor(Math.random() * 3 - 1));
+                sessionElement.textContent = newValue;
+            }, 5000);
+            
+            // Add some animation
+            const cards = document.querySelectorAll('.metric-card, .chart-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

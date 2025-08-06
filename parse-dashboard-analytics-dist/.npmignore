@@ -1,0 +1,24 @@
+# Development files
+*.sample.json
+create-package*.sh
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Environment
+.env*

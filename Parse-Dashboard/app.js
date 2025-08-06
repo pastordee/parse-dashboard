@@ -1093,6 +1093,18 @@ You have direct access to the Parse database through function calls, so you can 
       `);
     });
 
+    // Analytics dashboard route
+    app.get('/apps/*/analytics_dashboard', function(req, res) {
+      if (users && (!req.user || !req.user.isAuthenticated)) {
+        const redirect = req.url.replace('/login', '');
+        if (redirect.length > 1) {
+          return res.redirect(`${mountPath}login?redirect=${redirect}`);
+        }
+        return res.redirect(`${mountPath}login`);
+      }
+      res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+    });
+
     // For every other request, go to index.html. Let client-side handle the rest.
     app.get('/*', function(req, res) {
       if (users && (!req.user || !req.user.isAuthenticated)) {
