@@ -2,7 +2,16 @@
  * Copyright (c) 2016-present, Parse, LLC
  * All rights reserved.
  *
- * This source code is licensed under the license found in the LICENSE file in
+ * This source co  async fetchDropdownDataFromServer() {
+    console.log('📱 Fetching app versions from server...');
+    
+    try {
+      // Get app versions URL using centralized config
+      const url = buildAnalyticsUrl(this.context, 'analytics_app_versions');
+      
+      console.log('📡 Fetching app versions from:', url);
+      
+      const response = await fetch(url);d under the license found in the LICENSE file in
  * the root directory of this source tree.
  */
 import * as AnalyticsQueryStore from 'lib/stores/AnalyticsQueryStore';
@@ -20,6 +29,7 @@ import TableHeader from 'components/Table/TableHeader.react';
 import TableView from 'dashboard/TableView.react';
 import Toolbar from 'components/Toolbar/Toolbar.react';
 import { Directions } from 'lib/Constants';
+import { buildAnalyticsUrl } from 'lib/AnalyticsConfig';
 
 const SLOW_QUERIES_HEADERS = [
   'Class',
@@ -66,107 +76,228 @@ class SlowQueries extends TableView {
       className: undefined,
       os: undefined,
       version: undefined,
+      schemaClasses: [], // Store schema classes from server
+      schemaFetchAttempted: false, // Track if we've tried to fetch schema
     };
     this.xhrHandles = [];
   }
 
   componentWillMount() {
-    this.fetchDropdownData(this.props);
-    this.fetchSlowQueries(this.context);
+    this.fetchDropdownDataFromServer(this.context);
+    this.fetchSlowQueriesFromServer(this.context);
   }
 
   componentWillUnmount() {
-    this.xhrHandles.forEach(xhr => xhr.abort());
+    // Clean up any pending fetch requests
   }
 
   componentWillReceiveProps(nextProps, nextContext) {
     if (this.context !== nextContext) {
-      this.fetchDropdownData(nextProps);
-      this.fetchSlowQueries(nextContext);
+      this.fetchDropdownDataFromServer(nextContext);
+      this.fetchSlowQueriesFromServer(nextContext);
     }
   }
 
-  fetchDropdownData(props) {
-    props.schema.dispatch(SchemaStore.ActionTypes.FETCH);
-    const payload = {
-      ...APP_VERSIONS_EXPLORER_QUERY,
-      from: this.state.dateRange.start.getTime(),
-      to: this.state.dateRange.end.getTime(),
-    };
-    if (window.DEVELOPMENT) {
-      payload.appID = 16155;
+  async fetchSchemaFromServer() {
+    console.log('🔄 Fetching schema from server...');
+    
+    try {
+      const url = buildAnalyticsUrl(this.context, 'analytics_schema');
+      console.log('📡 Fetching schema from:', url);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Schema data received:', data);
+      
+      // Update state with received schema classes
+      if (data.content && data.content.classes) {
+        this.setState({
+          schemaClasses: Object.keys(data.content.classes)
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fetching schema:', error);
+      // Keep using default classes if schema fetch fails
     }
-    props.customQueries.dispatch(AnalyticsQueryStore.ActionTypes.FETCH, {
-      query: {
-        ...payload,
-      },
-    });
   }
 
-  fetchSlowQueries(app) {
-    const { className, os, version, dateRange } = this.state;
+  async fetchDropdownDataFromServer() {
+    console.log('� Fetching app versions from server...');
+    
+    try {
+      // Get app info from context
+      const { slug } = this.context || {};
+      const appSlug = slug || 'demo';
+      
+      const url = `http://localhost:1339/apps/${appSlug}/analytics_app_versions`;
+      
+      console.log('📡 Fetching app versions from:', url);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ App versions data received:', data);
+      
+      // Update state with received data
+      this.setState({
+        appVersionsData: data.content || []
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching app versions:', error);
+      
+      this.setState({
+        appVersionsData: []
+      });
+    }
+  }
 
-    this.setState({ loading: true }, () => {
-      const { promise, xhr } = app.getAnalyticsSlowQueries(
-        className,
-        os,
-        version,
-        dateRange.start,
-        dateRange.end
-      );
-      promise.then(
-        result =>
-          this.setState({
-            slowQueries: result || [],
-            loading: false,
-            mutated: false,
-          }),
-        () => this.setState({ slowQueries: [], loading: false, mutated: false })
-      );
-      this.xhrHandles = [xhr];
-    });
+  async fetchSlowQueriesFromServer() {
+    console.log('� Fetching slow queries from server...');
+    
+    this.setState({ loading: true });
+    
+    try {
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (this.state.className && this.state.className !== 'Class') {
+        params.append('className', this.state.className);
+      }
+      if (this.state.os && this.state.os !== 'OS') {
+        params.append('os', this.state.os);
+      }
+      if (this.state.version && this.state.version !== 'Version') {
+        params.append('version', this.state.version);
+      }
+      if (this.state.dateRange && this.state.dateRange.start) {
+        params.append('from', this.state.dateRange.start.toISOString());
+      }
+      if (this.state.dateRange && this.state.dateRange.end) {
+        params.append('to', this.state.dateRange.end.toISOString());
+      }
+      
+      const queryString = params.toString();
+      const endpoint = `analytics_slow_queries${queryString ? '?' + queryString : ''}`;
+      const url = buildAnalyticsUrl(this.context, endpoint);
+      
+      console.log('📡 Fetching from:', url);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Slow queries data received:', data);
+      
+      // Update state with received data
+      this.setState({
+        slowQueriesData: data.content || [],
+        loading: false,
+        mutated: false
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching slow queries:', error);
+      
+      this.setState({
+        slowQueriesData: [],
+        loading: false
+      });
+    }
   }
 
   handleDownload() {
-    const csvDeclaration = 'data:text/csv;charset=utf-8,';
-    let csvRows = [SLOW_QUERIES_HEADERS];
-    csvRows = csvRows.concat(this.state.slowQueries);
+    const queries = this.state.slowQueriesData || [];
+    const separator = ',';
+    let csvContent = '';
 
-    window.open(encodeURI(csvDeclaration + csvRows.join('\n')));
+    // CSV Header
+    csvContent += [
+      'Class',
+      'Query', 
+      'Count',
+      '% Slow',
+      'Timeouts',
+      'Avg (ms)',
+      'Avg Scanned',
+      'Avg Returned'
+    ].join(separator) + '\n';
+
+    // CSV Rows - queries are already in array format
+    queries.forEach(queryRow => {
+      const row = queryRow.map(value => {
+        // Escape values that contain commas or quotes
+        const stringValue = String(value || '');
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      });
+      csvContent += row.join(separator) + '\n';
+    });
+
+    // Create and trigger download
+    const csvDeclaration = 'data:text/csv;charset=utf-8,';
+    window.open(encodeURI(csvDeclaration + csvContent));
   }
 
   renderToolbar() {
-    // Get app versions using Explorer endpoint
-    const queries = this.props.customQueries.data.get('queries') || [];
-    const appVersionExplorerQuery = queries.find(
-      query => query.localId === APP_VERSIONS_EXPLORER_QUERY.localId
-    );
+    // Get app versions from server data
+    const appVersionsData = this.state.appVersionsData || [];
     const appVersions = {};
-    if (appVersionExplorerQuery && appVersionExplorerQuery.result) {
-      appVersionExplorerQuery.result.forEach(value => {
-        const os = value['OS'];
-        const version = value['App Display Version'];
-        if (os === null || version === null) {
-          return;
-        }
+    
+    appVersionsData.forEach(item => {
+      const os = item['OS'];
+      const version = item['App Display Version'];
+      if (os && version) {
         if (Object.prototype.hasOwnProperty.call(appVersions, os)) {
-          appVersions[os].push(version);
+          if (!appVersions[os].includes(version)) {
+            appVersions[os].push(version);
+          }
         } else {
           appVersions[os] = [version];
         }
-      });
-    }
+      }
+    });
 
     let osOptions = ['OS'];
     if (Object.keys(appVersions) && Object.keys(appVersions).length > 0) {
-      osOptions = Object.keys(appVersions);
+      osOptions = ['OS', ...Object.keys(appVersions)];
     }
 
-    // Get class names using Schema endpoint
+    // Get class names from schema store or fetch from server
     let classOptions = ['Class'];
-    const classList = this.props.schema.data.get('classes');
+    
+    // Primary: Get from schema store if available
+    const classList = this.props.schema && this.props.schema.data.get('classes');
     if (classList && !classList.isEmpty()) {
-      classOptions = Object.keys(classList.toObject());
+      const schemaClasses = Object.keys(classList.toObject());
+      classOptions = ['Class', ...schemaClasses];
+    } else if (this.state.schemaClasses && this.state.schemaClasses.length > 0) {
+      // Secondary: Use classes fetched from server
+      classOptions = ['Class', ...this.state.schemaClasses];
+    } else {
+      // Tertiary: Use common defaults and try to fetch schema
+      const commonClasses = ['User', 'Post', 'Comment', 'Product', 'Order', 'Review', 'Category', 'Media', '_User', '_Role', '_Session', '_Installation'];
+      classOptions = ['Class', ...commonClasses];
+      
+      // Attempt to fetch schema from server if not already attempted
+      if (!this.state.schemaFetchAttempted) {
+        this.fetchSchemaFromServer();
+        this.setState({ schemaFetchAttempted: true });
+      }
     }
 
     let actions = null;
@@ -179,7 +310,7 @@ class SlowQueries extends TableView {
             version={this.state.version}
             classNameOptions={classOptions}
             osOptions={osOptions}
-            versionOptions={appVersions[this.state.os] || ['Version']}
+            versionOptions={['Version', ...(appVersions[this.state.os] || [])]}
             onChange={newValue =>
               this.setState({
                 ...newValue,
@@ -215,7 +346,8 @@ class SlowQueries extends TableView {
   }
 
   tableData() {
-    return this.state.slowQueries;
+    // Server returns data in array format, which is exactly what TableView expects
+    return this.state.slowQueriesData || [];
   }
 
   renderRow(query) {
@@ -259,7 +391,7 @@ class SlowQueries extends TableView {
           <Button
             primary={true}
             disabled={!this.state.mutated}
-            onClick={this.fetchSlowQueries.bind(this, this.context)}
+            onClick={this.fetchSlowQueriesFromServer.bind(this)}
             value="Run query"
           />
         }

@@ -59,7 +59,16 @@ export default class Chart extends React.Component {
   }
 
   render() {
-    const { width, height, data } = this.props;
+    let { width, height, data } = this.props;
+    
+    // Ensure valid dimensions
+    if (!width || isNaN(width) || !isFinite(width) || width <= 0) {
+      width = 800;
+    }
+    if (!height || isNaN(height) || !isFinite(height) || height <= 0) {
+      height = 400;
+    }
+    
     const plotting = {};
     let minX = Infinity;
     let maxX = -Infinity;
@@ -127,12 +136,25 @@ export default class Chart extends React.Component {
       );
     }
     const labels = valueBuckets.slice(1, valueBuckets.length - 1);
+    const maxValue = valueBuckets[valueBuckets.length - 1];
     const labelHeights = labels.map(
-      label => chartHeight * (1 - label / valueBuckets[valueBuckets.length - 1])
+      label => {
+        if (!maxValue || maxValue === 0 || isNaN(maxValue) || !isFinite(maxValue)) {
+          return 0;
+        }
+        const height = chartHeight * (1 - label / maxValue);
+        return isNaN(height) || !isFinite(height) ? 0 : height;
+      }
     );
     const tickPoints = timeBuckets.map(
-      t =>
-        (chartWidth * (t - timeBuckets[0])) / (timeBuckets[timeBuckets.length - 1] - timeBuckets[0])
+      t => {
+        const timeDiff = timeBuckets[timeBuckets.length - 1] - timeBuckets[0];
+        if (!timeDiff || timeDiff === 0 || isNaN(timeDiff) || !isFinite(timeDiff)) {
+          return 0;
+        }
+        const point = (chartWidth * (t - timeBuckets[0])) / timeDiff;
+        return isNaN(point) || !isFinite(point) ? 0 : point;
+      }
     );
     let last = null;
     const tickLabels = timeBuckets.map((t, i) => {

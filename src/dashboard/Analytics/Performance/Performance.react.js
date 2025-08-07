@@ -18,6 +18,7 @@ import React from 'react';
 import styles from 'dashboard/Analytics/Performance/Performance.scss';
 import Toolbar from 'components/Toolbar/Toolbar.react';
 import baseStyles from 'stylesheets/base.scss';
+import { buildAnalyticsUrl } from 'lib/AnalyticsConfig';
 
 const PERFORMANCE_QUERIES = [
   {
@@ -85,29 +86,38 @@ export default class Performance extends DashboardView {
       // and re-style "Run query" button
       mutated: false,
     };
-    this.xhrHandles = [];
     this.displayRef = React.createRef();
   }
 
   componentDidMount() {
-    const display = this.displayRef;
-    this.displaySize = {
-      width: display.offsetWidth,
-      height: display.offsetHeight,
-    };
+    const display = this.displayRef.current;
+    if (display) {
+      this.displaySize = {
+        width: display.offsetWidth || 800,
+        height: display.offsetHeight || 400,
+      };
+    } else {
+      // Fallback dimensions if ref is not ready
+      this.displaySize = {
+        width: 800,
+        height: 400,
+      };
+    }
+    // Force re-render with updated display size
+    this.forceUpdate();
   }
 
   componentWillMount() {
-    this.handleRunQuery(this.context);
+    this.handleRunQuery();
   }
 
   componentWillUnmount() {
-    this.xhrHandles.forEach(xhr => xhr.abort());
+    // No cleanup needed for fetch calls
   }
 
   componentWillReceiveProps(nextProps, nextContext) {
     if (this.context !== nextContext) {
-      this.handleRunQuery(nextContext);
+      this.handleRunQuery();
     }
   }
 
@@ -117,38 +127,69 @@ export default class Performance extends DashboardView {
     this.setState({ activeQueries: activeQueries });
   }
 
-  handleRunQuery(app) {
+  async handleRunQuery() {
     this.setState({
       loading: true,
     });
-    const promises = [];
-    this.xhrHandles = [];
-    PERFORMANCE_QUERIES.forEach((query, index) => {
-      const res = app.getAnalyticsTimeSeries({
-        ...query.query,
-        from: this.state.dateRange.start.getTime() / 1000,
-        to: this.state.dateRange.end.getTime() / 1000,
-      });
 
-      let promise = res.promise;
-      const xhr = res.xhr;
-      promise = promise.then(result => {
-        const performanceData = this.state.performanceData;
+    const promises = PERFORMANCE_QUERIES.map(async (query, index) => {
+      try {
+        const from = Math.floor(this.state.dateRange.start.getTime() / 1000);
+        const to = Math.floor(this.state.dateRange.end.getTime() / 1000);
+        
+        const endpoint = `performance?` +
+          `performanceType=${query.query.performanceType}&` +
+          `stride=${query.query.stride}&` +
+          `from=${from}&` +
+          `to=${to}`;
+          
+        const url = buildAnalyticsUrl(this.context, endpoint);
+
+        console.log(`🔄 Fetching performance data for ${query.name}:`, url);
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log(`✅ Performance data received for ${query.name}:`, result);
+        
+        // Update state with received data
+        const performanceData = [...this.state.performanceData];
         performanceData[index] = result;
         this.setState({
           performanceData: performanceData,
         });
-      });
-
-      promises.push(promise);
-      this.xhrHandles.push(xhr);
+        
+        return result;
+      } catch (error) {
+        console.error(`❌ Error fetching performance data for ${query.name}:`, error);
+        
+        // Set empty data on error
+        const performanceData = [...this.state.performanceData];
+        performanceData[index] = {};
+        this.setState({
+          performanceData: performanceData,
+        });
+        
+        return {};
+      }
     });
-    Promise.all(promises).then(() => {
+
+    try {
+      await Promise.all(promises);
       this.setState({
         loading: false,
         mutated: false,
       });
-    });
+    } catch (error) {
+      console.error('❌ Error in performance data fetching:', error);
+      this.setState({
+        loading: false,
+        mutated: false,
+      });
+    }
   }
 
   renderContent() {
@@ -183,7 +224,7 @@ export default class Performance extends DashboardView {
           <Button
             primary={true}
             disabled={!this.state.mutated}
-            onClick={this.handleRunQuery.bind(this, this.context)}
+            onClick={this.handleRunQuery.bind(this)}
             value="Run query"
           />
         </div>

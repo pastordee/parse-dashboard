@@ -15,6 +15,7 @@ import React from 'react';
 import Toolbar from 'components/Toolbar/Toolbar.react';
 import styles from 'dashboard/Analytics/Overview/Overview.scss';
 import { yearMonthDayFormatter } from 'lib/DateUtils';
+import { buildAnalyticsUrl } from 'lib/AnalyticsConfig';
 
 const AUDIENCE_META = [
   // Users
@@ -100,12 +101,110 @@ export default class Overview extends DashboardView {
   }
 
   componentWillMount() {
-    this.fetchOverview(this.context);
+    this.fetchOverviewFromServer(this.context);
   }
 
   componentWillReceiveProps(nextProps, nextContext) {
     if (this.context !== nextContext) {
-      this.fetchOverview(nextContext);
+      this.fetchOverviewFromServer(nextContext);
+    }
+  }
+
+  async fetchOverviewFromServer(app) {
+    try {
+      console.log('🔄 Fetching overview data from analytics server...');
+      
+      // Set loading state for all metrics
+      const loadingState = {};
+      [...AUDIENCE_META.flat(), ...BILLING_META].forEach(meta => {
+        loadingState[meta.key] = { loading: true };
+      });
+      this.setState(loadingState);
+      
+      // Fetch overview data from server using centralized URL config
+      const overviewUrl = buildAnalyticsUrl(app, 'overview');
+      console.log('📊 Overview URL:', overviewUrl);
+      
+      const response = await fetch(overviewUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch overview: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Received overview data:', data);
+      
+      // Update state with received data
+      this.setState({
+        error: data.healthy ? undefined : 'Server reported unhealthy status',
+        
+        // User metrics - using trend data format [current, 1 week ago, 2 weeks ago]
+        dailyActiveUsers: { 
+          value: data.dailyActiveUsers,
+          promise: Promise.resolve(data.dailyActiveUsers)
+        },
+        weeklyActiveUsers: { 
+          value: data.weeklyActiveUsers,
+          promise: Promise.resolve(data.weeklyActiveUsers)
+        },
+        monthlyActiveUsers: { 
+          value: data.monthlyActiveUsers,
+          promise: Promise.resolve(data.monthlyActiveUsers)
+        },
+        totalUsers: { 
+          value: data.totalUsers,
+          promise: Promise.resolve(data.totalUsers)
+        },
+        
+        // Installation metrics
+        dailyActiveInstallations: { 
+          value: data.dailyActiveInstallations,
+          promise: Promise.resolve(data.dailyActiveInstallations)
+        },
+        weeklyActiveInstallations: { 
+          value: data.weeklyActiveInstallations,
+          promise: Promise.resolve(data.weeklyActiveInstallations)
+        },
+        monthlyActiveInstallations: { 
+          value: data.monthlyActiveInstallations,
+          promise: Promise.resolve(data.monthlyActiveInstallations)
+        },
+        totalInstallations: { 
+          value: data.totalInstallations,
+          promise: Promise.resolve(data.totalInstallations)
+        },
+        
+        // Billing metrics
+        billingFileStorage: { 
+          value: data.billingFileStorage,
+          promise: Promise.resolve(data.billingFileStorage)
+        },
+        billingDatabasetorage: { 
+          value: data.billingDatabasetorage,
+          promise: Promise.resolve(data.billingDatabasetorage)
+        },
+        billingDataTransfer: { 
+          value: data.billingDataTransfer,
+          promise: Promise.resolve(data.billingDataTransfer)
+        },
+      });
+      
+    } catch (error) {
+      console.error('❌ Error fetching overview data:', error);
+      
+      // Set error state for all metrics
+      const errorState = {
+        error: error.message || 'Failed to fetch analytics data from server'
+      };
+      
+      [...AUDIENCE_META.flat(), ...BILLING_META].forEach(meta => {
+        errorState[meta.key] = { 
+          error: error,
+          promise: Promise.reject(error)
+        };
+      });
+      
+      this.setState(errorState);
     }
   }
 
@@ -125,32 +224,33 @@ export default class Overview extends DashboardView {
     });
   }
 
-  fetchOverview(app) {
-    const overview = app.getAnalyticsOverview(new Date());
-    this.setState(overview);
-
-    for (const key in overview) {
-      const item = overview[key];
-      item.promise.then(
-        value => {
-          this.setState({
-            [key]: {
-              promise: item.promise,
-              value: value,
-            },
-          });
-        },
-        error => {
-          this.setState({
-            [key]: {
-              promise: item.promise,
-              error: error,
-            },
-          });
-        }
-      );
-    }
-  }
+  // Legacy method - replaced with fetchOverviewFromServer
+  // fetchOverview(app) {
+  //   const overview = app.getAnalyticsOverview(new Date());
+  //   this.setState(overview);
+  //
+  //   for (const key in overview) {
+  //     const item = overview[key];
+  //     item.promise.then(
+  //       value => {
+  //         this.setState({
+  //           [key]: {
+  //             promise: item.promise,
+  //             value: value,
+  //           },
+  //         });
+  //       },
+  //       error => {
+  //         this.setState({
+  //           [key]: {
+  //             promise: item.promise,
+  //             error: error,
+  //           },
+  //         });
+  //       }
+  //     );
+  //   }
+  // }
 
   renderContent() {
     const toolbar = <Toolbar section="Analytics" subsection="Overview" />;

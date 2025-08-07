@@ -1,15 +1,17 @@
 {
   "apps": [
     {
-      "serverURL": "http://localhost:1338/parse",
-      "appId": "mock-app-id",
-      "masterKey": "mock-master-key",
+      "serverURL": "http://localhost:1339/parse",
+      "appId": "analytics-demo-app",
+      "masterKey": "your-master-key-here",
       "appName": "Parse Dashboard Analytics Demo",
-      "appNameForURL": "mock-app-id",
+      "appNameForURL": "analytics-demo-app",
       "iconName": "",
       "primaryBackgroundColor": "#169CEE",
       "secondaryBackgroundColor": "#0F5B8A",
-      "analyticsPage": "/Users/prayercircle/Development/parse-dashboard/parse-dashboard-analytics-dist/simple-analytics.html"
+      "analytics": {
+        "endpoint": "http://localhost:1339"
+      }
     }
   ],
   "users": [

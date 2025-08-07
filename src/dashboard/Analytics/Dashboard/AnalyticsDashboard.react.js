@@ -17,6 +17,7 @@ import React from 'react';
 import Toolbar from 'components/Toolbar/Toolbar.react';
 import styles from './AnalyticsDashboard.scss';
 import { yearMonthDayFormatter } from 'lib/DateUtils';
+import { buildAnalyticsUrl } from 'lib/AnalyticsConfig';
 
 export default class AnalyticsDashboard extends DashboardView {
   constructor() {
@@ -85,20 +86,46 @@ export default class AnalyticsDashboard extends DashboardView {
     this.loadAnalytics();
   }
 
-  loadAnalytics() {
-    // Simulate loading analytics data with more comprehensive mock data
-    setTimeout(() => {
+   
+
+  async loadAnalytics() {
+    try {
+      // Get analytics endpoints from app context using centralized config
+      const audienceUrl = buildAnalyticsUrl(this.context, 'analytics_content_audience');
+      const analyticsUrl = buildAnalyticsUrl(this.context, 'analytics');
+      const billingUrl = buildAnalyticsUrl(this.context, 'billing');
+      
+      console.log('📊 Loading analytics from:', { audienceUrl, analyticsUrl, billingUrl });
+      
+      // Fetch data from multiple endpoints in parallel
+      const [
+        audienceResponse,
+        analyticsResponse,
+        billingResponse
+      ] = await Promise.all([
+        fetch(audienceUrl),
+        fetch(analyticsUrl),
+        fetch(billingUrl)
+      ]);
+
+      // Parse all responses
+      const audienceData = await audienceResponse.json();
+      const analyticsData = await analyticsResponse.json();
+      const billingData = await billingResponse.json();
+
+      console.log('Server data received:', { audienceData, analyticsData, billingData });
+
+      // Generate API usage chart data from analytics data
       const currentDate = new Date();
       const pastDays = 30;
       const apiUsageData = [];
       
-      // Generate mock API usage data for the chart
       for (let i = pastDays - 1; i >= 0; i--) {
         const date = new Date(currentDate);
         date.setDate(date.getDate() - i);
         apiUsageData.push({
           date: yearMonthDayFormatter(date),
-          requests: Math.floor(Math.random() * 5000) + 1000,
+          requests: Math.floor(Math.random() * 5000) + 1000, // Still using random for chart demo
           errors: Math.floor(Math.random() * 100) + 10,
         });
       }
@@ -106,51 +133,78 @@ export default class AnalyticsDashboard extends DashboardView {
       this.setState({
         loading: false,
         audienceData: {
-          totalUsers: 12453,
-          dailyActiveUsers: 2341,
-          weeklyActiveUsers: 8934,
-          monthlyActiveUsers: 11234,
-          newUsers: 234,
-          returningUsers: 2107,
+          totalUsers: audienceData.totalUsers || 0,
+          dailyActiveUsers: audienceData.dailyActiveUsers || 0,
+          weeklyActiveUsers: audienceData.weeklyActiveUsers || 0,
+          monthlyActiveUsers: audienceData.monthlyActiveUsers || 0,
+          newUsers: audienceData.newUsers || 0,
+          returningUsers: audienceData.returningUsers || 0,
         },
         eventData: {
-          apiRequests: 45623,
-          pushNotifications: 1234,
-          cloudCodeExecution: 567,
-          fileUploads: 123,
-          customEvents: 2345,
+          apiRequests: analyticsData.apiRequests || 0,
+          pushNotifications: analyticsData.pushNotifications || 0,
+          cloudCodeExecution: analyticsData.cloudCodeExecution || 0,
+          fileUploads: analyticsData.fileUploads || 0,
+          customEvents: analyticsData.customEvents || 0,
         },
         performanceData: {
-          avgResponseTime: 245,
-          errorRate: 0.23,
-          successfulRequests: 45200,
-          failedRequests: 423,
-          p95ResponseTime: 450,
-          p99ResponseTime: 780,
+          avgResponseTime: analyticsData.avgResponseTime || 0,
+          errorRate: analyticsData.errorRate || 0,
+          successfulRequests: analyticsData.successfulRequests || 0,
+          failedRequests: analyticsData.failedRequests || 0,
+          p95ResponseTime: analyticsData.p95ResponseTime || 0,
+          p99ResponseTime: analyticsData.p99ResponseTime || 0,
         },
         errorData: {
-          '4xx': 234,
-          '5xx': 189,
-          timeouts: 45,
-          other: 12,
+          '4xx': analyticsData.errorData?.['4xx'] || 0,
+          '5xx': analyticsData.errorData?.['5xx'] || 0,
+          timeouts: analyticsData.errorData?.timeouts || 0,
+          other: analyticsData.errorData?.other || 0,
         },
         apiUsageData,
-        topEvents: [
-          { name: 'user_login', count: 3421, trend: 12.5 },
-          { name: 'item_purchase', count: 2187, trend: -3.2 },
-          { name: 'page_view', count: 8934, trend: 23.1 },
-          { name: 'user_signup', count: 456, trend: 45.6 },
-          { name: 'share_content', count: 1234, trend: 8.9 },
-        ],
-        recentActivity: [
-          { time: '2 minutes ago', event: 'New user registered', type: 'user', severity: 'info' },
-          { time: '5 minutes ago', event: 'API rate limit exceeded', type: 'error', severity: 'warning' },
-          { time: '8 minutes ago', event: 'Push notification sent to 1,245 devices', type: 'push', severity: 'success' },
-          { time: '12 minutes ago', event: 'Cloud function execution completed', type: 'function', severity: 'info' },
-          { time: '15 minutes ago', event: 'Database query slow (>500ms)', type: 'performance', severity: 'warning' },
-        ]
+        topEvents: analyticsData.topEvents || [],
+        recentActivity: analyticsData.recentActivity || []
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Failed to load analytics data from server:', error);
+      
+      // Fallback to mock data if server request fails
+      this.setState({
+        loading: false,
+        audienceData: {
+          totalUsers: 0,
+          dailyActiveUsers: 0,
+          weeklyActiveUsers: 0,
+          monthlyActiveUsers: 0,
+          newUsers: 0,
+          returningUsers: 0,
+        },
+        eventData: {
+          apiRequests: 0,
+          pushNotifications: 0,
+          cloudCodeExecution: 0,
+          fileUploads: 0,
+          customEvents: 0,
+        },
+        performanceData: {
+          avgResponseTime: 0,
+          errorRate: 0,
+          successfulRequests: 0,
+          failedRequests: 0,
+          p95ResponseTime: 0,
+          p99ResponseTime: 0,
+        },
+        errorData: {
+          '4xx': 0,
+          '5xx': 0,
+          timeouts: 0,
+          other: 0,
+        },
+        apiUsageData: [],
+        topEvents: [],
+        recentActivity: []
+      });
+    }
   }
 
   renderMetricCard(title, value, subtitle, icon, trend) {
@@ -445,7 +499,7 @@ export default class AnalyticsDashboard extends DashboardView {
         </Toolbar>
 
         {/* Key Metrics Grid */}
-        <div className={styles.metricsGrid}>
+        <div className={styles.metricsGrid} style={{ marginTop: '80px' }}>
           {this.renderMetricCard('Total Users', audienceData.totalUsers || 0, 'All time', 'users-outline', 12.5)}
           {this.renderMetricCard('Daily Active', audienceData.dailyActiveUsers || 0, 'Last 24 hours', 'pulse-outline', 8.2)}
           {this.renderMetricCard('Weekly Active', audienceData.weeklyActiveUsers || 0, 'Last 7 days', 'trending-up-outline', 15.3)}

@@ -1093,9 +1093,12 @@ You have direct access to the Parse database through function calls, so you can 
       `);
     });
 
-    // Analytics dashboard route
+    // Analytics dashboard routes - Only serve custom analytics if analyticsPage is configured
     app.get('/apps/*/analytics_dashboard', function(req, res) {
+      console.log('🎯 Analytics dashboard route hit:', req.path, req.url);
+      
       if (users && (!req.user || !req.user.isAuthenticated)) {
+        console.log('🔒 User not authenticated, redirecting to login');
         const redirect = req.url.replace('/login', '');
         if (redirect.length > 1) {
           return res.redirect(`${mountPath}login?redirect=${redirect}`);
@@ -1106,29 +1109,100 @@ You have direct access to the Parse database through function calls, so you can 
       // Extract app ID from URL
       const appIdMatch = req.path.match(/\/apps\/([^\/]+)\/analytics_dashboard/);
       const appId = appIdMatch ? appIdMatch[1] : null;
+      console.log('📱 Extracted app ID:', appId);
       
       // Find the app configuration
       let customAnalyticsPath = null;
       if (appId && config.apps) {
-        const app = config.apps.find(app => app.appId === appId || app.appName === appId);
+        const app = config.apps.find(app => app.appId === appId || app.appNameForURL === appId || app.appName === appId);
+        console.log('🔍 Found app config:', app ? 'YES' : 'NO', app ? app.analyticsPage : 'N/A');
         if (app && app.analyticsPage) {
           customAnalyticsPath = app.analyticsPage;
         }
       }
       
-      // Use custom analytics page if specified, otherwise use default
-      const analyticsFile = customAnalyticsPath || path.join(__dirname, 'public', 'analytics.html');
-      
-      // Check if custom file exists
+      // Only serve custom analytics page if analyticsPage is configured
       if (customAnalyticsPath) {
-        const fs = require('fs');
-        if (!fs.existsSync(customAnalyticsPath)) {
-          console.warn(`Custom analytics page not found: ${customAnalyticsPath}, falling back to default`);
-          return res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+        console.log('✅ Using custom analytics path:', customAnalyticsPath);
+        if (customAnalyticsPath.startsWith('/')) {
+          // It's a URL path, serve from public directory
+          const publicPath = path.join(__dirname, 'public', customAnalyticsPath);
+          console.log('📁 Serving from public directory:', publicPath);
+          if (fs.existsSync(publicPath)) {
+            return res.sendFile(publicPath);
+          } else {
+            console.warn(`Custom analytics page not found in public directory: ${publicPath}, falling back to React component`);
+          }
+        } else {
+          // It's an absolute file path
+          console.log('📁 Serving from absolute path:', customAnalyticsPath);
+          if (fs.existsSync(customAnalyticsPath)) {
+            return res.sendFile(path.resolve(customAnalyticsPath));
+          } else {
+            console.warn(`Custom analytics page not found: ${customAnalyticsPath}, falling back to React component`);
+          }
         }
       }
       
-      res.sendFile(path.resolve(analyticsFile));
+      // No custom analytics page configured or file not found - let React component handle it
+      console.log('🔄 No custom analyticsPage configured, falling through to React component');
+      return; // This will fall through to the catch-all route for React routing
+    });
+
+    // Alternative analytics dashboard route (with slash instead of underscore)
+    app.get('/apps/*/analytics/dashboard', function(req, res) {
+      console.log('🎯 Alternative analytics route hit:', req.path, req.url);
+      
+      if (users && (!req.user || !req.user.isAuthenticated)) {
+        console.log('🔒 User not authenticated, redirecting to login');
+        const redirect = req.url.replace('/login', '');
+        if (redirect.length > 1) {
+          return res.redirect(`${mountPath}login?redirect=${redirect}`);
+        }
+        return res.redirect(`${mountPath}login`);
+      }
+      
+      // Extract app ID from URL
+      const appIdMatch = req.path.match(/\/apps\/([^\/]+)\/analytics\/dashboard/);
+      const appId = appIdMatch ? appIdMatch[1] : null;
+      console.log('📱 Extracted app ID:', appId);
+      
+      // Find the app configuration
+      let customAnalyticsPath = null;
+      if (appId && config.apps) {
+        const app = config.apps.find(app => app.appId === appId || app.appNameForURL === appId || app.appName === appId);
+        console.log('🔍 Found app config:', app ? 'YES' : 'NO', app ? app.analyticsPage : 'N/A');
+        if (app && app.analyticsPage) {
+          customAnalyticsPath = app.analyticsPage;
+        }
+      }
+      
+      // Only serve custom analytics page if analyticsPage is configured
+      if (customAnalyticsPath) {
+        console.log('✅ Using custom analytics path:', customAnalyticsPath);
+        if (customAnalyticsPath.startsWith('/')) {
+          // It's a URL path, serve from public directory
+          const publicPath = path.join(__dirname, 'public', customAnalyticsPath);
+          console.log('📁 Serving from public directory:', publicPath);
+          if (fs.existsSync(publicPath)) {
+            return res.sendFile(publicPath);
+          } else {
+            console.warn(`Custom analytics page not found in public directory: ${publicPath}, falling back to React component`);
+          }
+        } else {
+          // It's an absolute file path
+          console.log('📁 Serving from absolute path:', customAnalyticsPath);
+          if (fs.existsSync(customAnalyticsPath)) {
+            return res.sendFile(path.resolve(customAnalyticsPath));
+          } else {
+            console.warn(`Custom analytics page not found: ${customAnalyticsPath}, falling back to React component`);
+          }
+        }
+      }
+      
+      // No custom analytics page configured or file not found - let React component handle it
+      console.log('🔄 No custom analyticsPage configured, falling through to React component');
+      return; // This will fall through to the catch-all route for React routing
     });
 
     // For every other request, go to index.html. Let client-side handle the rest.

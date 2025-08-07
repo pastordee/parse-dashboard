@@ -23,6 +23,7 @@ import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
 import Parse from 'parse';
 import prettyNumber from 'lib/prettyNumber';
 import React from 'react';
+import { buildAnalyticsUrl } from 'lib/AnalyticsConfig';
 import styles from 'dashboard/Analytics/Explorer/Explorer.scss';
 import stylesTable from 'components/Table/Table.scss';
 import subscribeTo from 'lib/subscribeTo';
@@ -69,16 +70,18 @@ class Explorer extends DashboardView {
     const display = this.displayRef.current;
     if (display) {
       this.displaySize = {
-        width: display.offsetWidth,
-        height: display.offsetHeight,
+        width: display.offsetWidth || 800,
+        height: display.offsetHeight || 400,
       };
     } else {
-      // Fallback dimensions if ref is not available
+      // Fallback dimensions if ref is not ready
       this.displaySize = {
         width: 800,
         height: 400,
       };
     }
+    // Force re-render with updated display size
+    this.forceUpdate();
   }
 
   componentWillMount() {
@@ -169,29 +172,43 @@ class Explorer extends DashboardView {
       let promise = null;
       let xhr = null;
       if (query.preset && query.nonComposable) {
-        // A preset query, DAU, MAU, DAI
+        // A preset query, DAU, MAU, DAI - use our analytics server
         const payload = {
           ...query.query,
           from: this.state.dateRange.start.getTime() / 1000,
           to: this.state.dateRange.end.getTime() / 1000,
         };
 
-        const abortableRequest = this.context.getAnalyticsTimeSeries(payload);
-        promise = abortableRequest.promise.then(result => {
+        // Use fetch with centralized URL config
+        const explorerUrl = buildAnalyticsUrl(this.context, 'analytics_explorer');
+        console.log('📊 Explorer URL:', explorerUrl);
+        
+        promise = fetch(explorerUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
           const activeQueries = this.state.activeQueries;
-          activeQueries[i].result = result.map(point => [
-            Parse._decode('date', point[0]).getTime(),
-            point[1],
-          ]);
+          activeQueries[i].result = result.map(point => {
+            // Handle both Parse date format and direct timestamps
+            const timestamp = point[0].__type === 'Date' ? 
+              new Date(point[0].iso).getTime() : 
+              (typeof point[0] === 'number' ? point[0] : new Date(point[0]).getTime());
+            return [timestamp, point[1]];
+          });
           this.setState({ activeQueries });
         }).catch(error => {
-          console.warn('Analytics API request failed:', error);
+          console.warn('Analytics Explorer API request failed:', error);
           // Set empty result for failed queries
           const activeQueries = this.state.activeQueries;
           activeQueries[i].result = [];
           this.setState({ activeQueries });
         });
-        xhr = abortableRequest.xhr;
+        xhr = null; // No xhr for fetch
       } else {
         // Custom query
         const payload = this.buildCustomQueryPayload(query);

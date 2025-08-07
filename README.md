@@ -22,6 +22,32 @@
 
 Parse Dashboard is a standalone dashboard for managing your [Parse Server](https://github.com/ParsePlatform/parse-server) apps.
 
+## 📊 Analytics Edition
+
+This enhanced version includes comprehensive analytics capabilities:
+- **Real-time Metrics**: User analytics, installation tracking, performance monitoring
+- **Retention Analysis**: Configurable periods from 28 days to 5 years with automatic refresh
+- **Performance Insights**: Slow query detection, response time monitoring, optimization recommendations
+- **Easy Integration**: Drop-in replacement with demo server for testing
+
+### 🚀 Quick Start with Analytics
+```bash
+npm install parse-dashboard-analytics
+npx parse-dashboard --config your-config.json
+```
+
+### 📚 Documentation
+- **[📖 Complete Guide](ANALYTICS_GUIDE.md)** - Comprehensive documentation and API reference
+- **[⚡ Quick Reference](QUICK_REFERENCE.md)** - Developer cheat sheet and common patterns  
+- **[🎯 Step-by-Step Tutorial](TUTORIAL.md)** - 15-minute hands-on tutorial with demo server
+
+### 🔧 Analytics Features
+- **Overview Dashboard**: Total users, active users, installation metrics with trend indicators
+- **Retention Analysis**: User retention tracking with 6 configurable time periods
+- **Performance Monitor**: API response times, error rates, system performance metrics
+- **Slow Query Analyzer**: Database optimization insights with class-based filtering
+- **Explorer Tool**: Custom analytics queries with flexible time ranges
+
 ---
 
 - [Getting Started](#getting-started)

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Working Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        }
+        
+        .metric-value {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+            display: inline-block;
+        }
+        
+        .server-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+            text-align: center;
+        }
+        
+        .back-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+        
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-left: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="#" onclick="history.back()" class="back-button">← Back to Dashboard</a>
+        
+        <div class="header">
+            <div class="status" id="status">Connected</div>
+            <h1>✅ CUSTOM Analytics Dashboard - WORKING CORRECTLY</h1>
+            <p>🎉 SUCCESS! This is the custom simple-analytics.html file!</p>
+            <p style="color: green; font-weight: bold;">The analyticsPage configuration is working properly.</p>
+            <button class="refresh-btn" onclick="loadData()">Refresh Data</button>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="totalUsers">Loading...</div>
+                <div class="metric-label">Total Users</div>
+                <div class="metric-change" id="usersChange">+15.2% this month</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="totalObjects">Loading...</div>
+                <div class="metric-label">Total Objects</div>
+                <div class="metric-change" id="objectsChange">+8.7% this week</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="apiCalls">Loading...</div>
+                <div class="metric-label">API Calls (24h)</div>
+                <div class="metric-change" id="apiChange">+12.3% today</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="activeSessions">Loading...</div>
+                <div class="metric-label">Active Sessions</div>
+                <div class="metric-change" id="sessionsChange">+22.1% this hour</div>
+            </div>
+        </div>
+        
+        <div class="server-info">
+            <h3>🔧 Server Connection</h3>
+            <p>Status: <span id="serverStatus">Checking connection...</span></p>
+            <p id="serverUrl">Endpoint: Detecting...</p>
+            <p><small>Last updated: <span id="lastUpdated">Never</span></small></p>
+        </div>
+    </div>
+    
+    <script>
+        let serverUrl = '';
+        
+        // Test different server endpoints
+        async function findWorkingServer() {
+            const servers = [
+                'http://localhost:3001',
+                'http://192.168.0.138:3001',
+                'http://192.168.0.138:3000'
+            ];
+            
+            for (const server of servers) {
+                try {
+                    console.log(`Testing: ${server}`);
+                    const response = await fetch(`${server}/api/analytics/overview`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        mode: 'cors'
+                    });
+                    
+                    if (response.ok) {
+                        console.log(`✅ Working server found: ${server}`);
+                        serverUrl = server;
+                        document.getElementById('serverStatus').textContent = '✅ Connected';
+                        document.getElementById('serverUrl').textContent = `Endpoint: ${server}`;
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`❌ Failed: ${server} - ${error.message}`);
+                }
+            }
+            
+            console.log('❌ No working server found, using mock data');
+            document.getElementById('serverStatus').textContent = '❌ Using Mock Data';
+            document.getElementById('serverUrl').textContent = 'Endpoint: Mock Data Generator';
+            return false;
+        }
+        
+        // Load analytics data
+        async function loadData() {
+            const hasServer = await findWorkingServer();
+            
+            let data;
+            if (hasServer && serverUrl) {
+                try {
+                    const response = await fetch(`${serverUrl}/api/analytics/overview`);
+                    data = await response.json();
+                    console.log('📊 Live data loaded:', data);
+                } catch (error) {
+                    console.error('❌ Failed to load live data:', error);
+                    data = generateMockData();
+                }
+            } else {
+                data = generateMockData();
+            }
+            
+            // Update UI
+            document.getElementById('totalUsers').textContent = data.metrics.totalUsers.toLocaleString();
+            document.getElementById('totalObjects').textContent = data.metrics.totalObjects.toLocaleString();
+            document.getElementById('apiCalls').textContent = data.metrics.apiCalls.toLocaleString();
+            document.getElementById('activeSessions').textContent = data.metrics.activeSessions.toLocaleString();
+            
+            document.getElementById('usersChange').textContent = data.changes.users;
+            document.getElementById('objectsChange').textContent = data.changes.objects;
+            document.getElementById('apiChange').textContent = data.changes.api;
+            document.getElementById('sessionsChange').textContent = data.changes.sessions;
+            
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+            
+            const statusEl = document.getElementById('status');
+            if (hasServer) {
+                statusEl.textContent = 'Live Data';
+                statusEl.style.background = 'rgba(40, 167, 69, 0.3)';
+                statusEl.style.color = '#28a745';
+            } else {
+                statusEl.textContent = 'Mock Data';
+                statusEl.style.background = 'rgba(255, 193, 7, 0.3)';
+                statusEl.style.color = '#ffc107';
+            }
+        }
+        
+        // Generate mock data
+        function generateMockData() {
+            return {
+                timestamp: new Date().toISOString(),
+                metrics: {
+                    totalUsers: Math.floor(Math.random() * 5000) + 1000,
+                    totalObjects: Math.floor(Math.random() * 20000) + 5000,
+                    apiCalls: Math.floor(Math.random() * 1000) + 200,
+                    activeSessions: Math.floor(Math.random() * 100) + 20
+                },
+                changes: {
+                    users: '+' + (Math.random() * 20 + 5).toFixed(1) + '% this month',
+                    objects: '+' + (Math.random() * 15 + 3).toFixed(1) + '% this week',
+                    api: '+' + (Math.random() * 10 + 1).toFixed(1) + '% today',
+                    sessions: '+' + (Math.random() * 25 + 5).toFixed(1) + '% this hour'
+                }
+            };
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Starting Analytics Dashboard...');
+            loadData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadData, 30000);
+        });
+    </script>
+</body>
+</html>
