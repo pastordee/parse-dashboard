@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Analytics Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .connection-status.connected {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+        }
+        
+        .connection-status.disconnected {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.5);
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.5);
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            text-decoration: none;
+            transform: translateX(-5px);
+        }
+        
+        .server-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .server-info h3 {
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        .server-endpoint {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-value {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .metric-change.positive {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .metric-change.negative {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .metric-timestamp {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 32px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 350px;
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+        
+        .chart-placeholder {
+            height: 260px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.8;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        .error-message {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            color: #dc3545;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .refresh-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-left: 16px;
+        }
+        
+        .refresh-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .data-source {
+            font-size: 12px;
+            opacity: 0.7;
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        
+        .realtime-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 2s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        
+        .config-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .config-info h3 {
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .config-info code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="#" onclick="history.back()" class="back-button">
+            ← Back to Dashboard
+        </a>
+        
+        <div class="header">
+            <div class="connection-status" id="connectionStatus">Connecting...</div>
+            <h1>🌐 Remote Analytics Dashboard</h1>
+            <p>Real-time analytics from your dedicated analytics server</p>
+            <button class="refresh-button" onclick="refreshData()">Refresh Data</button>
+        </div>
+        
+        <div class="server-info">
+            <h3>📡 Analytics Server Connection</h3>
+            <div class="server-endpoint" id="serverEndpoint">Connecting to analytics server...</div>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="totalUsers">--</div>
+                <div class="metric-label">Total Users</div>
+                <div class="metric-change positive" id="usersChange">Loading...</div>
+                <div class="metric-timestamp" id="usersTimestamp"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="totalObjects">--</div>
+                <div class="metric-label">Total Objects</div>
+                <div class="metric-change positive" id="objectsChange">Loading...</div>
+                <div class="metric-timestamp" id="objectsTimestamp"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="apiCalls">--</div>
+                <div class="metric-label">API Calls (24h)</div>
+                <div class="metric-change positive" id="apiChange">Loading...</div>
+                <div class="metric-timestamp" id="apiTimestamp"></div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="activeSessions">--</div>
+                <div class="metric-label">Active Sessions</div>
+                <div class="metric-change positive" id="sessionsChange">Loading...</div>
+                <div class="metric-timestamp" id="sessionsTimestamp"></div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span class="realtime-indicator"></span>
+                    User Growth Trend
+                </div>
+                <div class="chart-placeholder" id="userGrowthChart">
+                    <div class="loading">Loading user growth data...</div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span class="realtime-indicator"></span>
+                    API Usage Distribution
+                </div>
+                <div class="chart-placeholder" id="apiUsageChart">
+                    <div class="loading">Loading API usage data...</div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span class="realtime-indicator"></span>
+                    Server Performance
+                </div>
+                <div class="chart-placeholder" id="performanceChart">
+                    <div class="loading">Loading performance metrics...</div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <span class="realtime-indicator"></span>
+                    Data Storage Trends
+                </div>
+                <div class="chart-placeholder" id="storageChart">
+                    <div class="loading">Loading storage data...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-source">
+            <span class="realtime-indicator"></span>
+            Data refreshed every 30 seconds from remote analytics server
+        </div>
+        
+        <div class="config-info">
+            <h3>🔧 Remote Analytics Configuration</h3>
+            <p>This dashboard connects directly to your analytics server for real-time data:</p>
+            <ul>
+                <li><strong>Primary Server:</strong> <code>192.168.0.138:${ENV.MAIN_PORT}</code> (your remote server)</li>
+                <li><strong>Fallback Server:</strong> <code>localhost:3001</code> (local demo server)</li>
+                <li><strong>Protocol:</strong> <code>HTTP</code> with CORS enabled</li>
+                <li><strong>Update Interval:</strong> <code>30 seconds</code></li>
+                <li><strong>Current Status:</strong> <span id="currentServerStatus">Loading...</span></li>
+            </ul>
+            <p><strong>Demo Server API Endpoints:</strong></p>
+            <ul>
+                <li><code>/api/analytics/overview</code> - Overall metrics</li>
+                <li><code>/api/analytics/users</code> - User statistics</li>
+                <li><code>/api/analytics/performance</code> - Server performance</li>
+                <li><code>/api/analytics/realtime</code> - Live data updates</li>
+            </ul>
+            <p><strong>How it works:</strong></p>
+            <ol>
+                <li>First tries to connect to local demo server at <code>localhost:3001</code></li>
+                <li>If demo server fails, tries your remote server at <code>192.168.0.138</code></li>
+                <li>If both fail, falls back to mock data for demonstration</li>
+                <li>Demo server provides realistic, live-updating analytics data</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration - Try demo server first since we know it's working
+        const ANALYTICS_SERVER_IP = '192.168.0.138';
+        const ANALYTICS_SERVER_PORT = getPortFromEnv() || '3000'; // Fallback port
+        const ANALYTICS_BASE_URL = `http://${ANALYTICS_SERVER_IP}:${ANALYTICS_SERVER_PORT}`;
+        
+        // Demo server that we know is working
+        const DEMO_SERVER_URL = 'http://localhost:3001';
+        
+        let connectionStatus = 'connecting';
+        let retryCount = 0;
+        const maxRetries = 2;
+        let currentServerUrl = DEMO_SERVER_URL; // Start with demo server first
+        
+        // Function to get port from environment variable or URL params
+        function getPortFromEnv() {
+            // Try to get from URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            const port = urlParams.get('port');
+            if (port) return port;
+            
+            // Try to get from a global variable if set by the server
+            if (typeof window.ENV_MAIN_PORT !== 'undefined') {
+                return window.ENV_MAIN_PORT;
+            }
+            
+            // Default fallback
+            return null;
+        }
+        
+        // Update connection status
+        function updateConnectionStatus(status, message = '') {
+            const statusElement = document.getElementById('connectionStatus');
+            const serverEndpoint = document.getElementById('serverEndpoint');
+            
+            connectionStatus = status;
+            statusElement.className = `connection-status ${status}`;
+            
+            switch (status) {
+                case 'connected':
+                    statusElement.textContent = 'Connected';
+                    serverEndpoint.textContent = `${currentServerUrl} - Active`;
+                    // Update status in config section
+                    const configStatus = document.getElementById('currentServerStatus');
+                    if (configStatus) {
+                        const serverType = currentServerUrl === DEMO_SERVER_URL ? 'Demo Server' : 'Remote Server';
+                        configStatus.innerHTML = `<span style="color: #28a745;">✅ Connected to ${serverType}</span>`;
+                    }
+                    break;
+                case 'disconnected':
+                    statusElement.textContent = 'Disconnected';
+                    serverEndpoint.textContent = `${currentServerUrl} - Unavailable`;
+                    const configStatusDisc = document.getElementById('currentServerStatus');
+                    if (configStatusDisc) {
+                        configStatusDisc.innerHTML = `<span style="color: #dc3545;">❌ Server Unavailable</span>`;
+                    }
+                    break;
+                case 'connecting':
+                    statusElement.textContent = 'Connecting...';
+                    serverEndpoint.textContent = `Connecting to ${currentServerUrl}...`;
+                    const configStatusConn = document.getElementById('currentServerStatus');
+                    if (configStatusConn) {
+                        configStatusConn.innerHTML = `<span style="color: #ffc107;">🔄 Connecting...</span>`;
+                    }
+                    break;
+            }
+            
+            if (message) {
+                showError(message);
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `
+                <div class="error-message">
+                    <strong>Connection Error:</strong> ${message}
+                    <br><small>Falling back to mock data for demonstration</small>
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Fetch data from analytics server
+        async function fetchAnalyticsData() {
+            try {
+                updateConnectionStatus('connecting');
+                console.log(`🔄 Attempting connection to: ${currentServerUrl}`);
+                
+                // Create a timeout promise
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Request timeout')), 3000)
+                );
+                
+                // Try to fetch data from analytics server with timeout
+                const fetchPromise = fetch(`${currentServerUrl}/api/analytics/overview`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+                
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log(`✅ Successfully connected to: ${currentServerUrl}`);
+                updateConnectionStatus('connected');
+                retryCount = 0;
+                return data;
+                
+            } catch (error) {
+                console.warn(`❌ Connection failed to ${currentServerUrl}:`, error.message);
+                
+                // If we're using demo server and it fails, try mock data
+                if (currentServerUrl === DEMO_SERVER_URL) {
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`🔄 Retry ${retryCount}/${maxRetries} for demo server...`);
+                        updateConnectionStatus('connecting', `Demo server retry ${retryCount}/${maxRetries}: ${error.message}`);
+                        
+                        // Wait before retry
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return fetchAnalyticsData();
+                    } else {
+                        console.log('🔄 Demo server failed, trying remote server...');
+                        currentServerUrl = ANALYTICS_BASE_URL;
+                        retryCount = 0;
+                        updateConnectionStatus('connecting', `Demo server unavailable, trying remote server...`);
+                        return fetchAnalyticsData();
+                    }
+                } else {
+                    // Remote server failed, use mock data
+                    console.log('❌ All servers failed, using mock data');
+                    updateConnectionStatus('disconnected', `Cannot reach any analytics server: ${error.message}`);
+                    return generateMockData();
+                }
+            }
+        }
+        
+        // Generate mock data when server is unavailable
+        function generateMockData() {
+            const now = new Date();
+            return {
+                timestamp: now.toISOString(),
+                metrics: {
+                    totalUsers: Math.floor(Math.random() * 5000) + 1000,
+                    totalObjects: Math.floor(Math.random() * 20000) + 5000,
+                    apiCalls: Math.floor(Math.random() * 1000) + 200,
+                    activeSessions: Math.floor(Math.random() * 100) + 20
+                },
+                changes: {
+                    users: '+' + (Math.random() * 20 + 5).toFixed(1) + '% this month',
+                    objects: '+' + (Math.random() * 15 + 3).toFixed(1) + '% this week',
+                    api: (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 10 + 1).toFixed(1) + '% today',
+                    sessions: '+' + (Math.random() * 25 + 5).toFixed(1) + '% this hour'
+                },
+                source: 'mock' // Indicates this is fallback data
+            };
+        }
+        
+        // Update the dashboard with new data
+        function updateDashboard(data) {
+            const timestamp = new Date(data.timestamp).toLocaleTimeString();
+            
+            // Update metrics
+            document.getElementById('totalUsers').textContent = data.metrics.totalUsers.toLocaleString();
+            document.getElementById('totalObjects').textContent = data.metrics.totalObjects.toLocaleString();
+            document.getElementById('apiCalls').textContent = data.metrics.apiCalls.toLocaleString();
+            document.getElementById('activeSessions').textContent = data.metrics.activeSessions.toLocaleString();
+            
+            // Update changes
+            document.getElementById('usersChange').textContent = data.changes.users;
+            document.getElementById('objectsChange').textContent = data.changes.objects;
+            document.getElementById('apiChange').textContent = data.changes.api;
+            document.getElementById('sessionsChange').textContent = data.changes.sessions;
+            
+            // Update timestamps
+            document.getElementById('usersTimestamp').textContent = `Updated: ${timestamp}`;
+            document.getElementById('objectsTimestamp').textContent = `Updated: ${timestamp}`;
+            document.getElementById('apiTimestamp').textContent = `Updated: ${timestamp}`;
+            document.getElementById('sessionsTimestamp').textContent = `Updated: ${timestamp}`;
+            
+            // Update chart placeholders with data indicators
+            const chartStatus = data.source === 'mock' ? 'Mock Data (Server Unavailable)' : 'Live Data from Analytics Server';
+            
+            document.getElementById('userGrowthChart').innerHTML = `
+                <div style="text-align: center; line-height: 1.4;">
+                    📈 User Growth Chart<br>
+                    <small style="opacity: 0.7;">${chartStatus}</small><br>
+                    <strong style="font-size: 24px; margin-top: 10px; display: block;">${data.metrics.totalUsers.toLocaleString()}</strong>
+                    <small>Total Users</small>
+                </div>
+            `;
+            
+            document.getElementById('apiUsageChart').innerHTML = `
+                <div style="text-align: center; line-height: 1.4;">
+                    🔄 API Usage Chart<br>
+                    <small style="opacity: 0.7;">${chartStatus}</small><br>
+                    <strong style="font-size: 24px; margin-top: 10px; display: block;">${data.metrics.apiCalls.toLocaleString()}</strong>
+                    <small>API Calls (24h)</small>
+                </div>
+            `;
+            
+            document.getElementById('performanceChart').innerHTML = `
+                <div style="text-align: center; line-height: 1.4;">
+                    ⚡ Performance Chart<br>
+                    <small style="opacity: 0.7;">${chartStatus}</small><br>
+                    <strong style="font-size: 24px; margin-top: 10px; display: block;">${data.metrics.activeSessions}</strong>
+                    <small>Active Sessions</small>
+                </div>
+            `;
+            
+            document.getElementById('storageChart').innerHTML = `
+                <div style="text-align: center; line-height: 1.4;">
+                    💾 Storage Chart<br>
+                    <small style="opacity: 0.7;">${chartStatus}</small><br>
+                    <strong style="font-size: 24px; margin-top: 10px; display: block;">${data.metrics.totalObjects.toLocaleString()}</strong>
+                    <small>Total Objects</small>
+                </div>
+            `;
+        }
+        
+        // Refresh data manually
+        async function refreshData() {
+            const data = await fetchAnalyticsData();
+            updateDashboard(data);
+        }
+        
+        // Initialize dashboard
+        async function initDashboard() {
+            console.log('🚀 Initializing Remote Analytics Dashboard');
+            console.log(`📡 Demo server: ${DEMO_SERVER_URL}`);
+            console.log(`🔄 Remote server: ${ANALYTICS_BASE_URL}`);
+            
+            // Initial data load
+            const data = await fetchAnalyticsData();
+            updateDashboard(data);
+            
+            // Set up auto-refresh every 30 seconds
+            setInterval(async () => {
+                if (connectionStatus !== 'connecting') {
+                    const data = await fetchAnalyticsData();
+                    updateDashboard(data);
+                }
+            }, 30000);
+            
+            // Add some visual feedback
+            const cards = document.querySelectorAll('.metric-card, .chart-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+        }
+        
+        // Start when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+        
+        // Handle page visibility changes to pause/resume updates
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && connectionStatus === 'disconnected') {
+                console.log('🔄 Page visible again, attempting to reconnect...');
+                refreshData();
+            }
+        });
+    </script>
+</body>
+</html>

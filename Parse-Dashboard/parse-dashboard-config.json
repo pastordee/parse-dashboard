@@ -8,7 +8,8 @@
       "appNameForURL": "mock-app-id",
       "iconName": "",
       "primaryBackgroundColor": "#169CEE",
-      "secondaryBackgroundColor": "#0F5B8A"
+      "secondaryBackgroundColor": "#0F5B8A",
+      "analyticsPage": "/Users/prayercircle/Development/parse-dashboard/parse-dashboard-analytics-dist/simple-analytics.html"
     }
   ],
   "users": [

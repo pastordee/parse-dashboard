@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Custom Analytics</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .back-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .back-button:hover {
+            background: #0056b3;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 8px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .chart-area {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .chart-placeholder {
+            height: 200px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 16px;
+        }
+        
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b8e2ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            margin: 0 0 12px 0;
+            color: #0056b3;
+        }
+        
+        .instructions code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="#" onclick="history.back()" class="back-button">← Back to Dashboard</a>
+        
+        <div class="header">
+            <h1>Simple Custom Analytics Example</h1>
+            <p>This is a basic template for creating your own custom analytics page.</p>
+        </div>
+        
+        <div class="metrics">
+            <div class="metric-box">
+                <div class="metric-value" id="users-count">Loading...</div>
+                <div class="metric-label">Total Users</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" id="objects-count">Loading...</div>
+                <div class="metric-label">Total Objects</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" id="api-calls">Loading...</div>
+                <div class="metric-label">API Calls Today</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" id="sessions">Loading...</div>
+                <div class="metric-label">Active Sessions</div>
+            </div>
+        </div>
+        
+        <div class="chart-area">
+            <h3>Usage Chart</h3>
+            <div class="chart-placeholder">
+                Add your chart here using Chart.js, D3.js, or any visualization library
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Customize This Page</h3>
+            <ul>
+                <li>Replace the placeholder metrics with real data from your Parse Server</li>
+                <li>Add your own CSS styling to match your brand</li>
+                <li>Include chart libraries like Chart.js for visualizations</li>
+                <li>Connect to your Parse Server using <code>Parse.Query</code> or fetch API</li>
+                <li>Update the <code>analyticsPage</code> config to point to your file</li>
+            </ul>
+            <p><strong>Example config:</strong></p>
+            <pre><code>{
+  "appId": "your-app-id",
+  "analyticsPage": "/path/to/your/custom-analytics.html"
+}</code></pre>
+        </div>
+    </div>
+    
+    <script>
+        // Example: Load sample data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate loading data
+            setTimeout(() => {
+                document.getElementById('users-count').textContent = '1,234';
+                document.getElementById('objects-count').textContent = '5,678';
+                document.getElementById('api-calls').textContent = '234';
+                document.getElementById('sessions').textContent = '45';
+            }, 1000);
+            
+            // You can replace this with real Parse Server queries:
+            /*
+            // Initialize Parse
+            Parse.initialize("YOUR_APP_ID", "YOUR_JS_KEY");
+            Parse.serverURL = 'http://your-parse-server.com/parse';
+            
+            // Query users
+            const userQuery = new Parse.Query(Parse.User);
+            userQuery.count().then(count => {
+                document.getElementById('users-count').textContent = count.toLocaleString();
+            });
+            
+            // Query custom objects
+            const MyClass = Parse.Object.extend("MyClass");
+            const objectQuery = new Parse.Query(MyClass);
+            objectQuery.count().then(count => {
+                document.getElementById('objects-count').textContent = count.toLocaleString();
+            });
+            */
+        });
+    </script>
+</body>
+</html>

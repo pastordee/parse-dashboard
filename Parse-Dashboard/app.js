@@ -1102,7 +1102,33 @@ You have direct access to the Parse database through function calls, so you can 
         }
         return res.redirect(`${mountPath}login`);
       }
-      res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+      
+      // Extract app ID from URL
+      const appIdMatch = req.path.match(/\/apps\/([^\/]+)\/analytics_dashboard/);
+      const appId = appIdMatch ? appIdMatch[1] : null;
+      
+      // Find the app configuration
+      let customAnalyticsPath = null;
+      if (appId && config.apps) {
+        const app = config.apps.find(app => app.appId === appId || app.appName === appId);
+        if (app && app.analyticsPage) {
+          customAnalyticsPath = app.analyticsPage;
+        }
+      }
+      
+      // Use custom analytics page if specified, otherwise use default
+      const analyticsFile = customAnalyticsPath || path.join(__dirname, 'public', 'analytics.html');
+      
+      // Check if custom file exists
+      if (customAnalyticsPath) {
+        const fs = require('fs');
+        if (!fs.existsSync(customAnalyticsPath)) {
+          console.warn(`Custom analytics page not found: ${customAnalyticsPath}, falling back to default`);
+          return res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+        }
+      }
+      
+      res.sendFile(path.resolve(analyticsFile));
     });
 
     // For every other request, go to index.html. Let client-side handle the rest.

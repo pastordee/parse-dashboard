@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analytics Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Analytics Server Connection Test</h1>
+    <div id="testResults"></div>
+    
+    <script>
+        async function testConnection() {
+            const results = document.getElementById('testResults');
+            
+            // Test 1: Remote Server
+            results.innerHTML += '<div class="test-result loading">🔄 Testing remote server (192.168.0.138:3000)...</div>';
+            
+            try {
+                const remoteResponse = await fetch('http://192.168.0.138:3000/api/analytics/overview', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (remoteResponse.ok) {
+                    const remoteData = await remoteResponse.json();
+                    results.innerHTML += '<div class="test-result success">✅ Remote server connection successful!</div>';
+                    results.innerHTML += `<pre>${JSON.stringify(remoteData, null, 2)}</pre>`;
+                } else {
+                    throw new Error(`HTTP ${remoteResponse.status}`);
+                }
+            } catch (error) {
+                results.innerHTML += `<div class="test-result error">❌ Remote server failed: ${error.message}</div>`;
+                
+                // Test 2: Local Demo Server
+                results.innerHTML += '<div class="test-result loading">🔄 Testing local demo server (localhost:3001)...</div>';
+                
+                try {
+                    const localResponse = await fetch('http://localhost:3001/api/analytics/overview', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (localResponse.ok) {
+                        const localData = await localResponse.json();
+                        results.innerHTML += '<div class="test-result success">✅ Local demo server connection successful!</div>';
+                        results.innerHTML += `<pre>${JSON.stringify(localData, null, 2)}</pre>`;
+                        results.innerHTML += '<div class="test-result success">🎯 Analytics dashboard should now work with demo data!</div>';
+                    } else {
+                        throw new Error(`HTTP ${localResponse.status}`);
+                    }
+                } catch (localError) {
+                    results.innerHTML += `<div class="test-result error">❌ Local demo server also failed: ${localError.message}</div>`;
+                    results.innerHTML += '<div class="test-result error">🚨 No analytics server available. Please start the demo server with: npm run demo-analytics:3001</div>';
+                }
+            }
+        }
+        
+        // Run test on page load
+        testConnection();
+    </script>
+</body>
+</html>

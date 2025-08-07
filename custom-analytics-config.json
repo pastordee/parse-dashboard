@@ -1,0 +1,33 @@
+{
+  "apps": [
+    {
+      "serverURL": "http://localhost:1339/parse",
+      "appId": "analytics-demo-app",
+      "masterKey": "your-master-key-here",
+      "appName": "Analytics Demo",
+      "supportedPushLocales": ["en", "es", "fr"],
+      "analytics": true
+    },
+    {
+      "serverURL": "http://localhost:1339/parse",
+      "appId": "custom-analytics-app", 
+      "masterKey": "your-master-key-here",
+      "appName": "Custom Analytics Demo",
+      "supportedPushLocales": ["en", "es", "fr"],
+      "analytics": true,
+      "analyticsPage": "/Users/prayercircle/Development/parse-dashboard/custom-analytics-demo.html"
+    }
+  ],
+  "users": [
+    {
+      "user": "admin",
+      "pass": "password",
+      "apps": [
+        {"appId": "analytics-demo-app"},
+        {"appId": "custom-analytics-app"}
+      ]
+    }
+  ],
+  "useEncryptedPasswords": false,
+  "trustProxy": false
+}

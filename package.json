@@ -143,6 +143,9 @@
     "generate": "node scripts/generate.js",
     "prepare": "webpack --config webpack/publish.config.js --progress",
     "start": "node ./Parse-Dashboard/index.js",
+    "demo-analytics": "node demo-analytics-server.js",
+    "demo-analytics:3001": "MAIN_PORT=3001 node demo-analytics-server.js",
+    "demo-analytics:remote": "MAIN_PORT=3001 node demo-analytics-server.js",
     "madge:circular": "node_modules/.bin/madge ./src --circular",
     "semantic-release": "semantic-release"
   },

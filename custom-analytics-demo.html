@@ -1,0 +1,345 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Analytics Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .analytics-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .analytics-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+        
+        .analytics-header h1 {
+            margin: 0 0 12px 0;
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .analytics-header p {
+            margin: 0;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-value {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .metric-change.positive {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        
+        .metric-change.negative {
+            background: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 32px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 300px;
+        }
+        
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+        
+        .chart-placeholder {
+            height: 240px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.8;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            text-decoration: none;
+            transform: translateX(-5px);
+        }
+        
+        .back-button svg {
+            margin-right: 10px;
+        }
+        
+        .custom-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .integration-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .integration-info h3 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+            opacity: 0.95;
+        }
+        
+        .integration-info code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-badge">Custom Analytics</div>
+    
+    <div class="analytics-container">
+        <a href="#" onclick="history.back()" class="back-button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15,18 9,12 15,6"></polyline>
+            </svg>
+            Back to Dashboard
+        </a>
+        
+        <div class="analytics-header">
+            <h1>🎨 Custom Analytics Dashboard</h1>
+            <p>Your personalized analytics experience - fully customizable and powerful</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">2,847</div>
+                <div class="metric-label">Custom Users</div>
+                <div class="metric-change positive">+18% from last month</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">12,391</div>
+                <div class="metric-label">Custom Objects</div>
+                <div class="metric-change positive">+25% from last month</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">489</div>
+                <div class="metric-label">API Calls (Today)</div>
+                <div class="metric-change positive">+7% from yesterday</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value">67</div>
+                <div class="metric-label">Active Sessions</div>
+                <div class="metric-change positive">+12% from last hour</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">📈 Revenue Growth Trend</div>
+                <div class="chart-placeholder">Your Custom Chart Here</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">🌍 Geographic Distribution</div>
+                <div class="chart-placeholder">Custom Map Visualization</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">⚡ Performance Metrics</div>
+                <div class="chart-placeholder">Real-time Performance Data</div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">🎯 Conversion Funnel</div>
+                <div class="chart-placeholder">Custom Funnel Analysis</div>
+            </div>
+        </div>
+        
+        <div class="integration-info">
+            <h3>🔧 Custom Analytics Integration</h3>
+            <p>This is your custom analytics page! You can:</p>
+            <ul>
+                <li>Connect to your Parse Server using <code>fetch()</code> or <code>Parse.Query</code></li>
+                <li>Integrate with Chart.js, D3.js, or any visualization library</li>
+                <li>Add real-time updates with WebSockets</li>
+                <li>Customize the design to match your brand</li>
+                <li>Include your own KPIs and business metrics</li>
+            </ul>
+            <p><strong>Configuration:</strong> Set <code>analyticsPage</code> in your app config to point to your custom HTML file.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Add some dynamic behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate real-time updates
+            setInterval(function() {
+                const sessionElement = document.querySelector('.metric-card:last-child .metric-value');
+                const currentValue = parseInt(sessionElement.textContent);
+                const newValue = Math.max(1, currentValue + Math.floor(Math.random() * 5 - 2));
+                sessionElement.textContent = newValue;
+            }, 3000);
+            
+            // Add some animation
+            const cards = document.querySelectorAll('.metric-card, .chart-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+            
+            // Add hover effects for metrics
+            document.querySelectorAll('.metric-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.15)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Custom Analytics</title>
+    <!-- Custom styles -->
+</head>
+<body>
+    <div class="analytics-container">
+        <a href="#" onclick="history.back()">← Back</a>
+        <h1>My Custom Dashboard</h1>
+        <!-- Custom content, metrics, charts -->
+    </div>
+    <script>
+        // Custom JavaScript for data loading
+    </script>
+</body>
+</html>
