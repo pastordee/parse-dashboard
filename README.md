@@ -37,9 +37,9 @@ npx parse-dashboard --config your-config.json
 ```
 
 ### 📚 Documentation
-- **[📖 Complete Guide](ANALYTICS_GUIDE.md)** - Comprehensive documentation and API reference
-- **[⚡ Quick Reference](QUICK_REFERENCE.md)** - Developer cheat sheet and common patterns  
-- **[🎯 Step-by-Step Tutorial](TUTORIAL.md)** - 15-minute hands-on tutorial with demo server
+- **[📖 Complete Guide](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/ANALYTICS_GUIDE.md)** - Comprehensive documentation and API reference
+- **[⚡ Quick Reference](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/QUICK_REFERENCE.md)** - Developer cheat sheet and common patterns  
+- **[🎯 Step-by-Step Tutorial](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/TUTORIAL.md)** - 15-minute hands-on tutorial with demo server
 
 ### 🔧 Analytics Features
 - **Overview Dashboard**: Total users, active users, installation metrics with trend indicators
@@ -47,6 +47,27 @@ npx parse-dashboard --config your-config.json
 - **Performance Monitor**: API response times, error rates, system performance metrics
 - **Slow Query Analyzer**: Database optimization insights with class-based filtering
 - **Explorer Tool**: Custom analytics queries with flexible time ranges
+
+### 📸 Analytics Dashboard Preview
+
+<div align="center">
+
+| **📊 Dashboard Overview** | **📈 App Health Overview** |
+|:---:|:---:|
+| ![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png) | ![Overview Page](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/overview-detailed.png) |
+| *Real-time metrics with trend indicators and performance charts* | *Comprehensive app health monitoring with user engagement insights* |
+
+| **🎯 Explorer Tool** | **⚡ Performance Monitoring** |
+|:---:|:---:|
+| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/explorer-interface.png) | ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/performance-charts.png) |
+| *Custom analytics queries with flexible date ranges* | *API response time tracking and system performance metrics* |
+
+| **🔄 Retention Analysis** | **🐌 Slow Query Analysis** |
+|:---:|:---:|
+| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/retention-matrix.png) | ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/slow-queries-table.png) |
+| *User retention heatmap with configurable periods* | *Database optimization insights with detailed query performance* |
+
+</div>
 
 ---
 

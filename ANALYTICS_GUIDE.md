@@ -46,6 +46,23 @@ Parse Dashboard Analytics extends the standard Parse Dashboard with comprehensiv
 - **Demo Server**: Complete mock server for testing and development
 - **Production Ready**: Optimized builds and deployment options
 
+## Visual Overview
+
+The analytics dashboard provides comprehensive insights through intuitive interfaces:
+
+### Dashboard Overview
+![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png)
+*Real-time metrics dashboard showing user activity, performance indicators, and system health*
+
+### Detailed Analytics Views
+| Component | Description |
+|-----------|-------------|
+| ![Overview](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/overview-detailed.png) | **App Health Overview** - User engagement tracking and billing insights |
+| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/explorer-interface.png) | **Explorer Interface** - Custom query builder with flexible date ranges |
+| ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/performance-charts.png) | **Performance Monitoring** - Real-time API response tracking |
+| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/retention-matrix.png) | **Retention Matrix** - User retention heatmap with configurable periods |
+| ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/slow-queries-table.png) | **Query Optimization** - Database performance analysis and recommendations |
+
 ## Installation
 
 ### Option 1: NPM Package (Recommended)

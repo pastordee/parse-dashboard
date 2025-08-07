@@ -20,6 +20,15 @@ By the end of this tutorial, you'll have:
 
 ---
 
+## What You'll Build
+
+By following this tutorial, you'll create a fully functional analytics dashboard:
+
+![Complete Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png)
+*The complete analytics dashboard you'll have running in 15 minutes*
+
+---
+
 ## Step 1: Installation (2 minutes)
 
 ### Option A: Use NPM Package (Recommended)
@@ -177,6 +186,9 @@ Parse Dashboard running on port 4040.
    - **Performance**: Monitor system performance
    - **Slow Queries**: Identify database bottlenecks
 
+![Analytics Navigation](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png)
+*The analytics dashboard showing all available components*
+
 **✅ Checkpoint**: You can see analytics data and navigate between different analytics views.
 
 ---
@@ -184,11 +196,13 @@ Parse Dashboard running on port 4040.
 ## Step 6: Understanding the Components (3 minutes)
 
 ### Overview Dashboard
+![App Overview](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/overview-detailed.png)
 - **Purpose**: High-level KPIs and metrics
 - **Refresh**: Automatically updates every 30 seconds
 - **Data**: User counts, installation metrics, trends
 
 ### Retention Analysis
+![Retention Matrix](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/retention-matrix.png)
 - **Purpose**: Track how users return over time
 - **Features**: 
   - Multiple time periods (28 days to 5 years)
@@ -197,14 +211,22 @@ Parse Dashboard running on port 4040.
 - **Try**: Change the time period and watch data auto-refresh
 
 ### Performance Monitor
+![Performance Charts](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/performance-charts.png)
 - **Purpose**: System performance tracking
 - **Metrics**: Response times, error rates, throughput
 - **Charts**: Real-time performance visualization
 
 ### Slow Queries
+![Slow Query Analysis](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/slow-queries-table.png)
 - **Purpose**: Database optimization
 - **Features**: Query analysis, class filtering, performance recommendations
 - **Use Case**: Identify slow database operations
+
+### Explorer Tool
+![Explorer Interface](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/explorer-interface.png)
+- **Purpose**: Custom analytics queries
+- **Features**: Flexible date ranges, multiple query types
+- **Use Case**: Build custom reports and analyze specific metrics
 
 **✅ Checkpoint**: You understand what each analytics component does.
 
