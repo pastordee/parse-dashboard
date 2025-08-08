@@ -54,17 +54,17 @@ npx parse-dashboard --config your-config.json
 
 | **📊 Dashboard Overview** | **📈 App Health Overview** |
 |:---:|:---:|
-| ![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png) | ![Overview Page](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/overview-detailed.png) |
+| ![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/1.png) | ![Overview Page](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/2.png) |
 | *Real-time metrics with trend indicators and performance charts* | *Comprehensive app health monitoring with user engagement insights* |
 
 | **🎯 Explorer Tool** | **⚡ Performance Monitoring** |
 |:---:|:---:|
-| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/explorer-interface.png) | ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/performance-charts.png) |
+| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/3.png) | ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/4.png) |
 | *Custom analytics queries with flexible date ranges* | *API response time tracking and system performance metrics* |
 
 | **🔄 Retention Analysis** | **🐌 Slow Query Analysis** |
 |:---:|:---:|
-| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/retention-matrix.png) | ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/slow-queries-table.png) |
+| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/5.png) | ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/6.png) |
 | *User retention heatmap with configurable periods* | *Database optimization insights with detailed query performance* |
 
 </div>

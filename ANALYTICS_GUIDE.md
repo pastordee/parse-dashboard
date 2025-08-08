@@ -51,17 +51,17 @@ Parse Dashboard Analytics extends the standard Parse Dashboard with comprehensiv
 The analytics dashboard provides comprehensive insights through intuitive interfaces:
 
 ### Dashboard Overview
-![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/dashboard-overview.png)
+![Analytics Dashboard](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/1.png)
 *Real-time metrics dashboard showing user activity, performance indicators, and system health*
 
 ### Detailed Analytics Views
 | Component | Description |
 |-----------|-------------|
-| ![Overview](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/overview-detailed.png) | **App Health Overview** - User engagement tracking and billing insights |
-| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/explorer-interface.png) | **Explorer Interface** - Custom query builder with flexible date ranges |
-| ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/performance-charts.png) | **Performance Monitoring** - Real-time API response tracking |
-| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/retention-matrix.png) | **Retention Matrix** - User retention heatmap with configurable periods |
-| ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/docs/images/slow-queries-table.png) | **Query Optimization** - Database performance analysis and recommendations |
+| ![Overview](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/2.png) | **App Health Overview** - User engagement tracking and billing insights |
+| ![Explorer](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/3.png) | **Explorer Interface** - Custom query builder with flexible date ranges |
+| ![Performance](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/4.png) | **Performance Monitoring** - Real-time API response tracking |
+| ![Retention](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/5.png) | **Retention Matrix** - User retention heatmap with configurable periods |
+| ![Slow Queries](https://github.com/pastordee/parse-dashboard/blob/pc_link_with_parse_server/analytic_image/6.png) | **Query Optimization** - Database performance analysis and recommendations |
 
 ## Installation
 
@@ -664,6 +664,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version**: 1.1.2  
-**Last Updated**: January 2025  
+**Version**: 1.1.4  
+**Last Updated**: August 2025  
 **Compatibility**: Parse Server 6.0+, Node.js 18+
