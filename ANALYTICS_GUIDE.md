@@ -664,6 +664,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Version**: 1.1.4  
-**Last Updated**: August 2025  
+**Version**: 7.4.0  
+**Last Updated**: September 2025  
 **Compatibility**: Parse Server 6.0+, Node.js 18+
