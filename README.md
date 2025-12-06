@@ -170,11 +170,14 @@ After starting the dashboard, you can visit http://localhost:4040 in your browse
 ## Compatibility
 
 ### Parse Server
-Parse Dashboard is compatible with the following Parse Server versions.
+Parse Dashboard is compatible with the following versions of Parse Server.
 
-| Parse Dashboard Version | Parse Server Version | Compatible |
-|-------------------------|----------------------|------------|
-| >=1.0                   | >= 2.1.4             | ✅ Yes      |
+| Parse Dashboard | Parse Server     |
+|-----------------|------------------|
+| >= 1.0.0        | >= 2.1.4 < 7.0.0 |
+| >= 8.0.0        | >= 7.0.0         |
+
+Parse Dashboard automatically checks the Parse Server version when connecting and displays a warning if the server version does not meet the minimum required version. The required Parse Server version is defined in the `supportedParseServerVersion` field in `package.json`.
 
 ### Node.js
 Parse Dashboard is continuously tested with the most recent releases of Node.js to ensure compatibility. We follow the [Node.js Long Term Support plan](https://github.com/nodejs/Release) and only test against versions that are officially supported and have not reached their end-of-life date.
@@ -189,32 +192,130 @@ Parse Dashboard is continuously tested with the most recent releases of Node.js 
 
 ### Options
 
-| Parameter                              | Type                | Optional | Default | Example                                          | Description                                                                                                                                                                                                                           |
-|----------------------------------------|---------------------|----------|---------|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `apps`                                 | Array&lt;Object&gt; | no       | -       | `[{ ... }, { ... }]`                             | The apps that are configured for the dashboard.                                                                                                                                                                                       |
-| `apps.appId`                           | String              | yes      | -       | `"myAppId"`                                      | The Application ID for your Parse Server instance.                                                                                                                                                                                    |
-| `apps.masterKey`                       | String \| Function  | yes      | -       | `"exampleMasterKey"`, `() => "exampleMasterKey"` | The master key for full access to Parse Server. It can be provided directly as a String or as a Function returning a String.                                                                                                          |
-| `apps.masterKeyTtl`                    | Number              | no       | -       | `3600`                                           | Time-to-live (TTL) for the master key in seconds. This defines how long the master key is cached before the `masterKey` function is re-triggered.                                                                                     |
-| `apps.serverURL`                       | String              | yes      | -       | `"http://localhost:1337/parse"`                  | The URL where your Parse Server is running.                                                                                                                                                                                           |
-| `apps.appName`                         | String              | no       | -       | `"MyApp"`                                        | The display name of the app in the dashboard.                                                                                                                                                                                         |
-| `infoPanel`                            | Array&lt;Object&gt; | yes      | -       | `[{ ... }, { ... }]`                             | The [info panel](#info-panel) configuration.                                                                                                                                                                                          |
-| `infoPanel[*].title`                   | String              | no       | -       | `User Details`                                   | The panel title.                                                                                                                                                                                                                      |
-| `infoPanel[*].classes`                 | Array&lt;String&gt; | no       | -       | `["_User"]`                                      | The classes for which the info panel should be displayed.                                                                                                                                                                             |
-| `infoPanel[*].cloudCodeFunction`       | String              | no       | -       | `getUserDetails`                                 | The Cloud Code Function which received the selected object in the data browser and returns the response to be displayed in the info panel.                                                                                            |
-| `infoPanel[*].prefetchObjects`         | Number              | yes      | `0`     | `2`                                              | Number of next rows to prefetch when browsing sequential rows. For example, `2` means the next 2 rows will be fetched in advance.                                                                                                     |
-| `infoPanel[*].prefetchStale`           | Number              | yes      | `0`     | `10`                                             | Duration in seconds after which prefetched data is discarded as stale.                                                                                                                                                                |
-| `apps.scripts`                         | Array&lt;Object&gt; | yes      | `[]`    | `[{ ... }, { ... }]`                             | The scripts that can be executed for that app.                                                                                                                                                                                        |
-| `apps.scripts.title`                   | String              | no       | -       | `'Delete User'`                                  | The title that will be displayed in the data browser context menu and the script run confirmation dialog.                                                                                                                             |
-| `apps.scripts.classes`                 | Array&lt;String&gt; | no       | -       | `['_User']`                                      | The classes of Parse Objects for which the scripts can be executed.                                                                                                                                                                   |
-| `apps.scripts.cloudCodeFunction`       | String              | no       | -       | `'deleteUser'`                                   | The name of the Parse Cloud Function to execute.                                                                                                                                                                                      |
-| `apps.scripts.executionBatchSize`      | Integer             | yes      | `1`     | `10`                                             | The batch size with which a script should be executed on all selected objects. For example, with 50 objects selected, a batch size of 10 means the script will run on 10 objects in parallel, running a total of 5 batches in serial. |
-| `apps.scripts.showConfirmationDialog`  | Bool                | yes      | `false` | `true`                                           | Is `true` if a confirmation dialog should be displayed before the script is executed, `false` if the script should be executed immediately.                                                                                           |
-| `apps.scripts.confirmationDialogStyle` | String              | yes      | `info`  | `critical`                                       | The style of the confirmation dialog. Valid values: `info` (blue style), `critical` (red style).                                                                                                                                      |
-| `apps.cloudConfigHistoryLimit`         | Integer             | yes      | `100`   | `100`                                            | The number of historic values that should be saved in the Cloud Config change history. Valid values: `0`...`Number.MAX_SAFE_INTEGER`.                                                                                                 |
+This section provides a comprehensive reference for all Parse Dashboard configuration options that can be used in the configuration file, via CLI arguments, or as environment variables.
+
+#### Root Configuration Keys
+
+| Key | Type | Required | Default | CLI | Env Variable | Example | Description | Links to Details |
+|-----|------|----------|---------|-----|--------------|---------|-------------|------------------|
+| `apps` | Array&lt;Object&gt; | Yes | - | - | `PARSE_DASHBOARD_CONFIG` | `[{...}]` | Array of Parse Server apps to manage | [App Configuration](#app-configuration-apps-array) |
+| `users` | Array&lt;Object&gt; | No | - | - | - | `[{...}]` | User accounts for dashboard authentication | [User Configuration](#user-configuration-users) |
+| `useEncryptedPasswords` | Boolean | No | `false` | - | - | `true` | Use bcrypt hashes instead of plain text passwords | - |
+| `trustProxy` | Boolean \| Number | No | `false` | `--trustProxy` | `PARSE_DASHBOARD_TRUST_PROXY` | `1` | Trust X-Forwarded-* headers when behind proxy | - |
+| `iconsFolder` | String | No | - | - | - | `"icons"` | Folder for app icons (relative or absolute path) | - |
+| `agent` | Object | No | - | - | `PARSE_DASHBOARD_AGENT` (JSON) | `{...}` | AI agent configuration | [AI Agent Configuration](#ai-agent) |
+| `enableResourceCache` | Boolean | No | `false` | - | - | `true` | Enable browser caching of dashboard resources | - |
+
+
+##### App Configuration (`apps` array)
+
+| Parameter                  | Type                | Optional | Default   | CLI                  | Env Variable                         | Example                           | Description                                                                                                  |
+| -------------------------- | ------------------- | -------- | --------- | -------------------- | ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `appId`                    | String              | no       | -         | `--appId`            | `PARSE_DASHBOARD_APP_ID`             | `"myAppId"`                       | The Application ID for your Parse Server instance.                                                           |
+| `masterKey`                | String \| Function  | no       | -         | `--masterKey`        | `PARSE_DASHBOARD_MASTER_KEY`         | `"key"` or `() => "key"`          | Master key for full access. Can be a String or Function returning a String.                                  |
+| `serverURL`                | String              | no       | -         | `--serverURL`        | `PARSE_DASHBOARD_SERVER_URL`         | `"http://localhost:1337/parse"`   | The URL where your Parse Server is running.                                                                  |
+| `appName`                  | String              | yes      | `appId`   | `--appName`          | `PARSE_DASHBOARD_APP_NAME`           | `"MyApp"`                         | Display name of the app.                                                                                     |
+| `masterKeyTtl`             | Number              | yes      | -         | `--masterKeyTtl`     | -                                    | `3600`                            | TTL for master key cache in seconds (only when masterKey is a function).                                        |
+| `readOnlyMasterKey`        | String              | yes      | -         | -                    | -                                    | `"myReadOnlyKey"`                 | Read-only master key that prevents mutations.                                                                |
+| `clientKey`                | String              | yes      | -         | -                    | -                                    | `"myClientKey"`                   | Client key for Parse SDK (legacy, mostly unused).                                                            |
+| `javascriptKey`            | String              | yes      | -         | -                    | -                                    | `"myJsKey"`                       | JavaScript key for Parse SDK (legacy, mostly unused).                                                        |
+| `restKey`                  | String              | yes      | -         | -                    | -                                    | `"myRestKey"`                     | REST API key for server-side REST applications.                                                              |
+| `windowsKey`               | String              | yes      | -         | -                    | -                                    | `"myWindowsKey"`                  | Windows SDK key (legacy, mostly unused).                                                                     |
+| `webhookKey`               | String              | yes      | -         | -                    | -                                    | `"myWebhookKey"`                  | Webhook key for Cloud Code Webhooks.                                                                         |
+| `fileKey`                  | String              | yes      | -         | -                    | -                                    | `"myFileKey"`                     | File key used for file migrations.                                                           |
+| `graphQLServerURL`         | String              | yes      | -         | `--graphQLServerURL` | `PARSE_DASHBOARD_GRAPHQL_SERVER_URL` | `"http://localhost:1337/graphql"` | The URL where your Parse GraphQL Server is running.                                                          |
+| `appNameForURL`            | String              | yes      | `appName` | -                    | -                                    | `"my-app"`                        | URL-friendly name used in dashboard URLs.                                                                    |
+| `production`               | Boolean             | yes      | `false`   | -                    | -                                    | `true`                            | Mark as production environment.                                                                              |
+| `iconName`                 | String              | yes      | -         | -                    | -                                    | `"icon.png"`                      | Filename of app icon (requires global `iconsFolder`).                                                        |
+| `primaryBackgroundColor`   | String              | yes      | -         | -                    | -                                    | `"#FFA500"`                       | Primary background color (CSS value).                                                                        |
+| `secondaryBackgroundColor` | String              | yes      | -         | -                    | -                                    | `"#FF4500"`                       | Secondary background color (CSS value).                                                                      |
+| `supportedPushLocales`     | Array&lt;String&gt; | yes      | -         | -                    | -                                    | `["en","fr"]`                     | Supported locales for push notifications.                                                                    |
+| `preventSchemaEdits`       | Boolean             | yes      | `false`   | -                    | -                                    | `true`                            | Prevent schema modifications through the dashboard.                                                          |
+| `columnPreference`         | Object              | yes      | -         | -                    | -                                    | `{"_User":[...]}`                 | Column visibility/sorting/filtering preferences. See [column preferences details](#prevent-columns-sorting). |
+| `classPreference`          | Object              | yes      | -         | -                    | -                                    | `{"_Role":{...}}`                 | Persistent filters for all users. See [persistent filters details](#persistent-filters).                     |
+| `enableSecurityChecks`     | Boolean             | yes      | `false`   | -                    | -                                    | `true`                            | Enable security checks under App Settings > Security.                                                        |
+| `cloudConfigHistoryLimit`  | Integer             | yes      | `100`     | -                    | -                                    | `200`                             | Number of historic Cloud Config values (0 to Number.MAX_SAFE_INTEGER).                                       |
+| `config`                   | Object              | yes      | -         | -                    | -                                    | `{...}`                           | Settings for storing dashboard config on server.                                                             |
+| `config.className`         | String              | yes      | -         | -                    | -                                    | `"DashboardConfig"`               | Table name for dashboard configuration.                                                                      |
+| `scripts`                  | Array&lt;Object&gt; | yes      | `[]`      | -                    | -                                    | `[{...}]`                         | Scripts for this app. See [scripts table below](#scripts).                                                   |
+| `infoPanel`                | Array&lt;Object&gt; | yes      | -         | -                    | -                                    | `[{...}]`                         | Info panel config. See [info panel table below](#info-panel).                                                |
+
+##### Column Preference Configuration (`apps[].columnPreference.<className>[]`)
+
+Each class in `columnPreference` can have an array of column configurations:
+
+| Parameter         | Type    | Optional | Default | Example       | Description                                        |
+| ------------------|---------|----------|---------|---------------|----------------------------------------------------|
+| `name`            | String  | no       | -       | `"createdAt"` | Column/field name.                                 |
+| `visible`         | Boolean | yes      | `true`  | `false`       | Whether the column is visible in the data browser. |
+| `preventSort`     | Boolean | yes      | `false` | `true`        | Prevent this column from being sortable.           |
+| `filterSortToTop` | Boolean | yes      | `false` | `true`        | Sort this column to the top in filter popup.       |
+
+##### Scripts Configuration (`apps[].scripts[]`)
+
+| Parameter                 | Type                                       | Optional | Default | Example         | Description                                       |
+| --------------------------|--------------------------------------------|----------|---------|-----------------|---------------------------------------------------|
+| `title`                   | String                                     | no       | -       | `"Delete User"` | Title in context menu and confirmation dialog.    |
+| `classes`                 | Array&lt;String&gt; \| Array&lt;Object&gt; | no       | -       | `["_User"]`     | Classes for which script can run.                 |
+| `cloudCodeFunction`       | String                                     | no       | -       | `"deleteUser"`  | Parse Cloud Function name to execute.             |
+| `executionBatchSize`      | Integer                                    | yes      | `1`     | `10`            | Batch size for multiple objects (runs in serial). |
+| `showConfirmationDialog`  | Boolean                                    | yes      | `false` | `true`          | Show confirmation dialog before execution.        |
+| `confirmationDialogStyle` | String                                     | yes      | `info`  | `critical`      | Dialog style: `info` (blue) or `critical` (red).  |
+
+##### Info Panel Configuration (`apps[].infoPanel[]`)
+
+| Parameter           | Type                | Optional | Default | Example            | Description                                   |
+| --------------------|---------------------|----------|---------|--------------------|-----------------------------------------------|
+| `title`             | String              | no       | -       | `"User Details"`   | Panel title.                                  |
+| `classes`           | Array&lt;String&gt; | no       | -       | `["_User"]`        | Classes for which panel is displayed.         |
+| `cloudCodeFunction` | String              | no       | -       | `"getUserDetails"` | Cloud Function receiving selected object.     |
+| `prefetchObjects`   | Number              | yes      | `0`     | `2`                | Number of next rows to prefetch.              |
+| `prefetchStale`     | Number              | yes      | `0`     | `10`               | Seconds after which prefetched data is stale. |
+| `prefetchImage`     | Boolean             | yes      | `true`  | `false`            | Whether to prefetch image content.            |
+| `prefetchVideo`     | Boolean             | yes      | `true`  | `false`            | Whether to prefetch video content.            |
+| `prefetchAudio`     | Boolean             | yes      | `true`  | `false`            | Whether to prefetch audio content.            |
+
+
+##### User Configuration (`users[]`)
+
+| Parameter         | Type                | Optional | Default  | CLI              | Env Variable                    | Example              | Description                            |
+| ------------------|---------------------|----------|----------|------------------|---------------------------------|----------------------|----------------------------------------|
+| `user`            | String              | no       | -        | `--userId`       | `PARSE_DASHBOARD_USER_ID`       | `"admin"`            | Username for authentication.           |
+| `pass`            | String              | no       | -        | `--userPassword` | `PARSE_DASHBOARD_USER_PASSWORD` | `"pass"`             | Password (plain or bcrypt hash).       |
+| `mfa`             | String              | yes      | -        | -                | -                               | `"JBSWY3DPEHPK3PXP"` | MFA secret for TOTP.                   |
+| `mfaAlgorithm`    | String              | yes      | `"SHA1"` | -                | -                               | `"SHA256"`           | TOTP algorithm for MFA.                |
+| `mfaDigits`       | Number              | yes      | `6`      | -                | -                               | `8`                  | Number of digits in MFA code.          |
+| `mfaPeriod`       | Number              | yes      | `30`     | -                | -                               | `60`                 | MFA code validity period in seconds.   |
+| `readOnly`        | Boolean             | yes      | `false`  | -                | -                               | `true`               | Read-only access to all their apps.    |
+| `apps`            | Array&lt;Object&gt; | yes      | -        | -                | -                               | `[{...}]`            | Apps user can access (all if omitted). |
+| `apps[].appId`    | String              | no       | -        | -                | -                               | `"myAppId"`          | App ID user can access.                |
+| `apps[].readOnly` | Boolean             | yes      | `false`  | -                | -                               | `true`               | Read-only access to this specific app. |
+
+#### CLI & Server Options
+
+| Parameter             | Type    | Optional | Default      | CLI                     | Env Variable                             | Example         | Description                                      |
+| ----------------------|---------|----------|--------------|-------------------------|------------------------------------------|-----------------| -------------------------------------------------|
+| `host`                | String  | yes      | `"0.0.0.0"`  | `--host`                | `HOST`                                   | `"127.0.0.1"`   | Host address to bind server.                     |
+| `port`                | Number  | yes      | `4040`       | `--port`                | `PORT`                                   | `8080`          | Port for dashboard server.                       |
+| `mountPath`           | String  | yes      | `"/"`        | `--mountPath`           | `MOUNT_PATH`                             | `"/dashboard"`  | Mount path for application.                      |
+| `allowInsecureHTTP`   | Boolean | yes      | `false`      | `--allowInsecureHTTP`   | `PARSE_DASHBOARD_ALLOW_INSECURE_HTTP`    | `true`          | Allow HTTP (use behind HTTPS proxy).             |
+| `sslKey`              | String  | yes      | -            | `--sslKey`              | `PARSE_DASHBOARD_SSL_KEY`                | `"/path/key"`   | Path to SSL private key for HTTPS.               |
+| `sslCert`             | String  | yes      | -            | `--sslCert`             | `PARSE_DASHBOARD_SSL_CERT`               | `"/path/cert"`  | Path to SSL certificate for HTTPS.               |
+| `cookieSessionSecret` | String  | yes      | Random       | `--cookieSessionSecret` | `PARSE_DASHBOARD_COOKIE_SESSION_SECRET`  | `"secret"`      | Secret for session cookies (for multi-server).   |
+| `cookieSessionMaxAge` | Number  | yes      | Session-only | `--cookieSessionMaxAge` | `PARSE_DASHBOARD_COOKIE_SESSION_MAX_AGE` | `3600`          | Session cookie expiration (seconds).             |
+| `dev`                 | Boolean | yes      | `false`      | `--dev`                 | -                                        | -               | Development mode (**DO NOT use in production**). |
+| `config`              | String  | yes      | -            | `--config`              | -                                        | `"config.json"` | Path to JSON configuration file.                 |
+
+#### Helper CLI Commands
+
+| Command        | Description                                                         |
+| ---------------|---------------------------------------------------------------------|
+| `--createUser` | Interactive tool to generate secure user passwords and MFA secrets. |
+| `--createMFA`  | Interactive tool to generate MFA secrets for existing users.        |
 
 ### File
 
-You can also start the dashboard from the command line with a config file.  To do this, create a new file called `parse-dashboard-config.json` inside your local Parse Dashboard directory hierarchy.  The file should match the following format:
+You can also start the dashboard from the command line with a config file. To do this, create a new file called `parse-dashboard-config.json` inside your local Parse Dashboard directory hierarchy. The file should match the following format:
 
 ```json
 {
@@ -749,6 +850,55 @@ If you create a new user by running `parse-dashboard --createUser`, you will be 
 
  Parse Dashboard follows the industry standard and supports the common OTP algorithm `SHA-1` by default, to be compatible with most authenticator apps. If you have specific security requirements regarding TOTP characteristics (algorithm, digit length, time period) you can customize them by using the guided configuration mentioned above.
 
+### Running Multiple Dashboard Replicas
+
+When deploying Parse Dashboard with multiple replicas behind a load balancer, you need to use a shared session store to ensure that CSRF tokens and user sessions work correctly across all replicas. Without a shared session store, login attempts may fail with "CSRF token validation failed" errors when requests are distributed across different replicas.
+
+#### Using a Custom Session Store
+
+Parse Dashboard supports using any session store compatible with [express-session](https://github.com/expressjs/session). The `sessionStore` option must be configured programmatically when initializing the dashboard.
+
+**Suggested Session Stores:**
+
+- [connect-redis](https://www.npmjs.com/package/connect-redis) - Redis session store
+- [connect-mongo](https://www.npmjs.com/package/connect-mongo) - MongoDB session store
+- [connect-pg-simple](https://www.npmjs.com/package/connect-pg-simple) - PostgreSQL session store
+- [memorystore](https://www.npmjs.com/package/memorystore) - Memory session store with TTL support
+
+**Example using connect-redis:**
+
+```js
+const express = require('express');
+const ParseDashboard = require('parse-dashboard');
+const { createClient } = require('redis');
+const RedisStore = require('connect-redis').default;
+
+// Instantiate Redis client
+const redisClient = createClient({ url: 'redis://localhost:6379' });
+redisClient.connect();
+
+// Instantiate Redis session store
+const cookieSessionStore = new RedisStore({ client: redisClient });
+
+// Configure dashboard with session store
+const dashboard = new ParseDashboard({
+  apps: [...],
+  users: [...],
+}, {
+  cookieSessionStore,
+  cookieSessionSecret: 'your-secret-key',
+});
+
+**Important Notes:**
+
+- The `cookieSessionSecret` option must be set to the same value across all replicas to ensure session cookies work correctly.
+- If `cookieSessionStore` is not provided, Parse Dashboard will use the default in-memory session store, which only works for single-instance deployments.
+- For production deployments with multiple replicas, always configure a shared session store.
+
+#### Alternative: Using Sticky Sessions
+
+If you cannot use a shared session store, you can configure your load balancer to use sticky sessions (session affinity), which ensures that requests from the same user are always routed to the same replica. However, using a shared session store is the recommended approach as it provides better reliability and scalability.
+
 ### Separating App Access Based on User Identity
 If you have configured your dashboard to manage multiple applications, you can restrict the management of apps based on user identity.
 
@@ -969,7 +1119,10 @@ The following example dashboard configuration shows an info panel for the `_User
         "classes": ["_User"],
         "cloudCodeFunction": "getUserDetails",
         "prefetchObjects": 2,
-        "prefetchStale": 10
+        "prefetchStale": 10,
+        "prefetchImage": true,
+        "prefetchVideo": true,
+        "prefetchAudio": true
       }
     ]
   }
@@ -1270,12 +1423,17 @@ Example:
 
 To reduce the time for info panel data to appear, data can be prefetched.
 
-| Parameter                      | Type   | Optional | Default | Example | Description                                                                                                                       |
-|--------------------------------|--------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `infoPanel[*].prefetchObjects` | Number | yes      | `0`     | `2`     | Number of next rows to prefetch when browsing sequential rows. For example, `2` means the next 2 rows will be fetched in advance. |
-| `infoPanel[*].prefetchStale`   | Number | yes      | `0`     | `10`    | Duration in seconds after which prefetched data is discarded as stale.                                                            |
+| Parameter                      | Type    | Optional | Default | Example | Description                                                                                                                       |
+|--------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `infoPanel[*].prefetchObjects` | Number  | yes      | `0`     | `2`     | Number of navigation steps to prefetch ahead when browsing sequential rows. For example, `2` means data for the next 2 navigation steps will be fetched in advance. When using multi-panel mode with batch navigation enabled, each navigation step corresponds to a full batch of panels, so the total number of prefetched objects will be `prefetchObjects × panelCount`. |
+| `infoPanel[*].prefetchStale`   | Number  | yes      | `0`     | `10`    | Duration in seconds after which prefetched data is discarded as stale.                                                            |
+| `infoPanel[*].prefetchImage`   | Boolean | yes      | `true`  | `false` | Whether to prefetch image content when prefetching objects. Only applies when `prefetchObjects` is enabled.                       |
+| `infoPanel[*].prefetchVideo`   | Boolean | yes      | `true`  | `false` | Whether to prefetch video content when prefetching objects. Only applies when `prefetchObjects` is enabled.                       |
+| `infoPanel[*].prefetchAudio`   | Boolean | yes      | `true`  | `false` | Whether to prefetch audio content when prefetching objects. Only applies when `prefetchObjects` is enabled.                       |
 
 Prefetching is particularly useful when navigating through lists of objects. To optimize performance and avoid unnecessary data loading, prefetching is triggered only after the user has moved through 3 consecutive rows using the keyboard down-arrow key or by mouse click.
+
+When `prefetchObjects` is enabled, media content (images, videos, and audio) in the info panel can also be prefetched to improve loading performance. By default, all media types are prefetched, but you can selectively disable prefetching for specific media types using the `prefetchImage`, `prefetchVideo`, and `prefetchAudio` options.
 
 ### Freeze Columns
 
