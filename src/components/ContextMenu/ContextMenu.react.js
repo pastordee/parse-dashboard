@@ -10,12 +10,7 @@ import PropTypes from 'lib/PropTypes';
 import React, { useState, useEffect, useRef } from 'react';
 import styles from 'components/ContextMenu/ContextMenu.scss';
 
-const getPositionToFitVisibleScreen = (
-  ref,
-  offset = 0,
-  mainItemCount = 0,
-  subItemCount = 0
-) => {
+const getPositionToFitVisibleScreen = (ref, offset = 0) => {
   if (!ref.current) {
     return;
   }
@@ -26,21 +21,30 @@ const getPositionToFitVisibleScreen = (
   const lowerLimit = window.innerHeight - footerHeight;
   const upperLimit = 0;
 
-  const shouldApplyOffset = mainItemCount === 0 || subItemCount > mainItemCount;
   const prevEl = ref.current.previousSibling;
 
   if (prevEl) {
     const prevElBox = prevEl.getBoundingClientRect();
-    const showOnRight = prevElBox.x + prevElBox.width + elBox.width < window.innerWidth;
 
-    let proposedTop = shouldApplyOffset
-      ? prevElBox.top + offset
-      : prevElBox.top;
+    // Position relative to the immediate previous sibling (parent submenu)
+    // Check if there's space to the right of the previous menu
+    const spaceOnRight = window.innerWidth - prevElBox.right;
+    const showOnRight = spaceOnRight >= elBox.width;
 
+    // Calculate x offset relative to current element's position
+    // to place it adjacent to the previous sibling
+    const xRight = prevElBox.right - elBox.left;
+    const xLeft = prevElBox.left - elBox.left - elBox.width;
+
+    // Align submenu vertically with the hovered item in the parent menu
+    // offset is the pixel position of the hovered item (index * 30px item height)
+    let proposedTop = prevElBox.top + offset;
+
+    // Clamp to screen bounds
     proposedTop = Math.max(upperLimit, Math.min(proposedTop, lowerLimit - menuHeight));
 
     return {
-      x: showOnRight ? prevElBox.width : -elBox.width,
+      x: showOnRight ? xRight : xLeft,
       y: proposedTop - elBox.top,
     };
   }
@@ -53,19 +57,14 @@ const getPositionToFitVisibleScreen = (
   };
 };
 
-const MenuSection = ({ level, items, path, setPath, hide, parentItemCount = 0 }) => {
+const MenuSection = ({ level, items, path, setPath, hide }) => {
   const sectionRef = useRef(null);
   const [position, setPosition] = useState(null);
   const hasPositioned = useRef(false);
 
   useEffect(() => {
     if (!hasPositioned.current) {
-      const newPosition = getPositionToFitVisibleScreen(
-        sectionRef,
-        path[level] * 30,
-        parentItemCount,
-        items.length
-      );
+      const newPosition = getPositionToFitVisibleScreen(sectionRef, path[level] * 30);
       if (newPosition) {
         setPosition(newPosition);
         hasPositioned.current = true;
@@ -160,8 +159,6 @@ const ContextMenu = ({ x, y, items }) => {
     >
       {path.map((_, level) => {
         const itemsForLevel = getItemsFromLevel(level);
-        const parentItemCount =
-          level === 0 ? items.length : getItemsFromLevel(level - 1).length;
 
         return (
           <MenuSection
@@ -171,7 +168,6 @@ const ContextMenu = ({ x, y, items }) => {
             level={level}
             items={itemsForLevel}
             hide={hide}
-            parentItemCount={parentItemCount}
           />
         );
       })}
