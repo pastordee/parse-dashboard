@@ -1,3 +1,10 @@
+# [8.3.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.3...8.3.0-alpha.4) (2026-01-16)
+
+
+### Features
+
+* Add quick-remove button to array parameter in Cloud Config ([#3121](https://github.com/parse-community/parse-dashboard/issues/3121)) ([b632074](https://github.com/parse-community/parse-dashboard/commit/b63207442a0c6e4d6890d77eadb397de3381b83b))
+
 # [8.3.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.2...8.3.0-alpha.3) (2026-01-16)
 
 
