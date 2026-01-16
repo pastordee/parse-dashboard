@@ -1,3 +1,10 @@
+# [8.3.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.1...8.3.0-alpha.2) (2026-01-16)
+
+
+### Features
+
+* Detect and warn about unprintable characters in Cloud Config parameter values ([#3119](https://github.com/parse-community/parse-dashboard/issues/3119)) ([26c909c](https://github.com/parse-community/parse-dashboard/commit/26c909c02949f7aadecdc4393893a484d49062e3))
+
 # [8.3.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.2.0...8.3.0-alpha.1) (2026-01-16)
 
 
