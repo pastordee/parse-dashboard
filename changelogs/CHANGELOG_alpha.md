@@ -1,3 +1,10 @@
+# [8.3.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.2.0...8.3.0-alpha.1) (2026-01-16)
+
+
+### Features
+
+* Add context menu in data browser to get related records from String and Number fields ([#3118](https://github.com/parse-community/parse-dashboard/issues/3118)) ([824bebd](https://github.com/parse-community/parse-dashboard/commit/824bebd8d2d4207f133fb36dd8f8af9c9051e0f3))
+
 # [8.2.0-alpha.27](https://github.com/parse-community/parse-dashboard/compare/8.2.0-alpha.26...8.2.0-alpha.27) (2026-01-15)
 
 
