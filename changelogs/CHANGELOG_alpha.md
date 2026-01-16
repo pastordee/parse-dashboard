@@ -1,3 +1,10 @@
+# [8.3.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.2...8.3.0-alpha.3) (2026-01-16)
+
+
+### Bug Fixes
+
+* Context menu sub-menu in data browser vertically misaligned when scrolling in parent menu ([#3120](https://github.com/parse-community/parse-dashboard/issues/3120)) ([2acaa27](https://github.com/parse-community/parse-dashboard/commit/2acaa270c9e0c768d3e34960bae1627ed038afad))
+
 # [8.3.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.1...8.3.0-alpha.2) (2026-01-16)
 
 
