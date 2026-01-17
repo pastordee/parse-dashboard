@@ -1,3 +1,10 @@
+# [8.3.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.7...8.3.0-alpha.8) (2026-01-17)
+
+
+### Bug Fixes
+
+* Dashboard crashes when adding Parse Pointer JSON to array field in data browser ([#3125](https://github.com/parse-community/parse-dashboard/issues/3125)) ([70bf081](https://github.com/parse-community/parse-dashboard/commit/70bf081788fc245a7e476ea4c92f0d4f6501d014))
+
 # [8.3.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.6...8.3.0-alpha.7) (2026-01-17)
 
 
