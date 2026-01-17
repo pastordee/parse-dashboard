@@ -14,10 +14,10 @@ import React from 'react';
 import TextInput from 'components/TextInput/TextInput.react';
 
 export default class AddArrayEntryDialog extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
-      value: '',
+      value: String(props.initialValue ?? ''),
       showMismatchRow: false,
       mismatchConfirmed: false,
       parsedType: '',
@@ -28,6 +28,18 @@ export default class AddArrayEntryDialog extends React.Component {
   componentDidMount() {
     if (this.inputRef.current) {
       this.inputRef.current.focus();
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    // Sync state when initialValue prop changes
+    if (prevProps.initialValue !== this.props.initialValue) {
+      this.setState({
+        value: String(this.props.initialValue ?? ''),
+        showMismatchRow: false,
+        mismatchConfirmed: false,
+        parsedType: '',
+      });
     }
   }
 

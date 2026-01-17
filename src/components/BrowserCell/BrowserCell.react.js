@@ -377,6 +377,18 @@ export default class BrowserCell extends Component {
         });
     }
 
+    // Sort menu items alphabetically by text
+    contextMenuOptions.sort((a, b) => a.text.localeCompare(b.text));
+
+    // Add separator and "Add to config parameter..." after the sorted items
+    const addToConfigOption = this.getAddToConfigContextMenuOption();
+    if (addToConfigOption && contextMenuOptions.length > 0) {
+      contextMenuOptions.push({ type: 'separator' });
+      contextMenuOptions.push(addToConfigOption);
+    } else if (addToConfigOption) {
+      contextMenuOptions.push(addToConfigOption);
+    }
+
     return contextMenuOptions;
   }
 
@@ -616,6 +628,38 @@ export default class BrowserCell extends Component {
       });
 
     return relatedRecordsMenuItem.items.length ? relatedRecordsMenuItem : undefined;
+  }
+
+  getAddToConfigContextMenuOption() {
+    const { arrayConfigParams, onAddToArrayConfig, hidden } = this.props;
+
+    // Don't show for hidden cells to prevent leaking sensitive values
+    if (hidden) {
+      return;
+    }
+
+    // Only show if there are array config params and handler is available
+    if (!arrayConfigParams || arrayConfigParams.length === 0 || !onAddToArrayConfig) {
+      return;
+    }
+
+    // Get the cell's copyable value as string
+    const cellValue = this.copyableValue !== undefined ? String(this.copyableValue) : '';
+
+    // Don't show for empty or special values
+    if (!cellValue || cellValue === '(undefined)' || cellValue === '(null)' || cellValue === '(hidden)') {
+      return;
+    }
+
+    return {
+      text: 'Add to config parameter...',
+      items: arrayConfigParams.map(param => ({
+        text: param.name,
+        callback: () => {
+          onAddToArrayConfig(param.name, cellValue);
+        },
+      })),
+    };
   }
 
   pickFilter(constraint, addToExistingFilter) {
