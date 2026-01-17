@@ -1,3 +1,10 @@
+# [8.3.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.6...8.3.0-alpha.7) (2026-01-17)
+
+
+### Bug Fixes
+
+* Cloud Config parameter modal cannot scroll when content scales beyond visible area ([#3124](https://github.com/parse-community/parse-dashboard/issues/3124)) ([bb6de31](https://github.com/parse-community/parse-dashboard/commit/bb6de31f4e1f5543e7e12b20bc5a4ea801db67f7))
+
 # [8.3.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.5...8.3.0-alpha.6) (2026-01-17)
 
 
