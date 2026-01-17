@@ -1,3 +1,10 @@
+# [8.3.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.4...8.3.0-alpha.5) (2026-01-17)
+
+
+### Bug Fixes
+
+* Context menu of header cell in info panel does not group related records by class name ([#3122](https://github.com/parse-community/parse-dashboard/issues/3122)) ([230c1e2](https://github.com/parse-community/parse-dashboard/commit/230c1e29bf612f61516f63f39829053b6293a2a2))
+
 # [8.3.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.3...8.3.0-alpha.4) (2026-01-16)
 
 
