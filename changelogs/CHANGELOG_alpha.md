@@ -1,3 +1,10 @@
+# [8.3.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.8...8.3.0-alpha.9) (2026-01-18)
+
+
+### Features
+
+* Add custom dashboard canvas with graphs and data tables ([#3126](https://github.com/parse-community/parse-dashboard/issues/3126)) ([d45c27b](https://github.com/parse-community/parse-dashboard/commit/d45c27bf0896455713aeebaeb776ea3074af6253))
+
 # [8.3.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.7...8.3.0-alpha.8) (2026-01-17)
 
 
