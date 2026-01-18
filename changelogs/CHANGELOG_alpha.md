@@ -1,3 +1,10 @@
+# [8.3.0-alpha.10](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.9...8.3.0-alpha.10) (2026-01-18)
+
+
+### Bug Fixes
+
+* Data browser graph requires value field even when calculated value is defined ([#3127](https://github.com/parse-community/parse-dashboard/issues/3127)) ([53e4f2b](https://github.com/parse-community/parse-dashboard/commit/53e4f2be61eb374d658e839afa67ee91a7761a54))
+
 # [8.3.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.8...8.3.0-alpha.9) (2026-01-18)
 
 
