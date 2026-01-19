@@ -1,3 +1,10 @@
+# [8.3.0-alpha.11](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.10...8.3.0-alpha.11) (2026-01-19)
+
+
+### Bug Fixes
+
+* Canvas graph element does not apply data filter option ([#3128](https://github.com/parse-community/parse-dashboard/issues/3128)) ([00ff1aa](https://github.com/parse-community/parse-dashboard/commit/00ff1aafa9cc59d277520a4c97a28131cf5c5ae7))
+
 # [8.3.0-alpha.10](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.9...8.3.0-alpha.10) (2026-01-18)
 
 
