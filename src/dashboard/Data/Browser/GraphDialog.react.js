@@ -46,6 +46,18 @@ const CALCULATED_VALUE_OPERATORS = [
   { value: 'formula', label: 'Formula' },
 ];
 
+const LINE_STYLES = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'dashed', label: 'Dashed' },
+  { value: 'dotted', label: 'Dotted' },
+];
+
+const BAR_STYLES = [
+  { value: 'solid', label: 'Solid' },
+  { value: 'outlined', label: 'Outlined' },
+  { value: 'striped', label: 'Striped' },
+];
+
 export default class GraphDialog extends React.Component {
   constructor(props) {
     super(props);
@@ -77,6 +89,7 @@ export default class GraphDialog extends React.Component {
       title: initialConfig.title || '',
       yAxisTitlePrimary: initialConfig.yAxisTitlePrimary || '',
       yAxisTitleSecondary: initialConfig.yAxisTitleSecondary || '',
+      secondaryYAxisType: initialConfig.secondaryYAxisType || null,
       showLegend: initialConfig.showLegend !== undefined ? initialConfig.showLegend : true,
       showGrid: initialConfig.showGrid !== undefined ? initialConfig.showGrid : true,
       showAxisLabels: initialConfig.showAxisLabels !== undefined ? initialConfig.showAxisLabels : true,
@@ -402,6 +415,10 @@ export default class GraphDialog extends React.Component {
               const hasCircular = this.hasCircularReference(index);
               // Check for formula errors
               const formulaError = this.getFormulaError(index);
+              // Compute effective chart type for this calculated value
+              const effectiveType = calc.useSecondaryYAxis && this.state.secondaryYAxisType
+                ? this.state.secondaryYAxisType
+                : this.state.chartType;
 
               return (
                 <div key={index} style={{ paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px', paddingBottom: isExpanded ? '0' : '10px', borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: index === this.state.calculatedValues.length - 1 ? '1px solid #e3e3e3' : 'none' }}>
@@ -547,6 +564,44 @@ export default class GraphDialog extends React.Component {
                             </div>
                           </div>
                         )}
+                        {effectiveType === 'line' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <Label text="Line Style" />
+                            </div>
+                            <div>
+                              <Dropdown
+                                value={calc.lineStyle || 'solid'}
+                                onChange={lineStyle => this.updateCalculatedValue(index, 'lineStyle', lineStyle)}
+                              >
+                                {LINE_STYLES.map(style => (
+                                  <Option key={style.value} value={style.value}>
+                                    {style.label}
+                                  </Option>
+                                ))}
+                              </Dropdown>
+                            </div>
+                          </div>
+                        )}
+                        {effectiveType === 'bar' && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <Label text="Bar Style" />
+                            </div>
+                            <div>
+                              <Dropdown
+                                value={calc.barStyle || 'solid'}
+                                onChange={barStyle => this.updateCalculatedValue(index, 'barStyle', barStyle)}
+                              >
+                                {BAR_STYLES.map(style => (
+                                  <Option key={style.value} value={style.value}>
+                                    {style.label}
+                                  </Option>
+                                ))}
+                              </Dropdown>
+                            </div>
+                          </div>
+                        )}
                         {hasCircular && (
                           <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#fff3cd', color: '#856404' }}>
                             <strong>⚠ Circular Reference Detected</strong>
@@ -683,6 +738,25 @@ export default class GraphDialog extends React.Component {
               onChange={yAxisTitleSecondary => this.setState({ yAxisTitleSecondary })}
               placeholder="Secondary Y-axis title"
             />
+          } />
+        )}
+
+        {(this.state.chartType === 'bar' || this.state.chartType === 'line') && (
+          <Field label={
+            <Label
+              text="Secondary Y-Axis Chart Type"
+              description="Chart type for secondary axis series"
+            />
+          } input={
+            <Dropdown
+              value={this.state.secondaryYAxisType || ''}
+              onChange={secondaryYAxisType => this.setState({ secondaryYAxisType: secondaryYAxisType || null })}
+              placeHolder="Same as chart type"
+            >
+              <Option value="">Same as chart type</Option>
+              <Option value="bar">Bar</Option>
+              <Option value="line">Line</Option>
+            </Dropdown>
           } />
         )}
 

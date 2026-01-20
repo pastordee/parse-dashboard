@@ -720,10 +720,12 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
   const sortedXLabels = sortedXKeys.map(key => xValues.get(key));
   const groupKeys = Object.keys(groups);
 
-  // Create maps for calculated value properties (operator, secondary Y axis)
+  // Create maps for calculated value properties (operator, secondary Y axis, line style, bar style)
   // This handles both simple calc names and grouped calc names like "CalcName (GroupValue)"
   const calcValueOperatorMap = new Map();
   const calcValueSecondaryYAxisMap = new Map();
+  const calcValueLineStyleMap = new Map();
+  const calcValueBarStyleMap = new Map();
   if (calculatedValues && Array.isArray(calculatedValues)) {
     calculatedValues.forEach(calc => {
       if (calc.name && calc.operator) {
@@ -735,6 +737,12 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
             calcValueOperatorMap.set(groupKey, calc.operator);
             if (calc.useSecondaryYAxis) {
               calcValueSecondaryYAxisMap.set(groupKey, true);
+            }
+            if (calc.lineStyle) {
+              calcValueLineStyleMap.set(groupKey, calc.lineStyle);
+            }
+            if (calc.barStyle) {
+              calcValueBarStyleMap.set(groupKey, calc.barStyle);
             }
           }
         });
@@ -770,7 +778,7 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
       }
     });
 
-    return {
+    const dataset = {
       label: groupKey,
       data: values,
       backgroundColor: colors[index],
@@ -778,6 +786,20 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
       borderWidth: 1,
       yAxisID: calcValueSecondaryYAxisMap.get(groupKey) ? 'y1' : 'y',
     };
+
+    // Add line style if specified
+    const lineStyle = calcValueLineStyleMap.get(groupKey);
+    if (lineStyle) {
+      dataset.lineStyle = lineStyle;
+    }
+
+    // Add bar style if specified
+    const barStyle = calcValueBarStyleMap.get(groupKey);
+    if (barStyle) {
+      dataset.barStyle = barStyle;
+    }
+
+    return dataset;
   });
 
   return {

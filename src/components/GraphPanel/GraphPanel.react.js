@@ -133,6 +133,7 @@ const GraphPanel = ({
       aggregationType,
       maxDataPoints,
       calculatedValues,
+      secondaryYAxisType,
     } = graphConfig;
 
     // Limit data points for performance
@@ -154,6 +155,81 @@ const GraphPanel = ({
           result = processBarLineData(limitedData, xColumn, valueColumn, groupByColumn, aggregationType, calculatedValues);
           break;
       }
+
+      // Apply secondary Y-axis chart type to datasets on secondary axis
+      if (result && result.datasets && secondaryYAxisType && (chartType === 'bar' || chartType === 'line')) {
+        result.datasets = result.datasets.map(dataset => {
+          if (dataset.yAxisID === 'y1') {
+            return {
+              ...dataset,
+              type: secondaryYAxisType,
+            };
+          }
+          return dataset;
+        });
+      }
+
+      // Helper to compute the effective chart type for a dataset
+      // dataset.type overrides global defaults (set by secondary Y-axis type or other means)
+      const getEffectiveType = (dataset) => {
+        if (dataset.type) {
+          return dataset.type;
+        }
+        if (dataset.yAxisID === 'y1' && secondaryYAxisType) {
+          return secondaryYAxisType;
+        }
+        return chartType;
+      };
+
+      // Apply line styles to datasets (convert lineStyle to Chart.js borderDash)
+      if (result && result.datasets) {
+        const lineStyleToBorderDash = {
+          solid: [],
+          dashed: [8, 4],
+          dotted: [2, 2],
+        };
+
+        result.datasets = result.datasets.map(dataset => {
+          const effectiveType = getEffectiveType(dataset);
+          if (effectiveType === 'line' && dataset.lineStyle && lineStyleToBorderDash[dataset.lineStyle]) {
+            return {
+              ...dataset,
+              borderDash: lineStyleToBorderDash[dataset.lineStyle],
+            };
+          }
+          return dataset;
+        });
+      }
+
+      // Apply bar styles to datasets
+      if (result && result.datasets) {
+        result.datasets = result.datasets.map(dataset => {
+          const effectiveType = getEffectiveType(dataset);
+          if (effectiveType === 'bar' && dataset.barStyle) {
+            switch (dataset.barStyle) {
+              case 'outlined':
+                // Outlined: transparent fill with thick border
+                return {
+                  ...dataset,
+                  backgroundColor: 'transparent',
+                  borderWidth: 2,
+                };
+              case 'striped':
+                // Striped: lighter fill with dashed border to indicate pattern
+                return {
+                  ...dataset,
+                  backgroundColor: dataset.backgroundColor.replace('0.8', '0.3'),
+                  borderWidth: 2,
+                  borderDash: [4, 4],
+                };
+              default:
+                return dataset;
+            }
+          }
+          return dataset;
+        });
+      }
+
       return { processedData: result, validationError: null };
     } catch (err) {
       console.error('Error processing graph data:', err);
