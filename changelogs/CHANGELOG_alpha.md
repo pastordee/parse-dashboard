@@ -1,3 +1,10 @@
+# [8.3.0-alpha.17](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.16...8.3.0-alpha.17) (2026-01-20)
+
+
+### Bug Fixes
+
+* Security upgrade react-router and react-router-dom ([#3107](https://github.com/parse-community/parse-dashboard/issues/3107)) ([b76b9d1](https://github.com/parse-community/parse-dashboard/commit/b76b9d17028467cf3b3e4ca7e320e4e7b6e8c619))
+
 # [8.3.0-alpha.16](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.15...8.3.0-alpha.16) (2026-01-20)
 
 
