@@ -1,3 +1,10 @@
+# [8.3.0-alpha.13](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.12...8.3.0-alpha.13) (2026-01-20)
+
+
+### Features
+
+* Add customizable Y-axis titles for data browser graphs ([#3130](https://github.com/parse-community/parse-dashboard/issues/3130)) ([2946e64](https://github.com/parse-community/parse-dashboard/commit/2946e64e048aba119394e7c6513aab6891c8afe7))
+
 # [8.3.0-alpha.12](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.11...8.3.0-alpha.12) (2026-01-20)
 
 
