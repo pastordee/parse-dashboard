@@ -1,3 +1,10 @@
+# [8.3.0-alpha.12](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.11...8.3.0-alpha.12) (2026-01-20)
+
+
+### Features
+
+* Add formula-based calculated value to data browser graph ([#3129](https://github.com/parse-community/parse-dashboard/issues/3129)) ([7c5d1b3](https://github.com/parse-community/parse-dashboard/commit/7c5d1b31f4475bf65ca6c82e879d8162945b4d17))
+
 # [8.3.0-alpha.11](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.10...8.3.0-alpha.11) (2026-01-19)
 
 
