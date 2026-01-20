@@ -18,6 +18,7 @@ import Option from 'components/Dropdown/Option.react';
 import Toggle from 'components/Toggle/Toggle.react';
 import TextInput from 'components/TextInput/TextInput.react';
 import styles from 'components/Modal/Modal.scss';
+import { validateFormula } from 'lib/FormulaEvaluator';
 
 const CHART_TYPES = [
   { value: 'bar', label: 'Bar Chart' },
@@ -42,6 +43,7 @@ const CALCULATED_VALUE_OPERATORS = [
   { value: 'average', label: 'Average' },
   { value: 'difference', label: 'Difference' },
   { value: 'ratio', label: 'Ratio' },
+  { value: 'formula', label: 'Formula' },
 ];
 
 export default class GraphDialog extends React.Component {
@@ -88,6 +90,15 @@ export default class GraphDialog extends React.Component {
     const hasValueColumn = Array.isArray(valueColumn) && valueColumn.length > 0;
     const hasCalculatedValues = Array.isArray(calculatedValues) && calculatedValues.length > 0;
     const hasValuesToDisplay = hasValueColumn || hasCalculatedValues;
+
+    // Check for any name errors in calculated values
+    if (hasCalculatedValues) {
+      for (let i = 0; i < calculatedValues.length; i++) {
+        if (this.getNameError(i)) {
+          return false;
+        }
+      }
+    }
 
     switch (chartType) {
       case 'pie':
@@ -203,6 +214,58 @@ export default class GraphDialog extends React.Component {
     }
 
     return false;
+  }
+
+  // Validate formula and return error message if invalid
+  getFormulaError(calcIndex) {
+    const calc = this.state.calculatedValues[calcIndex];
+    if (!calc || calc.operator !== 'formula' || !calc.formula || calc.formula.trim() === '') {
+      return null;
+    }
+
+    // Build list of available variables for the formula
+    const numericColumns = this.getNumericColumns();
+    // Include previous calculated value names
+    const previousCalcNames = this.state.calculatedValues
+      .slice(0, calcIndex)
+      .filter(c => c.name && c.name.trim() !== '')
+      .map(c => c.name);
+
+    const availableVariables = [...numericColumns, ...previousCalcNames];
+
+    const validation = validateFormula(calc.formula, availableVariables);
+    return validation.isValid ? null : validation.error;
+  }
+
+  // Validate calculated value name (must follow Parse field name rules)
+  getNameError(calcIndex) {
+    const calc = this.state.calculatedValues[calcIndex];
+    if (!calc || !calc.name || calc.name.trim() === '') {
+      return null; // Empty names are allowed (will use default "Calculated Value N")
+    }
+
+    const name = calc.name.trim();
+
+    // Check for valid characters (alphanumeric and underscore only)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+      if (/^\d/.test(name)) {
+        return 'Name cannot start with a number';
+      }
+      if (/\s/.test(name)) {
+        return 'Name cannot contain spaces';
+      }
+      return 'Name can only contain letters, numbers, and underscores';
+    }
+
+    // Check for duplicate names
+    const duplicateIndex = this.state.calculatedValues.findIndex(
+      (c, idx) => idx !== calcIndex && c.name && c.name.trim() === name
+    );
+    if (duplicateIndex >= 0) {
+      return 'Name is already used by another calculated value';
+    }
+
+    return null;
   }
 
   addCalculatedValue = () => {
@@ -335,6 +398,8 @@ export default class GraphDialog extends React.Component {
               const numericAndCalculatedFields = this.getNumericAndCalculatedFields(index);
               // Check for circular reference
               const hasCircular = this.hasCircularReference(index);
+              // Check for formula errors
+              const formulaError = this.getFormulaError(index);
 
               return (
                 <div key={index} style={{ paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px', paddingBottom: isExpanded ? '0' : '10px', borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: index === this.state.calculatedValues.length - 1 ? '1px solid #e3e3e3' : 'none' }}>
@@ -377,7 +442,30 @@ export default class GraphDialog extends React.Component {
                             </Dropdown>
                           </div>
                         </div>
-                        {calc.operator === 'percent' ? (
+                        {calc.operator === 'formula' ? (
+                          <>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <Label text="Formula" description="e.g., price * quantity" />
+                              </div>
+                              <div>
+                                <TextInput
+                                  value={calc.formula || ''}
+                                  onChange={formula => this.updateCalculatedValue(index, 'formula', formula)}
+                                  placeholder="e.g., round(price * quantity, 2)"
+                                />
+                              </div>
+                            </div>
+                            {formulaError && (
+                              <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#ffebee', color: '#c62828' }}>
+                                <strong>Formula Error</strong>
+                                <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
+                                  {formulaError}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        ) : calc.operator === 'percent' ? (
                           <>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
                               <div style={{ display: 'flex', alignItems: 'center' }}>
