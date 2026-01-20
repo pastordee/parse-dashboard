@@ -1,3 +1,10 @@
+# [8.3.0-alpha.15](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.14...8.3.0-alpha.15) (2026-01-20)
+
+
+### Bug Fixes
+
+* Name of calculated value in data browser graph allows leading and trailing spaces ([#3132](https://github.com/parse-community/parse-dashboard/issues/3132)) ([9493b18](https://github.com/parse-community/parse-dashboard/commit/9493b180e316ffbbf2a8444a47fc17818bf04371))
+
 # [8.3.0-alpha.14](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.13...8.3.0-alpha.14) (2026-01-20)
 
 
