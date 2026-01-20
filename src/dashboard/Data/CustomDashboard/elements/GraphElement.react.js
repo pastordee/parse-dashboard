@@ -27,17 +27,38 @@ const GraphElement = ({
     );
   }
 
+  const title = config.title || config.graphConfig?.title || 'Graph';
+
+  // Apply overrides from config (title removed, legend and axis labels configurable)
+  const modifiedGraphConfig = {
+    ...config.graphConfig,
+    title: undefined,
+    showLegend: config.showLegend ?? config.graphConfig?.showLegend ?? true,
+    showAxisLabels: config.showAxisLabels ?? config.graphConfig?.showAxisLabels ?? true,
+  };
+
   return (
     <div className={styles.graphElement}>
-      <GraphPanel
-        graphConfig={config.graphConfig}
-        data={data}
-        columns={columns}
-        isLoading={isLoading}
-        error={error}
-        onRefresh={onRefresh}
-        disableAnimation={true}
-      />
+      <div className={styles.graphHeader}>
+        <span className={styles.graphTitle}>{title}</span>
+        {onRefresh && (
+          <button type="button" onClick={onRefresh} className={styles.refreshButton}>
+            <Icon name="refresh-solid" width={12} height={12} fill="#94a3b8" />
+          </button>
+        )}
+      </div>
+      <div className={styles.graphContainer}>
+        <GraphPanel
+          graphConfig={modifiedGraphConfig}
+          data={data}
+          columns={columns}
+          isLoading={isLoading}
+          error={error}
+          disableAnimation={true}
+          hideHeader={true}
+          hideFooter={true}
+        />
+      </div>
     </div>
   );
 };

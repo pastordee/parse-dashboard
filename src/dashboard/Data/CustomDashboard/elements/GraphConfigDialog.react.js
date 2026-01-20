@@ -12,6 +12,7 @@ import Label from 'components/Label/Label.react';
 import Dropdown from 'components/Dropdown/Dropdown.react';
 import Option from 'components/Dropdown/Option.react';
 import TextInput from 'components/TextInput/TextInput.react';
+import Toggle from 'components/Toggle/Toggle.react';
 
 const GraphConfigDialog = ({
   initialConfig,
@@ -21,10 +22,13 @@ const GraphConfigDialog = ({
   onClose,
   onSave,
 }) => {
+  const [title, setTitle] = useState(initialConfig?.title || '');
   const [className, setClassName] = useState(initialConfig?.className || '');
   const [graphId, setGraphId] = useState(initialConfig?.graphId || '');
   const [filterId, setFilterId] = useState(initialConfig?.filterId || '');
   const [limit, setLimit] = useState(initialConfig?.limit?.toString() || '1000');
+  const [showLegend, setShowLegend] = useState(initialConfig?.showLegend ?? true);
+  const [showAxisLabels, setShowAxisLabels] = useState(initialConfig?.showAxisLabels ?? true);
 
   const classesWithGraphs = useMemo(() => {
     return classes
@@ -68,12 +72,15 @@ const GraphConfigDialog = ({
     const selectedFilter = filtersForClass.find(f => f.id === filterId);
 
     onSave({
+      title: title || selectedGraph?.title || 'Graph',
       className,
       graphId,
       graphConfig: selectedGraph,
       filterId: filterId || null,
       filterConfig: selectedFilter ? [selectedFilter] : null,
       limit: parseInt(limit, 10) || 1000,
+      showLegend,
+      showAxisLabels,
     });
   };
 
@@ -102,6 +109,16 @@ const GraphConfigDialog = ({
         />
       ) : (
         <>
+          <Field
+            label={<Label text="Title" description="Custom title for the graph element" />}
+            input={
+              <TextInput
+                value={title}
+                onChange={setTitle}
+                placeholder={selectedGraph?.title || 'Graph'}
+              />
+            }
+          />
           <Field
             label={<Label text="Class" description="Select the class containing the graph" />}
             input={
@@ -164,6 +181,30 @@ const GraphConfigDialog = ({
                 />
               }
             />
+          )}
+          {className && graphId && (
+            <>
+              <Field
+                label={<Label text="Show Legend" description="Display the graph legend" />}
+                input={
+                  <Toggle
+                    value={showLegend}
+                    onChange={setShowLegend}
+                    type={Toggle.Types.YES_NO}
+                  />
+                }
+              />
+              <Field
+                label={<Label text="Show Axis Labels" description="Display the Y-axis labels" />}
+                input={
+                  <Toggle
+                    value={showAxisLabels}
+                    onChange={setShowAxisLabels}
+                    type={Toggle.Types.YES_NO}
+                  />
+                }
+              />
+            </>
           )}
         </>
       )}
