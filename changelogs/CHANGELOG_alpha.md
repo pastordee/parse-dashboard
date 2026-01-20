@@ -1,3 +1,10 @@
+# [8.3.0-alpha.16](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.15...8.3.0-alpha.16) (2026-01-20)
+
+
+### Features
+
+* Allow adding View elements to canvas ([#3133](https://github.com/parse-community/parse-dashboard/issues/3133)) ([2f2ae9a](https://github.com/parse-community/parse-dashboard/commit/2f2ae9a86aaadec276f52c5f62f633c31bd57cef))
+
 # [8.3.0-alpha.15](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.14...8.3.0-alpha.15) (2026-01-20)
 
 
