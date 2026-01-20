@@ -1,3 +1,10 @@
+# [8.3.0-alpha.18](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.17...8.3.0-alpha.18) (2026-01-20)
+
+
+### Features
+
+* Add more customization options for graphs in canvas ([#3134](https://github.com/parse-community/parse-dashboard/issues/3134)) ([ddbd666](https://github.com/parse-community/parse-dashboard/commit/ddbd66694de45b3f45e674b3276a43eb1901874b))
+
 # [8.3.0-alpha.17](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.16...8.3.0-alpha.17) (2026-01-20)
 
 
