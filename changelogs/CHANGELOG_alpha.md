@@ -1,3 +1,10 @@
+# [8.3.0-alpha.19](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.18...8.3.0-alpha.19) (2026-01-20)
+
+
+### Features
+
+* Allow to favorite canvas for quick-access via sidebar menu ([#3135](https://github.com/parse-community/parse-dashboard/issues/3135)) ([1e3a3c7](https://github.com/parse-community/parse-dashboard/commit/1e3a3c7849cf5f980f3af23398cf35ab785d013f))
+
 # [8.3.0-alpha.18](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.17...8.3.0-alpha.18) (2026-01-20)
 
 
