@@ -1,3 +1,10 @@
+# [8.3.0-alpha.20](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.19...8.3.0-alpha.20) (2026-01-21)
+
+
+### Bug Fixes
+
+* Graph in canvas ignores date filter constraints ([#3137](https://github.com/parse-community/parse-dashboard/issues/3137)) ([6d8b8e6](https://github.com/parse-community/parse-dashboard/commit/6d8b8e65d9ebbbba202b6d60d988aa7a02a77e99))
+
 # [8.3.0-alpha.19](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.18...8.3.0-alpha.19) (2026-01-20)
 
 
