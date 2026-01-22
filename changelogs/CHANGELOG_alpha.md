@@ -1,3 +1,10 @@
+# [8.3.0-alpha.21](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.20...8.3.0-alpha.21) (2026-01-22)
+
+
+### Bug Fixes
+
+* Canvas is not expandable or scrollable beyond current view size ([#3140](https://github.com/parse-community/parse-dashboard/issues/3140)) ([cb73122](https://github.com/parse-community/parse-dashboard/commit/cb731220b43fcf68e510063331dd30e7e446daec))
+
 # [8.3.0-alpha.20](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.19...8.3.0-alpha.20) (2026-01-21)
 
 
