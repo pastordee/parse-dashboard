@@ -15,10 +15,24 @@ const CanvasElement = ({
   onSelect,
   onPositionChange,
   onSizeChange,
+  onDrag,
+  onResize,
   children,
 }) => {
+  const handleDrag = (e, d) => {
+    if (onDrag) {
+      onDrag(element.id, d.x, d.y, element.width, element.height);
+    }
+  };
+
   const handleDragStop = (e, d) => {
     onPositionChange(element.id, d.x, d.y);
+  };
+
+  const handleResize = (e, direction, ref, delta, position) => {
+    if (onResize) {
+      onResize(element.id, ref.offsetWidth, ref.offsetHeight, position.x, position.y);
+    }
   };
 
   const handleResizeStop = (e, direction, ref, delta, position) => {
@@ -40,13 +54,14 @@ const CanvasElement = ({
     <Rnd
       position={{ x: element.x, y: element.y }}
       size={{ width: element.width, height: element.height }}
-      dragGrid={[16, 16]}
-      resizeGrid={[16, 16]}
+      dragGrid={[50, 50]}
+      resizeGrid={[50, 50]}
       minWidth={100}
       minHeight={50}
-      bounds="parent"
       dragHandleClassName={styles.dragHandle}
+      onDrag={handleDrag}
       onDragStop={handleDragStop}
+      onResize={handleResize}
       onResizeStop={handleResizeStop}
       className={`${styles.canvasElement} ${isSelected ? styles.selected : ''}`}
       enableResizing={{
