@@ -1,3 +1,10 @@
+# [8.3.0-alpha.28](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.27...8.3.0-alpha.28) (2026-01-23)
+
+
+### Features
+
+* Optimize appearance of graph tick labels on x-axis for date values ([#3147](https://github.com/parse-community/parse-dashboard/issues/3147)) ([a9edcaf](https://github.com/parse-community/parse-dashboard/commit/a9edcafa5a2af60c89914adf3df4465e266a4ce6))
+
 # [8.3.0-alpha.27](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.26...8.3.0-alpha.27) (2026-01-23)
 
 
