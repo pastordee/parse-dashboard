@@ -1,3 +1,10 @@
+# [8.3.0-alpha.22](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.21...8.3.0-alpha.22) (2026-01-23)
+
+
+### Bug Fixes
+
+* Optimize data browser cell context menu grouping and readability ([#3141](https://github.com/parse-community/parse-dashboard/issues/3141)) ([5c711e1](https://github.com/parse-community/parse-dashboard/commit/5c711e141bb38f9a7c5faafde39c2c75cbbbc295))
+
 # [8.3.0-alpha.21](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.20...8.3.0-alpha.21) (2026-01-22)
 
 
