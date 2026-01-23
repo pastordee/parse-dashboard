@@ -1,3 +1,10 @@
+# [8.3.0-alpha.27](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.26...8.3.0-alpha.27) (2026-01-23)
+
+
+### Features
+
+* Add canvas tree to sidebar instead of loading dialog and favorite functionality ([#3146](https://github.com/parse-community/parse-dashboard/issues/3146)) ([e58dc82](https://github.com/parse-community/parse-dashboard/commit/e58dc8232bb4b11883c81dc1a88b91852c875b0a))
+
 # [8.3.0-alpha.26](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.25...8.3.0-alpha.26) (2026-01-23)
 
 
