@@ -127,6 +127,9 @@ const NON_PRINTABLE_REGEX = new RegExp(
   'g'
 );
 
+// Regex for non-alphanumeric characters (anything not a-z, A-Z, 0-9)
+const NON_ALPHANUMERIC_REGEX = /[^a-zA-Z0-9]/g;
+
 /**
  * Check if a string contains non-printable characters
  */
@@ -136,6 +139,175 @@ export function hasNonPrintableChars(str) {
   }
   NON_PRINTABLE_REGEX.lastIndex = 0;
   return NON_PRINTABLE_REGEX.test(str);
+}
+
+/**
+ * Strip leading and trailing quotation marks from a string value
+ * Used to ignore quotes when detecting non-alphanumeric characters
+ */
+function stripQuotes(str) {
+  if (!str || typeof str !== 'string') {
+    return str;
+  }
+  // Check for matching single or double quotes (minimum length 2 for valid quoted string)
+  if (str.length >= 2 && ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith('\'') && str.endsWith('\'')))) {
+    return str.slice(1, -1);
+  }
+  return str;
+}
+
+/**
+ * Check if a string contains non-alphanumeric characters (not a-z, A-Z, 0-9)
+ * Leading and trailing quotation marks are ignored for string values
+ */
+export function hasNonAlphanumericChars(str) {
+  if (!str || typeof str !== 'string') {
+    return false;
+  }
+  const strippedStr = stripQuotes(str);
+  if (!strippedStr) {
+    return false;
+  }
+  NON_ALPHANUMERIC_REGEX.lastIndex = 0;
+  return NON_ALPHANUMERIC_REGEX.test(strippedStr);
+}
+
+/**
+ * Get a list of non-alphanumeric characters found in a string with counts and positions
+ * Leading and trailing quotation marks are ignored for string values
+ * Returns { totalCount, chars: [{ char, label, code, count, positions }] }
+ */
+export function getNonAlphanumericChars(str) {
+  if (!str || typeof str !== 'string') {
+    return { totalCount: 0, chars: [] };
+  }
+
+  const strippedStr = stripQuotes(str);
+  if (!strippedStr) {
+    return { totalCount: 0, chars: [] };
+  }
+
+  // Calculate position offset if quotes were stripped
+  const offset = str !== strippedStr ? 1 : 0;
+
+  const positionMap = new Map();
+  let totalCount = 0;
+
+  for (let i = 0; i < strippedStr.length; i++) {
+    const char = strippedStr[i];
+    NON_ALPHANUMERIC_REGEX.lastIndex = 0;
+    if (NON_ALPHANUMERIC_REGEX.test(char)) {
+      if (!positionMap.has(char)) {
+        positionMap.set(char, []);
+      }
+      // Adjust position to account for stripped leading quote
+      positionMap.get(char).push(i + offset);
+      totalCount++;
+    }
+  }
+
+  const chars = [];
+  for (const [char, positions] of positionMap) {
+    // Create a readable label for the character
+    let label;
+    const code = char.charCodeAt(0);
+    if (char === ' ') {
+      label = 'SPACE';
+    } else if (code >= 32 && code <= 126) {
+      // Printable ASCII - show the character itself
+      label = char;
+    } else {
+      label = `U+${code.toString(16).toUpperCase().padStart(4, '0')}`;
+    }
+
+    chars.push({
+      char,
+      label,
+      code: `0x${code.toString(16).toUpperCase().padStart(2, '0')}`,
+      count: positions.length,
+      positions,
+    });
+  }
+
+  return { totalCount, chars };
+}
+
+/**
+ * Get non-alphanumeric characters from JSON string values only
+ * Parses the JSON and only checks string values within it
+ * Locations show the JSON path and character position (e.g., "[1] @ 5" or "name @ 3")
+ */
+export function getNonAlphanumericCharsFromJson(jsonStr) {
+  if (!jsonStr || typeof jsonStr !== 'string') {
+    return { totalCount: 0, chars: [] };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch {
+    // If JSON is invalid, don't report any errors
+    return { totalCount: 0, chars: [] };
+  }
+
+  const stringValuesWithPaths = extractStringValuesWithPaths(parsed);
+
+  // Map to track: char -> array of { path, position } objects
+  const charLocationMap = new Map();
+  let totalCount = 0;
+
+  for (const { value, path } of stringValuesWithPaths) {
+    for (let i = 0; i < value.length; i++) {
+      const char = value[i];
+      NON_ALPHANUMERIC_REGEX.lastIndex = 0;
+      if (NON_ALPHANUMERIC_REGEX.test(char)) {
+        if (!charLocationMap.has(char)) {
+          charLocationMap.set(char, []);
+        }
+        charLocationMap.get(char).push({ path, position: i });
+        totalCount++;
+      }
+    }
+  }
+
+  const chars = [];
+  for (const [char, locationsList] of charLocationMap) {
+    // Create a readable label for the character
+    let label;
+    const code = char.charCodeAt(0);
+    if (char === ' ') {
+      label = 'SPACE';
+    } else if (code >= 32 && code <= 126) {
+      // Printable ASCII - show the character itself
+      label = char;
+    } else {
+      label = `U+${code.toString(16).toUpperCase().padStart(4, '0')}`;
+    }
+
+    // Group positions by path and format as "path @ pos1, pos2, ..."
+    const pathPositions = new Map();
+    for (const { path, position } of locationsList) {
+      if (!pathPositions.has(path)) {
+        pathPositions.set(path, []);
+      }
+      pathPositions.get(path).push(position);
+    }
+
+    const locations = [];
+    for (const [path, positions] of pathPositions) {
+      locations.push(`${path} @ ${positions.join(', ')}`);
+    }
+
+    chars.push({
+      char,
+      label,
+      code: `0x${code.toString(16).toUpperCase().padStart(2, '0')}`,
+      count: locationsList.length,
+      locations,
+    });
+  }
+
+  return { totalCount, chars };
 }
 
 /**
@@ -274,10 +446,12 @@ export function getNonPrintableCharsFromJson(jsonStr) {
 /**
  * NonPrintableHighlighter component
  * Displays a warning indicator when non-printable characters are detected in the value
+ * Optionally displays an info indicator when non-alphanumeric characters are detected
  *
  * Props:
  * - value: The string value to check
  * - isJson: If true, only check string values within the parsed JSON (for Array/Object types)
+ * - detectNonAlphanumeric: If true, also detect and display non-alphanumeric characters
  * - children: The input element to wrap
  */
 export default class NonPrintableHighlighter extends React.Component {
@@ -285,15 +459,22 @@ export default class NonPrintableHighlighter extends React.Component {
     super(props);
     this.state = {
       showDetails: false,
+      showNonAlphanumericDetails: false,
     };
   }
 
   render() {
-    const { value, children, isJson } = this.props;
+    const { value, children, isJson, detectNonAlphanumeric } = this.props;
     const { totalCount, chars } = isJson
       ? getNonPrintableCharsFromJson(value)
       : getNonPrintableChars(value);
     const hasNonPrintable = totalCount > 0;
+
+    // Get non-alphanumeric characters if detection is enabled
+    const nonAlphanumericResult = detectNonAlphanumeric
+      ? (isJson ? getNonAlphanumericCharsFromJson(value) : getNonAlphanumericChars(value))
+      : { totalCount: 0, chars: [] };
+    const hasNonAlphanumeric = nonAlphanumericResult.totalCount > 0;
 
     return (
       <div className={styles.container}>
@@ -307,7 +488,7 @@ export default class NonPrintableHighlighter extends React.Component {
             >
               <span className={styles.warningIcon}>⚠</span>
               <span className={styles.warningText}>
-                {totalCount} non-printable character{totalCount > 1 ? 's' : ''} detected
+                {totalCount} non-printable character{totalCount > 1 ? 's' : ''}
               </span>
             </div>
             {this.state.showDetails && (
@@ -316,6 +497,43 @@ export default class NonPrintableHighlighter extends React.Component {
                   {chars.map(({ label, code, count, positions, locations }, i) => (
                     <div key={i} className={styles.charItem}>
                       <span className={styles.charLabel}>{label}</span>
+                      <span className={styles.charCode}>{code}</span>
+                      {count > 1 && <span className={styles.charCount}>×{count}</span>}
+                      {positions && (
+                        <span className={styles.charPositions}>
+                          @ {positions.length <= 5 ? positions.join(', ') : `${positions.slice(0, 5).join(', ')}...`}
+                        </span>
+                      )}
+                      {locations && (
+                        <span className={styles.charPositions}>
+                          in {locations.length <= 3 ? locations.join(', ') : `${locations.slice(0, 3).join(', ')}...`}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {hasNonAlphanumeric && (
+          <div className={styles.infoContainer}>
+            <div
+              className={`${styles.infoBadge} ${this.state.showNonAlphanumericDetails ? styles.expanded : ''}`}
+              onClick={() => this.setState({ showNonAlphanumericDetails: !this.state.showNonAlphanumericDetails })}
+              title="Click for details"
+            >
+              <span className={styles.infoIcon}>ℹ</span>
+              <span className={styles.infoText}>
+                {nonAlphanumericResult.totalCount} non-alphanumeric character{nonAlphanumericResult.totalCount > 1 ? 's' : ''}
+              </span>
+            </div>
+            {this.state.showNonAlphanumericDetails && (
+              <div className={styles.infoDetailsPanel}>
+                <div className={styles.charList}>
+                  {nonAlphanumericResult.chars.map(({ label, code, count, positions, locations }, i) => (
+                    <div key={i} className={styles.charItem}>
+                      <span className={styles.charLabelInfo}>{label}</span>
                       <span className={styles.charCode}>{code}</span>
                       {count > 1 && <span className={styles.charCount}>×{count}</span>}
                       {positions && (
