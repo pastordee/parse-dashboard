@@ -1,3 +1,10 @@
+# [8.3.0-alpha.24](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.23...8.3.0-alpha.24) (2026-01-23)
+
+
+### Features
+
+* Add non-alphanumeric character detection in Cloud Config parameters ([#3143](https://github.com/parse-community/parse-dashboard/issues/3143)) ([1594ec8](https://github.com/parse-community/parse-dashboard/commit/1594ec8b53fec5d6a9b6f0643105c6141bb8a67c))
+
 # [8.3.0-alpha.23](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.22...8.3.0-alpha.23) (2026-01-23)
 
 
