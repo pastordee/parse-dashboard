@@ -1,3 +1,10 @@
+# [8.3.0-alpha.23](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.22...8.3.0-alpha.23) (2026-01-23)
+
+
+### Features
+
+* Add context menu item to get related records for selected text in data browser cell ([#3142](https://github.com/parse-community/parse-dashboard/issues/3142)) ([33d3595](https://github.com/parse-community/parse-dashboard/commit/33d359590ca134aaeef480f5b2b895ecb04df71a))
+
 # [8.3.0-alpha.22](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.21...8.3.0-alpha.22) (2026-01-23)
 
 
