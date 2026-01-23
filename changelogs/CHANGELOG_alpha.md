@@ -1,3 +1,10 @@
+# [8.3.0-alpha.26](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.25...8.3.0-alpha.26) (2026-01-23)
+
+
+### Features
+
+* Optimize canvas menu organization ([#3145](https://github.com/parse-community/parse-dashboard/issues/3145)) ([1558826](https://github.com/parse-community/parse-dashboard/commit/1558826115dd266e46c79951a8a6b748c65c431f))
+
 # [8.3.0-alpha.25](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.24...8.3.0-alpha.25) (2026-01-23)
 
 
