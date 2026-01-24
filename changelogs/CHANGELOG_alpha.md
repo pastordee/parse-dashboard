@@ -1,3 +1,10 @@
+# [8.3.0-alpha.29](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.28...8.3.0-alpha.29) (2026-01-24)
+
+
+### Features
+
+* Improve usability and layout of canvas and elements ([#3148](https://github.com/parse-community/parse-dashboard/issues/3148)) ([cd654dc](https://github.com/parse-community/parse-dashboard/commit/cd654dcc1c424a5b385a666753379f7ab6cbdc04))
+
 # [8.3.0-alpha.28](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.27...8.3.0-alpha.28) (2026-01-23)
 
 
