@@ -63,26 +63,19 @@ const CanvasElement = ({
       onDragStop={handleDragStop}
       onResize={handleResize}
       onResizeStop={handleResizeStop}
-      className={`${styles.canvasElement} ${isSelected ? styles.selected : ''}`}
+      className={`${styles.canvasElement} ${isSelected ? styles.selected : ''} canvasElementWrapper`}
       enableResizing={{
-        top: true,
-        right: true,
-        bottom: true,
-        left: true,
-        topRight: true,
+        top: false,
+        right: false,
+        bottom: false,
+        left: false,
+        topRight: false,
         bottomRight: true,
-        bottomLeft: true,
-        topLeft: true,
+        bottomLeft: false,
+        topLeft: false,
       }}
       resizeHandleClasses={{
-        top: styles.resizeHandle,
-        right: styles.resizeHandle,
-        bottom: styles.resizeHandle,
-        left: styles.resizeHandle,
-        topRight: styles.resizeHandle,
-        bottomRight: styles.resizeHandle,
-        bottomLeft: styles.resizeHandle,
-        topLeft: styles.resizeHandle,
+        bottomRight: styles.resizeHandleVisible,
       }}
     >
       <div className={styles.dragHandle} />
