@@ -1,3 +1,10 @@
+# [8.3.0-alpha.31](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.30...8.3.0-alpha.31) (2026-01-26)
+
+
+### Features
+
+* Various improvements for auto-scrolling info panel ([#3151](https://github.com/parse-community/parse-dashboard/issues/3151)) ([423d83a](https://github.com/parse-community/parse-dashboard/commit/423d83a662007e23dd4a46a11a9baff27c755125))
+
 # [8.3.0-alpha.30](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.29...8.3.0-alpha.30) (2026-01-25)
 
 
