@@ -39,6 +39,7 @@ const AGGREGATION_PANEL_COUNT = 'aggregationPanelCount';
 const GRAPH_PANEL_VISIBLE = 'graphPanelVisible';
 const GRAPH_PANEL_WIDTH = 'graphPanelWidth';
 const AGGREGATION_PANEL_AUTO_SCROLL = 'aggregationPanelAutoScroll';
+const AGGREGATION_PANEL_AUTO_SCROLL_REQUIRE_HOVER = 'aggregationPanelAutoScrollRequireHover';
 
 function formatValueForCopy(value, type) {
   if (value === undefined) {
@@ -123,6 +124,8 @@ export default class DataBrowser extends React.Component {
       ]?.[props.className];
     const storedAutoScroll =
       window.localStorage?.getItem(AGGREGATION_PANEL_AUTO_SCROLL) === 'true';
+    const storedAutoScrollRequireHover =
+      window.localStorage?.getItem(AGGREGATION_PANEL_AUTO_SCROLL_REQUIRE_HOVER) !== 'false';
     const storedGraphPanelVisible =
       window.localStorage?.getItem(GRAPH_PANEL_VISIBLE) === 'true';
     const storedGraphPanelWidth = window.localStorage?.getItem(GRAPH_PANEL_WIDTH);
@@ -182,14 +185,18 @@ export default class DataBrowser extends React.Component {
       isCreatingNewGraph: false,
       // Auto-scroll feature state
       autoScrollEnabled: storedAutoScroll, // Whether auto-scroll feature is enabled (menu setting)
+      autoScrollRequireHover: storedAutoScrollRequireHover, // Whether auto-scroll requires mouse hover over panel
       isAutoScrolling: false, // Whether auto-scroll is currently active
-      isRecordingAutoScroll: false, // Whether we're recording (Option key held during scroll)
+      isRecordingAutoScroll: false, // Whether we're recording (Command key held during scroll)
       autoScrollAmount: 0, // The registered scroll amount (pixels)
       autoScrollDelay: 1000, // The registered wait time (ms)
       autoScrollPaused: false, // Whether auto-scroll is currently paused
       recordingScrollStart: null, // Timestamp when scroll recording started
-      recordingScrollEnd: null, // Timestamp when scrolling ended (before Option key release)
+      recordingScrollEnd: null, // Timestamp when scrolling ended (before Command key release)
       recordedScrollDelta: 0, // Accumulated scroll delta during recording
+      nativeContextMenuOpen: false, // Whether the browser's native context menu is open
+      mouseOutsidePanel: true, // Whether the mouse is outside the AggregationPanel
+      mouseOverPanelHeader: false, // Whether the mouse is over the panel header row
     };
 
     this.handleResizeDiv = this.handleResizeDiv.bind(this);
@@ -238,6 +245,7 @@ export default class DataBrowser extends React.Component {
     this.deleteGraphConfig = this.deleteGraphConfig.bind(this);
     this.selectGraph = this.selectGraph.bind(this);
     this.toggleAutoScroll = this.toggleAutoScroll.bind(this);
+    this.toggleAutoScrollRequireHover = this.toggleAutoScrollRequireHover.bind(this);
     this.handleAutoScrollKeyDown = this.handleAutoScrollKeyDown.bind(this);
     this.handleAutoScrollKeyUp = this.handleAutoScrollKeyUp.bind(this);
     this.handleAutoScrollWheel = this.handleAutoScrollWheel.bind(this);
@@ -245,12 +253,19 @@ export default class DataBrowser extends React.Component {
     this.stopAutoScroll = this.stopAutoScroll.bind(this);
     this.performAutoScrollStep = this.performAutoScrollStep.bind(this);
     this.pauseAutoScrollWithResume = this.pauseAutoScrollWithResume.bind(this);
+    this.handleNativeContextMenu = this.handleNativeContextMenu.bind(this);
+    this.handleNativeContextMenuClose = this.handleNativeContextMenuClose.bind(this);
+    this.handlePanelMouseEnter = this.handlePanelMouseEnter.bind(this);
+    this.handlePanelMouseLeave = this.handlePanelMouseLeave.bind(this);
+    this.handlePanelHeaderMouseEnter = this.handlePanelHeaderMouseEnter.bind(this);
+    this.handlePanelHeaderMouseLeave = this.handlePanelHeaderMouseLeave.bind(this);
     this.saveOrderTimeout = null;
     this.aggregationPanelRef = React.createRef();
     this.autoScrollIntervalId = null;
     this.autoScrollTimeoutId = null;
     this.autoScrollResumeTimeoutId = null;
     this.autoScrollAnimationId = null;
+    this.panelHeaderLeaveTimeoutId = null;
     this.panelColumnRefs = [];
     this.activePanelIndex = -1;
     this.isWheelScrolling = false;
@@ -333,6 +348,18 @@ export default class DataBrowser extends React.Component {
     // Auto-scroll event listeners
     document.body.addEventListener('keydown', this.handleAutoScrollKeyDown);
     document.body.addEventListener('keyup', this.handleAutoScrollKeyUp);
+    // Native context menu detection for auto-scroll pause
+    // Use capture phase to ensure we detect the event before the menu handles it
+    document.addEventListener('contextmenu', this.handleNativeContextMenu, true);
+    // Listen for events that indicate the context menu was closed:
+    // - mousemove: user moved mouse after menu closed (most reliable)
+    // - keydown: Escape key closes the menu
+    // - blur: switching windows/tabs closes the menu
+    // NOTE: click/mousedown don't fire while native context menu is open
+    // NOTE: scroll is not used because auto-scroll itself triggers it
+    window.addEventListener('mousemove', this.handleNativeContextMenuClose);
+    window.addEventListener('keydown', this.handleNativeContextMenuClose, true);
+    window.addEventListener('blur', this.handleNativeContextMenuClose);
 
     // Load keyboard shortcuts from server
     try {
@@ -371,6 +398,10 @@ export default class DataBrowser extends React.Component {
     // Auto-scroll cleanup
     document.body.removeEventListener('keydown', this.handleAutoScrollKeyDown);
     document.body.removeEventListener('keyup', this.handleAutoScrollKeyUp);
+    document.removeEventListener('contextmenu', this.handleNativeContextMenu, true);
+    window.removeEventListener('mousemove', this.handleNativeContextMenuClose);
+    window.removeEventListener('keydown', this.handleNativeContextMenuClose, true);
+    window.removeEventListener('blur', this.handleNativeContextMenuClose);
     if (this.autoScrollTimeoutId) {
       clearTimeout(this.autoScrollTimeoutId);
     }
@@ -379,6 +410,9 @@ export default class DataBrowser extends React.Component {
     }
     if (this.autoScrollAnimationId) {
       cancelAnimationFrame(this.autoScrollAnimationId);
+    }
+    if (this.panelHeaderLeaveTimeoutId) {
+      clearTimeout(this.panelHeaderLeaveTimeoutId);
     }
   }
 
@@ -1385,6 +1419,45 @@ export default class DataBrowser extends React.Component {
     });
   }
 
+  /**
+   * Checks if auto-scroll should be blocked due to user interactions.
+   * Auto-scroll pauses when:
+   * - A modal is displayed (script confirmation, graph dialog)
+   * - A context menu is displayed (custom or native browser menu)
+   * - The user is editing a cell in the databrowser table
+   * - Manual scroll pause is active
+   */
+  isAutoScrollBlocked() {
+    const {
+      autoScrollPaused,
+      editing,
+      contextMenuItems,
+      showScriptConfirmationDialog,
+      showGraphDialog,
+      nativeContextMenuOpen,
+      mouseOutsidePanel,
+      mouseOverPanelHeader,
+      autoScrollRequireHover,
+    } = this.state;
+
+    // disableKeyControls is true when parent Browser has a modal open
+    const { disableKeyControls } = this.props;
+
+    // Check hover-related blocking only if autoScrollRequireHover is enabled
+    const hoverBlocked = autoScrollRequireHover && (mouseOutsidePanel || mouseOverPanelHeader);
+
+    return (
+      autoScrollPaused ||
+      editing ||
+      (contextMenuItems && contextMenuItems.length > 0) ||
+      showScriptConfirmationDialog ||
+      showGraphDialog ||
+      nativeContextMenuOpen ||
+      disableKeyControls ||
+      hoverBlocked
+    );
+  }
+
   toggleAutoScroll() {
     this.setState(prevState => {
       const newAutoScroll = !prevState.autoScrollEnabled;
@@ -1397,10 +1470,18 @@ export default class DataBrowser extends React.Component {
     });
   }
 
+  toggleAutoScrollRequireHover() {
+    this.setState(prevState => {
+      const newRequireHover = !prevState.autoScrollRequireHover;
+      window.localStorage?.setItem(AGGREGATION_PANEL_AUTO_SCROLL_REQUIRE_HOVER, String(newRequireHover));
+      return { autoScrollRequireHover: newRequireHover };
+    });
+  }
+
   handleAutoScrollKeyDown(e) {
-    // Option/Alt key = keyCode 18
+    // Command/Meta key = keyCode 91 (left) or 93 (right)
     // Only detect when panels are visible and auto-scroll is enabled
-    if (e.keyCode === 18 && this.state.autoScrollEnabled && this.state.isPanelVisible && !this.state.isRecordingAutoScroll) {
+    if ((e.keyCode === 91 || e.keyCode === 93) && this.state.autoScrollEnabled && this.state.isPanelVisible && !this.state.isRecordingAutoScroll) {
       // Stop any existing auto-scroll first
       if (this.state.isAutoScrolling) {
         this.stopAutoScroll();
@@ -1415,8 +1496,8 @@ export default class DataBrowser extends React.Component {
   }
 
   handleAutoScrollKeyUp(e) {
-    // Option/Alt key = keyCode 18
-    if (e.keyCode === 18 && this.state.isRecordingAutoScroll) {
+    // Command/Meta key = keyCode 91 (left) or 93 (right)
+    if ((e.keyCode === 91 || e.keyCode === 93) && this.state.isRecordingAutoScroll) {
       const { recordedScrollDelta, recordingScrollStart, recordingScrollEnd } = this.state;
 
       // Only start auto-scroll if we actually recorded some scrolling
@@ -1471,12 +1552,70 @@ export default class DataBrowser extends React.Component {
       this.setState({ autoScrollPaused: true });
     }
 
-    // Schedule resume after 500ms of inactivity
+    // Schedule resume after 1000ms of inactivity
     this.autoScrollResumeTimeoutId = setTimeout(() => {
       if (this.state.isAutoScrolling && this.state.autoScrollPaused) {
         this.setState({ autoScrollPaused: false });
       }
-    }, 500);
+    }, 1000);
+  }
+
+  handleNativeContextMenu() {
+    // Pause auto-scroll when native browser context menu is opened
+    if (this.state.isAutoScrolling && !this.state.nativeContextMenuOpen) {
+      this.setState({ nativeContextMenuOpen: true });
+    }
+  }
+
+  handleNativeContextMenuClose(e) {
+    // Only process if native context menu is open
+    if (!this.state.nativeContextMenuOpen) {
+      return;
+    }
+
+    // For keydown events, only handle Escape key
+    if (e && e.type === 'keydown' && e.key !== 'Escape') {
+      return;
+    }
+
+    // mousemove, Escape key, or blur all indicate the menu is closed
+    this.setState({ nativeContextMenuOpen: false });
+  }
+
+  handlePanelMouseEnter() {
+    if (this.state.mouseOutsidePanel) {
+      this.setState({ mouseOutsidePanel: false });
+    }
+  }
+
+  handlePanelMouseLeave() {
+    if (!this.state.mouseOutsidePanel) {
+      this.setState({ mouseOutsidePanel: true });
+    }
+  }
+
+  handlePanelHeaderMouseEnter() {
+    // Cancel any pending leave timeout
+    if (this.panelHeaderLeaveTimeoutId) {
+      clearTimeout(this.panelHeaderLeaveTimeoutId);
+      this.panelHeaderLeaveTimeoutId = null;
+    }
+    if (!this.state.mouseOverPanelHeader) {
+      this.setState({ mouseOverPanelHeader: true });
+    }
+  }
+
+  handlePanelHeaderMouseLeave() {
+    // Use a small delay to allow moving between adjacent headers without resuming scroll
+    if (this.panelHeaderLeaveTimeoutId) {
+      clearTimeout(this.panelHeaderLeaveTimeoutId);
+    }
+    this.panelHeaderLeaveTimeoutId = setTimeout(() => {
+      this.panelHeaderLeaveTimeoutId = null;
+      if (this.state.mouseOverPanelHeader) {
+        this.setState({ mouseOverPanelHeader: false });
+      }
+    }, 50);
   }
 
   startAutoScroll() {
@@ -1517,8 +1656,8 @@ export default class DataBrowser extends React.Component {
       return;
     }
 
-    if (this.state.autoScrollPaused) {
-      // When paused, keep checking but don't scroll
+    if (this.isAutoScrollBlocked()) {
+      // When blocked (modal, context menu, editing, or manual pause), keep checking but don't scroll
       this.autoScrollTimeoutId = setTimeout(() => {
         this.performAutoScrollStep();
       }, 100);
@@ -1554,8 +1693,8 @@ export default class DataBrowser extends React.Component {
     }
 
     const animateScroll = (currentTime) => {
-      if (!this.state.isAutoScrolling || this.state.autoScrollPaused) {
-        // If stopped or paused during animation, schedule next check
+      if (!this.state.isAutoScrolling || this.isAutoScrollBlocked()) {
+        // If stopped or blocked during animation, schedule next check
         this.autoScrollTimeoutId = setTimeout(() => {
           this.performAutoScrollStep();
         }, 100);
@@ -2373,6 +2512,8 @@ export default class DataBrowser extends React.Component {
                 className={styles.aggregationPanelContainer}
                 ref={this.aggregationPanelRef}
                 onWheel={this.handleAutoScrollWheel}
+                onMouseEnter={this.handlePanelMouseEnter}
+                onMouseLeave={this.handlePanelMouseLeave}
               >
                 {this.state.panelCount > 1 ? (
                   <div
@@ -2435,7 +2576,11 @@ export default class DataBrowser extends React.Component {
                                     this.onMouseDownPanelCheckBox(objectId, isRowSelected);
                                   }}
                                   onMouseUp={this.onMouseUpPanelCheckBox}
-                                  onMouseEnter={() => this.onMouseEnterPanelCheckBox(objectId)}
+                                  onMouseEnter={() => {
+                                    this.onMouseEnterPanelCheckBox(objectId);
+                                    this.handlePanelHeaderMouseEnter();
+                                  }}
+                                  onMouseLeave={this.handlePanelHeaderMouseLeave}
                                   onContextMenu={(e) => {
                                     e.preventDefault();
                                     this.handlePanelHeaderContextMenu(e, objectId);
@@ -2570,6 +2715,8 @@ export default class DataBrowser extends React.Component {
           toggleShowPanelCheckbox={this.toggleShowPanelCheckbox}
           autoScrollEnabled={this.state.autoScrollEnabled}
           toggleAutoScroll={this.toggleAutoScroll}
+          autoScrollRequireHover={this.state.autoScrollRequireHover}
+          toggleAutoScrollRequireHover={this.toggleAutoScrollRequireHover}
           isAutoScrolling={this.state.isAutoScrolling}
           stopAutoScroll={this.stopAutoScroll}
           toggleGraphPanel={this.toggleGraphPanelVisibility}
@@ -2583,6 +2730,7 @@ export default class DataBrowser extends React.Component {
             x={this.state.contextMenuX}
             y={this.state.contextMenuY}
             items={this.state.contextMenuItems}
+            onHide={() => this.setState({ contextMenuX: null, contextMenuY: null, contextMenuItems: null })}
           />
         )}
         {this.state.showScriptConfirmationDialog && (
