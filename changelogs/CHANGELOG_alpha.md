@@ -1,3 +1,10 @@
+# [8.3.0-alpha.32](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.31...8.3.0-alpha.32) (2026-01-26)
+
+
+### Bug Fixes
+
+* Incorrect percentage and average calculation for calculated values in graphs ([#3152](https://github.com/parse-community/parse-dashboard/issues/3152)) ([14b4d48](https://github.com/parse-community/parse-dashboard/commit/14b4d485ed2a8d9a52f35af6e583997105db115d))
+
 # [8.3.0-alpha.31](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.30...8.3.0-alpha.31) (2026-01-26)
 
 
