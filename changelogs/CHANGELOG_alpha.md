@@ -1,3 +1,10 @@
+# [8.3.0-alpha.33](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.32...8.3.0-alpha.33) (2026-01-27)
+
+
+### Features
+
+* Add expanded view for canvas elements graph, table, view ([#3156](https://github.com/parse-community/parse-dashboard/issues/3156)) ([0ffd767](https://github.com/parse-community/parse-dashboard/commit/0ffd767a06b0cd005a102e00299d5cc96cb043c6))
+
 # [8.3.0-alpha.32](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.31...8.3.0-alpha.32) (2026-01-26)
 
 
