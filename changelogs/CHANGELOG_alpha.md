@@ -1,3 +1,10 @@
+# [8.3.0-alpha.38](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.37...8.3.0-alpha.38) (2026-01-28)
+
+
+### Features
+
+* Add field `objectId` to get related records context menu in data browser ([#3161](https://github.com/parse-community/parse-dashboard/issues/3161)) ([2847ccf](https://github.com/parse-community/parse-dashboard/commit/2847ccf3adc4a7aa902e8a5b70ad61d9a2379877))
+
 # [8.3.0-alpha.37](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.36...8.3.0-alpha.37) (2026-01-28)
 
 
