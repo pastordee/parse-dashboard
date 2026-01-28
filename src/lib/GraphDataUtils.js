@@ -311,43 +311,6 @@ function createGroupKey(item, groupByColumns) {
 }
 
 /**
- * Group data by a column and apply aggregation
- * @param {Array} data - Array of Parse objects
- * @param {string|Array<string>} groupByColumn - Column(s) to group by
- * @param {string} valueColumn - Column to aggregate
- * @param {string} aggregationType - Aggregation type
- * @returns {Object} Grouped and aggregated data
- */
-export function groupAndAggregate(data, groupByColumn, valueColumn, aggregationType = 'count') {
-  const groups = {};
-
-  data.forEach(item => {
-    const rawValue = getNestedValue(item, valueColumn);
-    const value = extractNumericValue(rawValue);
-
-    // Create composite group key from potentially multiple columns
-    const groupKey = createGroupKey(item, groupByColumn);
-
-    if (!groups[groupKey]) {
-      groups[groupKey] = [];
-    }
-
-    // Only add numeric values for aggregation
-    if (value !== null) {
-      groups[groupKey].push(value);
-    }
-  });
-
-  // Apply aggregation to each group
-  const result = {};
-  Object.keys(groups).forEach(groupKey => {
-    result[groupKey] = aggregateValues(groups[groupKey], aggregationType);
-  });
-
-  return result;
-}
-
-/**
  * Process data for scatter plots
  * @param {Array} data - Array of Parse objects
  * @param {string} xColumn - X-axis column
@@ -390,54 +353,131 @@ export function processScatterData(data, xColumn, yColumn, maxPoints = 1000) {
 }
 
 /**
+ * Get the display label for a series
+ * @param {Object} s - Series definition
+ * @param {number} index - Series index (for fallback naming)
+ * @returns {string} Series label
+ */
+function getSeriesLabel(s, index) {
+  // Use title if provided
+  if (s.title && s.title.trim() !== '') {
+    return s.title;
+  }
+  // Fall back to fields
+  const fields = s.fields || [];
+  if (fields.length === 1) {
+    return fields[0];
+  }
+  if (fields.length > 1) {
+    return fields.join(' + ');
+  }
+  // Last resort
+  return `Series ${index + 1}`;
+}
+
+/**
  * Process data for pie/doughnut charts
  * @param {Array} data - Array of Parse objects
- * @param {string|Array<string>} valueColumn - Value column(s) for aggregation
+ * @param {Array} series - Series definitions with fields, title, aggregationType, color, etc.
  * @param {string|Array<string>} groupByColumn - Column(s) to group by (optional)
- * @param {string} aggregationType - Aggregation type
  * @param {Array} calculatedValues - Calculated value definitions (optional)
  * @returns {Object} Chart.js compatible data
  */
-export function processPieData(data, valueColumn, groupByColumn, aggregationType = 'count', calculatedValues = null) {
+export function processPieData(data, series, groupByColumn, calculatedValues = null) {
   if (!Array.isArray(data)) {
     return null;
   }
 
-  // Convert single valueColumn to array for uniform handling
-  const valueColumns = Array.isArray(valueColumn) ? valueColumn : (valueColumn ? [valueColumn] : []);
+  // Convert series to array if needed and extract value columns
+  const seriesArray = Array.isArray(series) ? series : [];
   const hasCalculatedValues = calculatedValues && Array.isArray(calculatedValues) && calculatedValues.length > 0;
 
-  // Must have at least one value column or calculated value
-  if (valueColumns.length === 0 && !hasCalculatedValues) {
+  // Must have at least one series or calculated value
+  if (seriesArray.length === 0 && !hasCalculatedValues) {
     return null;
   }
 
-  let aggregatedData = {};
+  // Build a map of series styles for color lookup
+  // Use title if available, otherwise first field or generated name
+  const seriesStyleMap = new Map();
+  seriesArray.forEach((s, idx) => {
+    const seriesLabel = getSeriesLabel(s, idx);
+    seriesStyleMap.set(seriesLabel, s);
+  });
+
+  const aggregatedData = {};
 
   if (groupByColumn) {
-    // Group by column and aggregate for each value column
-    valueColumns.forEach(valCol => {
-      const columnData = groupAndAggregate(data, groupByColumn, valCol, aggregationType);
-      // Prefix keys with column name if multiple columns
-      if (valueColumns.length > 1) {
-        Object.keys(columnData).forEach(key => {
-          aggregatedData[`${valCol} (${key})`] = columnData[key];
-        });
-      } else {
-        aggregatedData = { ...aggregatedData, ...columnData };
+    // Group by column and aggregate for each series
+    seriesArray.forEach((s, idx) => {
+      const fields = s.fields || [];
+      if (fields.length === 0) {
+        return;
       }
+
+      const seriesLabel = getSeriesLabel(s, idx);
+
+      // For multi-field series, we need to aggregate across all fields
+      const groups = {};
+      data.forEach(item => {
+        const groupKey = createGroupKey(item, groupByColumn);
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+
+        // Sum values from all fields in this series for this item
+        let combinedValue = 0;
+        let hasValue = false;
+        fields.forEach(field => {
+          const rawValue = getNestedValue(item, field);
+          const value = extractNumericValue(rawValue);
+          if (value !== null) {
+            combinedValue += value;
+            hasValue = true;
+          }
+        });
+
+        if (hasValue) {
+          groups[groupKey].push(combinedValue);
+        }
+      });
+
+      // Apply aggregation to each group
+      Object.keys(groups).forEach(groupKey => {
+        const labelKey = seriesArray.length > 1 || hasCalculatedValues
+          ? `${seriesLabel} (${groupKey})`
+          : groupKey;
+        aggregatedData[labelKey] = aggregateValues(groups[groupKey], s.aggregationType || 'count');
+      });
     });
   } else {
-    // Aggregate each value column separately
-    valueColumns.forEach(valCol => {
+    // Aggregate each series separately
+    seriesArray.forEach((s, idx) => {
+      const fields = s.fields || [];
+      if (fields.length === 0) {
+        return;
+      }
+
+      const seriesLabel = getSeriesLabel(s, idx);
+
+      // For multi-field series, sum values from all fields for each item
       const values = data
         .map(item => {
-          const rawValue = getNestedValue(item, valCol);
-          return extractNumericValue(rawValue);
+          let combinedValue = 0;
+          let hasValue = false;
+          fields.forEach(field => {
+            const rawValue = getNestedValue(item, field);
+            const value = extractNumericValue(rawValue);
+            if (value !== null) {
+              combinedValue += value;
+              hasValue = true;
+            }
+          });
+          return hasValue ? combinedValue : null;
         })
         .filter(val => val !== null);
 
-      aggregatedData[valCol] = aggregateValues(values, aggregationType);
+      aggregatedData[seriesLabel] = aggregateValues(values, s.aggregationType || 'count');
     });
   }
 
@@ -463,7 +503,20 @@ export function processPieData(data, valueColumn, groupByColumn, aggregationType
           }
 
           // Build available fields for formula evaluation
-          const availableFields = [...valueColumns];
+          const availableFields = [];
+          seriesArray.forEach((s, idx) => {
+            const fields = s.fields || [];
+            fields.forEach(field => {
+              if (!availableFields.includes(field)) {
+                availableFields.push(field);
+              }
+            });
+            // Also add series title if present
+            const seriesLabel = getSeriesLabel(s, idx);
+            if (seriesLabel && !availableFields.includes(seriesLabel)) {
+              availableFields.push(seriesLabel);
+            }
+          });
           // Add previously calculated value names
           Object.keys(calculatedValuesForRow).forEach(name => {
             if (!availableFields.includes(name)) {
@@ -541,7 +594,7 @@ export function processPieData(data, valueColumn, groupByColumn, aggregationType
 
           // Aggregate each group
           Object.keys(groups).forEach(groupKey => {
-            const labelKey = valueColumns.length > 1 || calculatedValues.length > 1
+            const labelKey = seriesArray.length > 0 || calculatedValues.length > 1
               ? `${calc.name} (${groupKey})`
               : groupKey;
 
@@ -633,7 +686,31 @@ export function processPieData(data, valueColumn, groupByColumn, aggregationType
     return null;
   }
 
-  const colors = generateColors(labels.length);
+  // Generate default colors, then apply custom colors from series or calculated values
+  const defaultColors = generateColors(labels.length);
+
+  // Build a map of colors from calculated values
+  const calcValueColorMap = new Map();
+  if (calculatedValues && Array.isArray(calculatedValues)) {
+    calculatedValues.forEach(calc => {
+      if (calc.name && calc.color) {
+        calcValueColorMap.set(calc.name, calc.color);
+      }
+    });
+  }
+
+  const colors = labels.map((label, index) => {
+    // Check series style map first
+    const seriesStyle = seriesStyleMap.get(label);
+    if (seriesStyle && seriesStyle.color) {
+      return seriesStyle.color;
+    }
+    // Check calculated value color
+    if (calcValueColorMap.has(label)) {
+      return calcValueColorMap.get(label);
+    }
+    return defaultColors[index];
+  });
 
   return {
     labels,
@@ -650,25 +727,32 @@ export function processPieData(data, valueColumn, groupByColumn, aggregationType
  * Process data for bar/line/radar charts
  * @param {Array} data - Array of Parse objects
  * @param {string} xColumn - X-axis column
- * @param {string|Array<string>} valueColumn - Value column(s)
+ * @param {Array} series - Series definitions with field, aggregationType, color, etc.
  * @param {string|Array<string>} groupByColumn - Column(s) to group by (optional)
- * @param {string} aggregationType - Aggregation type
  * @param {Array} calculatedValues - Calculated value definitions (optional)
  * @returns {Object} Chart.js compatible data
  */
-export function processBarLineData(data, xColumn, valueColumn, groupByColumn, aggregationType = 'count', calculatedValues = null) {
+export function processBarLineData(data, xColumn, series, groupByColumn, calculatedValues = null) {
   if (!xColumn || !Array.isArray(data)) {
     return null;
   }
 
-  // Convert single valueColumn to array for uniform handling
-  const valueColumns = Array.isArray(valueColumn) ? valueColumn : (valueColumn ? [valueColumn] : []);
+  // Convert series to array if needed
+  const seriesArray = Array.isArray(series) ? series : [];
   const hasCalculatedValues = calculatedValues && Array.isArray(calculatedValues) && calculatedValues.length > 0;
 
-  // Must have at least one value column or calculated value
-  if (valueColumns.length === 0 && !hasCalculatedValues) {
+  // Must have at least one series or calculated value
+  if (seriesArray.length === 0 && !hasCalculatedValues) {
     return null;
   }
+
+  // Build a map of series styles for lookup
+  // Use title if available, otherwise first field or generated name
+  const seriesStyleMap = new Map();
+  seriesArray.forEach((s, idx) => {
+    const seriesLabel = getSeriesLabel(s, idx);
+    seriesStyleMap.set(seriesLabel, s);
+  });
 
   // Collect unique x-axis values and group data
   const xValues = new Map(); // Use Map to store both raw value and formatted label
@@ -706,21 +790,37 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
     // Create an extended item that will hold calculated values for this row
     const calculatedValuesForRow = {};
 
-    // Process each value column
-    valueColumns.forEach(valCol => {
-      const rawValue = getNestedValue(item, valCol);
-      const value = extractNumericValue(rawValue);
+    // Process each series
+    seriesArray.forEach((s, idx) => {
+      const fields = s.fields || [];
+      if (fields.length === 0) {
+        return;
+      }
 
-      if (value === null) {return;}
+      const seriesLabel = getSeriesLabel(s, idx);
+
+      // For multi-field series, sum values from all fields
+      let combinedValue = 0;
+      let hasValue = false;
+      fields.forEach(field => {
+        const rawValue = getNestedValue(item, field);
+        const value = extractNumericValue(rawValue);
+        if (value !== null) {
+          combinedValue += value;
+          hasValue = true;
+        }
+      });
+
+      if (!hasValue) {return;}
 
       // Handle groupBy column(s) - create composite key if multiple columns
-      let groupKeyValue = valCol; // Use column name as default group
+      let groupKeyValue = seriesLabel; // Use series label as default group
       if (groupByColumn && (Array.isArray(groupByColumn) ? groupByColumn.length > 0 : true)) {
         const compositeKey = createGroupKey(item, groupByColumn);
         groupKeyValue = compositeKey;
-        // When groupBy is specified, combine with column name for unique series
-        if (valueColumns.length > 1) {
-          groupKeyValue = `${valCol} (${compositeKey})`;
+        // When groupBy is specified, combine with series label for unique series
+        if (seriesArray.length > 1 || hasCalculatedValues) {
+          groupKeyValue = `${seriesLabel} (${compositeKey})`;
         }
       }
       const groupKey = groupKeyValue;
@@ -731,7 +831,7 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
       if (!groups[groupKey][xKey]) {
         groups[groupKey][xKey] = [];
       }
-      groups[groupKey][xKey].push(value);
+      groups[groupKey][xKey].push(combinedValue);
     });
 
     // Process calculated values - with support for referencing other calculated values
@@ -752,7 +852,20 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
           }
 
           // Build available fields for formula evaluation
-          const availableFields = [...valueColumns];
+          const availableFields = [];
+          seriesArray.forEach((s, idx) => {
+            const fields = s.fields || [];
+            fields.forEach(field => {
+              if (!availableFields.includes(field)) {
+                availableFields.push(field);
+              }
+            });
+            // Also add series title if present
+            const seriesLabel = getSeriesLabel(s, idx);
+            if (seriesLabel && !availableFields.includes(seriesLabel)) {
+              availableFields.push(seriesLabel);
+            }
+          });
           // Add previously calculated value names
           Object.keys(calculatedValuesForRow).forEach(name => {
             if (!availableFields.includes(name)) {
@@ -772,7 +885,7 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
               const compositeKey = createGroupKey(item, groupByColumn);
               groupKeyValue = compositeKey;
               // When groupBy is specified, combine with calc name for unique series
-              if (calculatedValues.length > 1 || valueColumns.length > 0) {
+              if (calculatedValues.length > 1 || seriesArray.length > 0) {
                 groupKeyValue = `${calc.name} (${compositeKey})`;
               }
             }
@@ -857,12 +970,54 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
   const sortedXLabels = sortedXKeys.map(key => xValues.get(key));
   const groupKeys = Object.keys(groups);
 
-  // Create maps for calculated value properties (operator, secondary Y axis, line style, bar style)
+  // Create maps for series properties (aggregationType, chartType, color, line style, bar style, secondary Y axis)
+  // This handles both simple series labels and grouped names like "SeriesLabel (GroupValue)"
+  const seriesAggregationMap = new Map();
+  const seriesChartTypeMap = new Map();
+  const seriesSecondaryYAxisMap = new Map();
+  const seriesColorMap = new Map();
+  const seriesLineStyleMap = new Map();
+  const seriesBarStyleMap = new Map();
+  const seriesStrokeWidthMap = new Map();
+  seriesArray.forEach((s, idx) => {
+    const seriesLabel = getSeriesLabel(s, idx);
+    // Map all possible variations of this series' group keys
+    groupKeys.forEach(groupKey => {
+      // Check if this groupKey is for this series
+      // It either matches exactly, or starts with "SeriesLabel ("
+      if (groupKey === seriesLabel || groupKey.startsWith(`${seriesLabel} (`)) {
+        seriesAggregationMap.set(groupKey, s.aggregationType || 'count');
+        if (s.chartType) {
+          seriesChartTypeMap.set(groupKey, s.chartType);
+        }
+        if (s.useSecondaryYAxis) {
+          seriesSecondaryYAxisMap.set(groupKey, true);
+        }
+        if (s.color) {
+          seriesColorMap.set(groupKey, s.color);
+        }
+        if (s.lineStyle) {
+          seriesLineStyleMap.set(groupKey, s.lineStyle);
+        }
+        if (s.barStyle) {
+          seriesBarStyleMap.set(groupKey, s.barStyle);
+        }
+        if (s.strokeWidth != null) {
+          seriesStrokeWidthMap.set(groupKey, s.strokeWidth);
+        }
+      }
+    });
+  });
+
+  // Create maps for calculated value properties (operator, chartType, secondary Y axis, color, line style, bar style)
   // This handles both simple calc names and grouped calc names like "CalcName (GroupValue)"
   const calcValueOperatorMap = new Map();
+  const calcValueChartTypeMap = new Map();
   const calcValueSecondaryYAxisMap = new Map();
+  const calcValueColorMap = new Map();
   const calcValueLineStyleMap = new Map();
   const calcValueBarStyleMap = new Map();
+  const calcValueStrokeWidthMap = new Map();
   if (calculatedValues && Array.isArray(calculatedValues)) {
     calculatedValues.forEach(calc => {
       if (calc.name && calc.operator) {
@@ -872,14 +1027,23 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
           // It either matches exactly, or starts with "CalcName ("
           if (groupKey === calc.name || groupKey.startsWith(`${calc.name} (`)) {
             calcValueOperatorMap.set(groupKey, calc.operator);
+            if (calc.chartType) {
+              calcValueChartTypeMap.set(groupKey, calc.chartType);
+            }
             if (calc.useSecondaryYAxis) {
               calcValueSecondaryYAxisMap.set(groupKey, true);
+            }
+            if (calc.color) {
+              calcValueColorMap.set(groupKey, calc.color);
             }
             if (calc.lineStyle) {
               calcValueLineStyleMap.set(groupKey, calc.lineStyle);
             }
             if (calc.barStyle) {
               calcValueBarStyleMap.set(groupKey, calc.barStyle);
+            }
+            if (calc.strokeWidth != null) {
+              calcValueStrokeWidthMap.set(groupKey, calc.strokeWidth);
             }
           }
         });
@@ -888,7 +1052,7 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
   }
 
   // Generate colors once for all datasets
-  const colors = generateColors(groupKeys.length);
+  const defaultColors = generateColors(groupKeys.length);
 
   const datasets = groupKeys.map((groupKey, index) => {
     const groupData = groups[groupKey];
@@ -918,37 +1082,43 @@ export function processBarLineData(data, xColumn, valueColumn, groupByColumn, ag
 
         // For other ratio-based operators (ratio, formula), average the results
         // For other operators (sum, difference), sum the results
-        let aggregationType = 'sum';
+        let calcAggType = 'sum';
         if (calcOperator === 'ratio' || calcOperator === 'formula') {
-          aggregationType = 'avg';
+          calcAggType = 'avg';
         }
-        return groupValues.length > 0 ? aggregateValues(groupValues, aggregationType) : 0;
+        return groupValues.length > 0 ? aggregateValues(groupValues, calcAggType) : 0;
       } else {
-        // For regular values, use the selected aggregationType
-        return groupValues.length > 0 ? aggregateValues(groupValues, aggregationType) : 0;
+        // For regular series, use the series' aggregationType
+        const seriesAggType = seriesAggregationMap.get(groupKey) || 'count';
+        return groupValues.length > 0 ? aggregateValues(groupValues, seriesAggType) : 0;
       }
     });
+
+    // Get custom styles for this series if available
+    // Priority: series color > calculated value color > default
+    const color = seriesColorMap.get(groupKey) || calcValueColorMap.get(groupKey) || defaultColors[index];
+
+    // Get line style - prefer series style, then calculated value style
+    const lineStyle = seriesLineStyleMap.get(groupKey) || calcValueLineStyleMap.get(groupKey);
+    // Get bar style - prefer series style, then calculated value style
+    const barStyle = seriesBarStyleMap.get(groupKey) || calcValueBarStyleMap.get(groupKey);
+    // Get stroke width - prefer series style, then calculated value style
+    const strokeWidth = seriesStrokeWidthMap.get(groupKey) ?? calcValueStrokeWidthMap.get(groupKey);
+    // Get chart type - prefer series type, then calculated value type (for mixed bar/line charts)
+    const datasetChartType = seriesChartTypeMap.get(groupKey) || calcValueChartTypeMap.get(groupKey);
 
     const dataset = {
       label: groupKey,
       data: values,
-      backgroundColor: colors[index],
-      borderColor: colors[index].replace('0.8', '1'),
+      backgroundColor: color,
+      borderColor: color.replace('0.8', '1'),
       borderWidth: 1,
-      yAxisID: calcValueSecondaryYAxisMap.get(groupKey) ? 'y1' : 'y',
+      yAxisID: (seriesSecondaryYAxisMap.get(groupKey) || calcValueSecondaryYAxisMap.get(groupKey)) ? 'y1' : 'y',
+      type: datasetChartType || undefined,
+      lineStyle: lineStyle || undefined,
+      barStyle: barStyle || undefined,
+      strokeWidth: strokeWidth ?? undefined,
     };
-
-    // Add line style if specified
-    const lineStyle = calcValueLineStyleMap.get(groupKey);
-    if (lineStyle) {
-      dataset.lineStyle = lineStyle;
-    }
-
-    // Add bar style if specified
-    const barStyle = calcValueBarStyleMap.get(groupKey);
-    if (barStyle) {
-      dataset.barStyle = barStyle;
-    }
 
     return dataset;
   });
@@ -1018,15 +1188,19 @@ export function validateGraphConfig(config, columns) {
     return { isValid: false, error: 'No configuration provided' };
   }
 
-  const { chartType, xColumn, yColumn, valueColumn, calculatedValues } = config;
+  const { chartType, xColumn, yColumn, series, calculatedValues } = config;
 
   if (!chartType) {
     return { isValid: false, error: 'Chart type is required' };
   }
 
-  const hasValueColumn = valueColumn && (!Array.isArray(valueColumn) || valueColumn.length > 0);
+  // Check for series - a series with at least one field
+  const hasSeries = Array.isArray(series) && series.length > 0 && series.some(s => {
+    const fields = s.fields || [];
+    return fields.length > 0;
+  });
   const hasCalculatedValues = calculatedValues && Array.isArray(calculatedValues) && calculatedValues.length > 0;
-  const hasValuesToDisplay = hasValueColumn || hasCalculatedValues;
+  const hasValuesToDisplay = hasSeries || hasCalculatedValues;
 
   // Check required columns based on chart type
   switch (chartType) {
@@ -1042,14 +1216,16 @@ export function validateGraphConfig(config, columns) {
     case 'pie':
     case 'doughnut': {
       if (!hasValuesToDisplay) {
-        return { isValid: false, error: 'Pie charts require at least one value column or calculated value' };
+        return { isValid: false, error: 'Pie charts require at least one series or calculated value' };
       }
-      // Validate all value columns exist (only if valueColumn is specified)
-      if (hasValueColumn) {
-        const pieValueCols = Array.isArray(valueColumn) ? valueColumn : [valueColumn];
-        for (const col of pieValueCols) {
-          if (!columns || !columns[col]) {
-            return { isValid: false, error: `Value column '${col}' does not exist` };
+      // Validate all series fields exist
+      if (hasSeries && columns) {
+        for (const s of series) {
+          const fields = s.fields || [];
+          for (const col of fields) {
+            if (!columns[col]) {
+              return { isValid: false, error: `Field '${col}' does not exist` };
+            }
           }
         }
       }
@@ -1060,17 +1236,19 @@ export function validateGraphConfig(config, columns) {
     case 'line':
     case 'radar': {
       if (!xColumn || !hasValuesToDisplay) {
-        return { isValid: false, error: 'Bar/line charts require both X axis and at least one value column or calculated value' };
+        return { isValid: false, error: 'Bar/line charts require both X axis and at least one series or calculated value' };
       }
       if (!columns || !columns[xColumn]) {
         return { isValid: false, error: 'X column does not exist' };
       }
-      // Validate all value columns exist (only if valueColumn is specified)
-      if (hasValueColumn) {
-        const barValueCols = Array.isArray(valueColumn) ? valueColumn : [valueColumn];
-        for (const col of barValueCols) {
-          if (!columns || !columns[col]) {
-            return { isValid: false, error: `Value column '${col}' does not exist` };
+      // Validate all series fields exist
+      if (hasSeries && columns) {
+        for (const s of series) {
+          const fields = s.fields || [];
+          for (const col of fields) {
+            if (!columns[col]) {
+              return { isValid: false, error: `Field '${col}' does not exist` };
+            }
           }
         }
       }

@@ -157,12 +157,11 @@ const GraphPanel = ({
       chartType,
       xColumn,
       yColumn,
-      valueColumn,
+      series,
       groupByColumn,
-      aggregationType,
       maxDataPoints,
       calculatedValues,
-      secondaryYAxisType,
+      strokeWidthOverride,
     } = graphConfig;
 
     // Limit data points for performance
@@ -176,38 +175,19 @@ const GraphPanel = ({
           break;
         case 'pie':
         case 'doughnut':
-          result = processPieData(limitedData, valueColumn, groupByColumn, aggregationType, calculatedValues);
+          result = processPieData(limitedData, series || [], groupByColumn, calculatedValues);
           break;
         case 'bar':
         case 'line':
         case 'radar':
-          result = processBarLineData(limitedData, xColumn, valueColumn, groupByColumn, aggregationType, calculatedValues);
+          result = processBarLineData(limitedData, xColumn, series || [], groupByColumn, calculatedValues);
           break;
       }
 
-      // Apply secondary Y-axis chart type to datasets on secondary axis
-      if (result && result.datasets && secondaryYAxisType && (chartType === 'bar' || chartType === 'line')) {
-        result.datasets = result.datasets.map(dataset => {
-          if (dataset.yAxisID === 'y1') {
-            return {
-              ...dataset,
-              type: secondaryYAxisType,
-            };
-          }
-          return dataset;
-        });
-      }
-
       // Helper to compute the effective chart type for a dataset
-      // dataset.type overrides global defaults (set by secondary Y-axis type or other means)
+      // dataset.type overrides the global chart type
       const getEffectiveType = (dataset) => {
-        if (dataset.type) {
-          return dataset.type;
-        }
-        if (dataset.yAxisID === 'y1' && secondaryYAxisType) {
-          return secondaryYAxisType;
-        }
-        return chartType;
+        return dataset.type || chartType;
       };
 
       // Apply line styles to datasets (convert lineStyle to Chart.js borderDash)
@@ -220,10 +200,15 @@ const GraphPanel = ({
 
         result.datasets = result.datasets.map(dataset => {
           const effectiveType = getEffectiveType(dataset);
-          if (effectiveType === 'line' && dataset.lineStyle && lineStyleToBorderDash[dataset.lineStyle]) {
+          if (effectiveType === 'line') {
+            // Line charts get custom or default stroke width and optional dash pattern
+            // strokeWidthOverride takes precedence over individual series strokeWidth
             return {
               ...dataset,
-              borderDash: lineStyleToBorderDash[dataset.lineStyle],
+              borderWidth: strokeWidthOverride || dataset.strokeWidth || 2,
+              ...(dataset.lineStyle && lineStyleToBorderDash[dataset.lineStyle]
+                ? { borderDash: lineStyleToBorderDash[dataset.lineStyle] }
+                : {}),
             };
           }
           return dataset;

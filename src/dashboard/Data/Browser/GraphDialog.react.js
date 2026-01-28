@@ -52,11 +52,68 @@ const LINE_STYLES = [
   { value: 'dotted', label: 'Dotted' },
 ];
 
+const STROKE_WIDTHS = [
+  { value: 1, label: 'Thin (1px)' },
+  { value: 2, label: 'Normal (2px)' },
+  { value: 4, label: 'Medium (4px)' },
+  { value: 8, label: 'Thick (8px)' },
+];
+
 const BAR_STYLES = [
   { value: 'solid', label: 'Solid' },
   { value: 'outlined', label: 'Outlined' },
   { value: 'striped', label: 'Striped' },
 ];
+
+const SERIES_CHART_TYPES = [
+  { value: 'bar', label: 'Bar' },
+  { value: 'line', label: 'Line' },
+];
+
+// Colors sorted by hue (color wheel order)
+const PREDEFINED_COLORS = [
+  // Reds
+  { value: '#FF6384', label: 'Red' },
+  { value: '#E53935', label: 'Crimson' },
+  { value: '#FF5733', label: 'Coral' },
+  // Oranges
+  { value: '#FF9F40', label: 'Orange' },
+  { value: '#FFB347', label: 'Peach' },
+  // Yellows
+  { value: '#FFCD56', label: 'Yellow' },
+  { value: '#FDD835', label: 'Gold' },
+  // Greens
+  { value: '#8BC34A', label: 'Lime' },
+  { value: '#4CAF50', label: 'Green' },
+  { value: '#2E7D32', label: 'Forest' },
+  // Cyan/Teal
+  { value: '#4BC0C0', label: 'Teal' },
+  { value: '#00BCD4', label: 'Cyan' },
+  // Blues
+  { value: '#36A2EB', label: 'Blue' },
+  { value: '#1E88E5', label: 'Azure' },
+  { value: '#1565C0', label: 'Navy' },
+  // Indigo/Purple
+  { value: '#5733FF', label: 'Indigo' },
+  { value: '#9966FF', label: 'Purple' },
+  { value: '#7B1FA2', label: 'Violet' },
+  // Pinks
+  { value: '#E91E63', label: 'Pink' },
+  { value: '#F48FB1', label: 'Rose' },
+  // Neutrals
+  { value: '#795548', label: 'Brown' },
+  { value: '#C9CBCF', label: 'Grey' },
+  { value: '#455A64', label: 'Slate' },
+  { value: '#000000', label: 'Black' },
+];
+
+// Validate hex color format: #RRGGBB only
+const isValidHexColor = (color) => {
+  if (!color) {
+    return true;
+  }
+  return /^#[0-9A-Fa-f]{6}$/.test(color);
+};
 
 export default class GraphDialog extends React.Component {
   constructor(props) {
@@ -64,32 +121,32 @@ export default class GraphDialog extends React.Component {
 
     const initialConfig = props.initialConfig || {};
 
-    // Ensure valueColumn is always an array
-    const valueColumn = initialConfig.valueColumn
-      ? (Array.isArray(initialConfig.valueColumn) ? initialConfig.valueColumn : [initialConfig.valueColumn])
-      : [];
-
     // Ensure groupByColumn is always an array
     const groupByColumn = initialConfig.groupByColumn
       ? (Array.isArray(initialConfig.groupByColumn) ? initialConfig.groupByColumn : [initialConfig.groupByColumn])
       : [];
 
+    // Series configuration
+    const series = (initialConfig.series || []).map(s => ({
+      ...s,
+      title: s.title || '',
+      fields: s.fields || [],
+    }));
+
     // Ensure calculatedValues is always an array
     const calculatedValues = initialConfig.calculatedValues || [];
 
     this.state = {
-      id: initialConfig.id || null, // Preserve existing ID for updates
+      id: initialConfig.id || null,
       chartType: initialConfig.chartType || 'bar',
       xColumn: initialConfig.xColumn || '',
       yColumn: initialConfig.yColumn || '',
-      valueColumn,
+      series,
       groupByColumn,
       calculatedValues,
-      aggregationType: initialConfig.aggregationType || 'count',
       title: initialConfig.title || '',
       yAxisTitlePrimary: initialConfig.yAxisTitlePrimary || '',
       yAxisTitleSecondary: initialConfig.yAxisTitleSecondary || '',
-      secondaryYAxisType: initialConfig.secondaryYAxisType || null,
       showLegend: initialConfig.showLegend !== undefined ? initialConfig.showLegend : true,
       showGrid: initialConfig.showGrid !== undefined ? initialConfig.showGrid : true,
       showAxisLabels: initialConfig.showAxisLabels !== undefined ? initialConfig.showAxisLabels : true,
@@ -101,15 +158,33 @@ export default class GraphDialog extends React.Component {
   }
 
   valid() {
-    const { chartType, xColumn, yColumn, valueColumn, calculatedValues } = this.state;
-    const hasValueColumn = Array.isArray(valueColumn) && valueColumn.length > 0;
+    const { chartType, xColumn, yColumn, series, calculatedValues } = this.state;
+    const hasSeries = Array.isArray(series) && series.length > 0 && series.some(s => s.fields && s.fields.length > 0);
     const hasCalculatedValues = Array.isArray(calculatedValues) && calculatedValues.length > 0;
-    const hasValuesToDisplay = hasValueColumn || hasCalculatedValues;
+    const hasValuesToDisplay = hasSeries || hasCalculatedValues;
 
     // Check for any name errors in calculated values
     if (hasCalculatedValues) {
       for (let i = 0; i < calculatedValues.length; i++) {
         if (this.getNameError(i)) {
+          return false;
+        }
+      }
+    }
+
+    // Check for invalid hex colors in series
+    if (hasSeries) {
+      for (const s of series) {
+        if (s.color && !isValidHexColor(s.color)) {
+          return false;
+        }
+      }
+    }
+
+    // Check for invalid hex colors in calculated values
+    if (hasCalculatedValues) {
+      for (const calc of calculatedValues) {
+        if (calc.color && !isValidHexColor(calc.color)) {
           return false;
         }
       }
@@ -137,7 +212,7 @@ export default class GraphDialog extends React.Component {
         className: this.props.className,
         xColumn: this.state.xColumn || null,
         yColumn: this.state.yColumn || null,
-        valueColumn: this.state.valueColumn.length > 0 ? this.state.valueColumn : null,
+        series: this.state.series.length > 0 ? this.state.series : null,
         groupByColumn: this.state.groupByColumn.length > 0 ? this.state.groupByColumn : null,
         calculatedValues: this.state.calculatedValues.length > 0 ? this.state.calculatedValues : null,
       });
@@ -190,38 +265,78 @@ export default class GraphDialog extends React.Component {
 
   getNumericAndCalculatedFields(currentIndex = -1) {
     const numericColumns = this.getNumericColumns();
+    // Include series fields and titles
+    const seriesFields = [];
+    this.state.series.forEach(s => {
+      // Add individual fields
+      if (s.fields && s.fields.length > 0) {
+        seriesFields.push(...s.fields);
+      }
+      // Add series title if it has one (to allow referencing the aggregated series)
+      if (s.title && s.title.trim() !== '') {
+        seriesFields.push(s.title);
+      }
+    });
     // Only include calculated values that come BEFORE the current one
-    // to prevent forward references and simplify circular reference detection
     const calculatedFields = this.state.calculatedValues
       .slice(0, currentIndex >= 0 ? currentIndex : this.state.calculatedValues.length)
       .filter(calc => calc.name && calc.name.trim() !== '')
       .map(calc => calc.name);
-    return [...numericColumns, ...calculatedFields];
+    return [...new Set([...numericColumns, ...seriesFields, ...calculatedFields])];
   }
 
-  // Detect if a calculated value has a circular reference
+  // Series management methods
+  addSeries = () => {
+    this.setState({
+      series: [
+        ...this.state.series,
+        { title: '', fields: [], aggregationType: 'count', chartType: '', color: '', lineStyle: '', barStyle: '', expanded: true }
+      ]
+    });
+  };
+
+  removeSeries = (index) => {
+    const newSeries = [...this.state.series];
+    newSeries.splice(index, 1);
+    this.setState({ series: newSeries });
+  };
+
+  updateSeries = (index, key, value) => {
+    const newSeries = [...this.state.series];
+    newSeries[index] = {
+      ...newSeries[index],
+      [key]: value
+    };
+    this.setState({ series: newSeries });
+  };
+
+  toggleSeries = (index) => {
+    const newSeries = [...this.state.series];
+    newSeries[index] = {
+      ...newSeries[index],
+      expanded: !newSeries[index].expanded
+    };
+    this.setState({ series: newSeries });
+  };
+
+  // Calculated value methods
   hasCircularReference(calcIndex, visited = new Set()) {
     const calc = this.state.calculatedValues[calcIndex];
     if (!calc || !calc.fields || !Array.isArray(calc.fields)) {
       return false;
     }
 
-    // Mark this calc as being visited
     visited.add(calcIndex);
 
-    // Check each field to see if it references another calculated value
     for (const field of calc.fields) {
-      // Find if this field is a calculated value
       const referencedCalcIndex = this.state.calculatedValues.findIndex(
         (c, idx) => idx < calcIndex && c.name === field
       );
 
       if (referencedCalcIndex >= 0) {
-        // If we've already visited this calc, we have a circular reference
         if (visited.has(referencedCalcIndex)) {
           return true;
         }
-        // Recursively check the referenced calc
         if (this.hasCircularReference(referencedCalcIndex, new Set(visited))) {
           return true;
         }
@@ -231,43 +346,46 @@ export default class GraphDialog extends React.Component {
     return false;
   }
 
-  // Validate formula and return error message if invalid
   getFormulaError(calcIndex) {
     const calc = this.state.calculatedValues[calcIndex];
     if (!calc || calc.operator !== 'formula' || !calc.formula || calc.formula.trim() === '') {
       return null;
     }
 
-    // Build list of available variables for the formula
     const numericColumns = this.getNumericColumns();
-    // Include previous calculated value names
+    const seriesFields = [];
+    this.state.series.forEach(s => {
+      if (s.fields && s.fields.length > 0) {
+        seriesFields.push(...s.fields);
+      }
+      if (s.title && s.title.trim() !== '') {
+        seriesFields.push(s.title);
+      }
+    });
     const previousCalcNames = this.state.calculatedValues
       .slice(0, calcIndex)
       .filter(c => c.name && c.name.trim() !== '')
       .map(c => c.name);
 
-    const availableVariables = [...numericColumns, ...previousCalcNames];
+    const availableVariables = [...new Set([...numericColumns, ...seriesFields, ...previousCalcNames])];
 
     const validation = validateFormula(calc.formula, availableVariables);
     return validation.isValid ? null : validation.error;
   }
 
-  // Validate calculated value name (must follow Parse field name rules)
   getNameError(calcIndex) {
     const calc = this.state.calculatedValues[calcIndex];
     if (!calc || !calc.name || calc.name.trim() === '') {
-      return null; // Empty names are allowed (will use default "Calculated Value N")
+      return null;
     }
 
     const name = calc.name;
     const trimmedName = name.trim();
 
-    // Check for leading or trailing whitespace
     if (name !== trimmedName) {
       return 'Name cannot start or end with spaces';
     }
 
-    // Check for valid characters (alphanumeric and underscore only)
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
       if (/^\d/.test(name)) {
         return 'Name cannot start with a number';
@@ -278,7 +396,6 @@ export default class GraphDialog extends React.Component {
       return 'Name can only contain letters, numbers, and underscores';
     }
 
-    // Check for duplicate names
     const duplicateIndex = this.state.calculatedValues.findIndex(
       (c, idx) => idx !== calcIndex && c.name && c.name.trim() === name
     );
@@ -293,7 +410,7 @@ export default class GraphDialog extends React.Component {
     this.setState({
       calculatedValues: [
         ...this.state.calculatedValues,
-        { fields: [], operator: 'sum', name: '', expanded: true }
+        { fields: [], operator: 'sum', name: '', chartType: '', expanded: true }
       ]
     });
   };
@@ -339,11 +456,533 @@ export default class GraphDialog extends React.Component {
     );
   }
 
+  renderSeriesBox(s, index) {
+    const { chartType } = this.state;
+    const isExpanded = s.expanded !== false;
+    // Display name: title if set, otherwise first field, otherwise "Series N"
+    const displayName = s.title || (s.fields && s.fields.length > 0 ? (s.fields.length === 1 ? s.fields[0] : `${s.fields.length} fields`) : `Series ${index + 1}`);
+    const numericAndPointerColumns = this.getNumericAndPointerColumns();
+    // Use series-specific chart type, or fall back to global chart type
+    const effectiveType = s.chartType || chartType;
+
+    return (
+      <div key={index} style={{ paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px', paddingBottom: isExpanded ? '0' : '10px', borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: 'none' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '8px' : '0', cursor: 'pointer' }} onClick={() => this.toggleSeries(index)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+            <Label text={displayName} />
+          </div>
+          <Button value="Remove" onClick={(e) => { e.stopPropagation(); this.removeSeries(index); }} />
+        </div>
+        {isExpanded && (
+          <div style={{ paddingBottom: '8px' }}>
+            <div style={{ borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: '1px solid #e3e3e3' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Title" description="Optional custom name" />
+                </div>
+                <div>
+                  <TextInput
+                    value={s.title || ''}
+                    onChange={title => this.updateSeries(index, 'title', title)}
+                    placeholder="Auto-generated from fields"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Fields" />
+                </div>
+                <div>
+                  <MultiSelect
+                    value={s.fields || []}
+                    onChange={fields => this.updateSeries(index, 'fields', fields)}
+                    placeHolder="Select field(s)"
+                    formatSelection={selection => selection.length === 1 ? selection[0] : `${selection.length} fields`}
+                  >
+                    {numericAndPointerColumns.map(col => (
+                      <MultiSelectOption key={col} value={col}>
+                        {col}
+                      </MultiSelectOption>
+                    ))}
+                  </MultiSelect>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Aggregation" />
+                </div>
+                <div>
+                  <Dropdown
+                    value={s.aggregationType || 'count'}
+                    onChange={aggregationType => this.updateSeries(index, 'aggregationType', aggregationType)}
+                  >
+                    {AGGREGATION_TYPES.map(type => (
+                      <Option key={type.value} value={type.value}>
+                        {type.label}
+                      </Option>
+                    ))}
+                  </Dropdown>
+                </div>
+              </div>
+              {(chartType === 'bar' || chartType === 'line') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Chart Type" />
+                  </div>
+                  <div>
+                    <Dropdown
+                      value={s.chartType || ''}
+                      onChange={seriesChartType => this.updateSeries(index, 'chartType', seriesChartType)}
+                      placeHolder={`Default (${chartType === 'bar' ? 'Bar' : 'Line'})`}
+                    >
+                      <Option value="">Default ({chartType === 'bar' ? 'Bar' : 'Line'})</Option>
+                      {SERIES_CHART_TYPES.map(type => (
+                        <Option key={type.value} value={type.value}>
+                          {type.label}
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              )}
+              {(chartType === 'bar' || chartType === 'line') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Secondary Y Axis" description="Display on right axis" />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6fafb', minHeight: '80px' }}>
+                    <Toggle
+                      type={Toggle.Types.YES_NO}
+                      value={s.useSecondaryYAxis || false}
+                      onChange={useSecondaryYAxis => this.updateSeries(index, 'useSecondaryYAxis', useSecondaryYAxis)}
+                    />
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Color" description="Preset or custom HEX" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f6fafb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginLeft: '20px' }}>
+                    <span style={{ fontSize: '14px', fontFamily: 'monospace' }}>#</span>
+                    <div style={{ width: '70px' }}>
+                      <TextInput
+                        value={s.color ? s.color.replace(/^#/, '') : ''}
+                        onChange={hex => {
+                          const cleaned = hex.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                          this.updateSeries(index, 'color', cleaned ? '#' + cleaned : '');
+                        }}
+                        placeholder="RRGGBB"
+                        style={{ textAlign: 'left', paddingLeft: 0 }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Dropdown
+                      value={PREDEFINED_COLORS.find(c => c.value === s.color) ? s.color : (s.color ? (isValidHexColor(s.color) ? 'custom' : 'invalid') : '')}
+                      onChange={color => { if (color !== 'custom' && color !== 'invalid') { this.updateSeries(index, 'color', color); } }}
+                      placeHolder="Preset"
+                    >
+                      <Option value=""><span style={{ display: 'flex' }}>Auto</span></Option>
+                      {s.color && !PREDEFINED_COLORS.find(c => c.value === s.color) && !isValidHexColor(s.color) && (
+                        <Option value="invalid">
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#c62828' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: '#ffebee', borderRadius: '2px', border: '1px solid #c62828', flexShrink: 0 }} />
+                            Invalid
+                          </span>
+                        </Option>
+                      )}
+                      {s.color && !PREDEFINED_COLORS.find(c => c.value === s.color) && isValidHexColor(s.color) && (
+                        <Option value="custom">
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: s.color, borderRadius: '2px', border: '1px solid #ccc', flexShrink: 0 }} />
+                            Custom
+                          </span>
+                        </Option>
+                      )}
+                      {PREDEFINED_COLORS.map(c => (
+                        <Option key={c.value} value={c.value}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: c.value, borderRadius: '2px', border: '1px solid #ccc', flexShrink: 0 }} />
+                            {c.label}
+                          </span>
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              </div>
+              {effectiveType === 'line' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Line Style" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={s.lineStyle || 'solid'}
+                        onChange={lineStyle => this.updateSeries(index, 'lineStyle', lineStyle)}
+                      >
+                        {LINE_STYLES.map(style => (
+                          <Option key={style.value} value={style.value}>
+                            {style.label}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Stroke Width" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={s.strokeWidth || 2}
+                        onChange={strokeWidth => this.updateSeries(index, 'strokeWidth', strokeWidth)}
+                      >
+                        {STROKE_WIDTHS.map(sw => (
+                          <Option key={sw.value} value={sw.value}>
+                            {sw.label}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                </>
+              )}
+              {effectiveType === 'bar' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Bar Style" />
+                  </div>
+                  <div>
+                    <Dropdown
+                      value={s.barStyle || 'solid'}
+                      onChange={barStyle => this.updateSeries(index, 'barStyle', barStyle)}
+                    >
+                      {BAR_STYLES.map(style => (
+                        <Option key={style.value} value={style.value}>
+                          {style.label}
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  renderCalculatedValueBox(calc, index) {
+    const { chartType } = this.state;
+    const isExpanded = calc.expanded !== false;
+    const displayName = calc.name || `Calculated Value ${index + 1}`;
+    const numericAndCalculatedFields = this.getNumericAndCalculatedFields(index);
+    const hasCircular = this.hasCircularReference(index);
+    const formulaError = this.getFormulaError(index);
+    // Use calculated value-specific chart type, or fall back to global chart type
+    const effectiveType = calc.chartType || chartType;
+
+    return (
+      <div key={`calc-${index}`} style={{ paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px', paddingBottom: isExpanded ? '0' : '10px', borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: 'none' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '8px' : '0', cursor: 'pointer' }} onClick={() => this.toggleCalculatedValue(index)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+            <Label text={displayName} />
+          </div>
+          <Button value="Remove" onClick={(e) => { e.stopPropagation(); this.removeCalculatedValue(index); }} />
+        </div>
+        {isExpanded && (
+          <div style={{ paddingBottom: '8px' }}>
+            <div style={{ borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: '1px solid #e3e3e3' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Name" />
+                </div>
+                <div>
+                  <TextInput
+                    value={calc.name}
+                    onChange={name => this.updateCalculatedValue(index, 'name', name)}
+                    placeholder="Enter name"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Operator" />
+                </div>
+                <div>
+                  <Dropdown
+                    value={calc.operator}
+                    onChange={operator => this.updateCalculatedValue(index, 'operator', operator)}
+                  >
+                    {CALCULATED_VALUE_OPERATORS.map(op => (
+                      <Option key={op.value} value={op.value}>
+                        {op.label}
+                      </Option>
+                    ))}
+                  </Dropdown>
+                </div>
+              </div>
+              {calc.operator === 'formula' ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Formula" description="e.g., price * quantity" />
+                    </div>
+                    <div>
+                      <TextInput
+                        value={calc.formula || ''}
+                        onChange={formula => this.updateCalculatedValue(index, 'formula', formula)}
+                        placeholder="e.g., round(price * quantity, 2)"
+                      />
+                    </div>
+                  </div>
+                  {formulaError && (
+                    <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#ffebee', color: '#c62828' }}>
+                      <strong>Formula Error</strong>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
+                        {formulaError}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : calc.operator === 'percent' ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Numerator" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={calc.fields && calc.fields[0] ? calc.fields[0] : ''}
+                        onChange={numerator => {
+                          const newFields = [numerator, calc.fields && calc.fields[1] ? calc.fields[1] : ''];
+                          this.updateCalculatedValue(index, 'fields', newFields);
+                        }}
+                        placeHolder="Select field"
+                      >
+                        {numericAndCalculatedFields.map(col => (
+                          <Option key={col} value={col}>
+                            {col}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Denominator" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={calc.fields && calc.fields[1] ? calc.fields[1] : ''}
+                        onChange={denominator => {
+                          const newFields = [calc.fields && calc.fields[0] ? calc.fields[0] : '', denominator];
+                          this.updateCalculatedValue(index, 'fields', newFields);
+                        }}
+                        placeHolder="Select field"
+                      >
+                        {numericAndCalculatedFields.map(col => (
+                          <Option key={col} value={col}>
+                            {col}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Fields" />
+                  </div>
+                  <div>
+                    <MultiSelect
+                      value={calc.fields}
+                      onChange={fields => this.updateCalculatedValue(index, 'fields', fields)}
+                      placeHolder="Select field(s)"
+                      formatSelection={selection => selection.length === 1 ? selection[0] : `${selection.length} fields`}
+                    >
+                      {numericAndCalculatedFields.map(col => (
+                        <MultiSelectOption key={col} value={col}>
+                          {col}
+                        </MultiSelectOption>
+                      ))}
+                    </MultiSelect>
+                  </div>
+                </div>
+              )}
+              {(chartType === 'bar' || chartType === 'line') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Chart Type" />
+                  </div>
+                  <div>
+                    <Dropdown
+                      value={calc.chartType || ''}
+                      onChange={calcChartType => this.updateCalculatedValue(index, 'chartType', calcChartType)}
+                      placeHolder={`Default (${chartType === 'bar' ? 'Bar' : 'Line'})`}
+                    >
+                      <Option value="">Default ({chartType === 'bar' ? 'Bar' : 'Line'})</Option>
+                      {SERIES_CHART_TYPES.map(type => (
+                        <Option key={type.value} value={type.value}>
+                          {type.label}
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              )}
+              {(chartType === 'bar' || chartType === 'line') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Secondary Y Axis" description="Display on right axis" />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6fafb', minHeight: '80px' }}>
+                    <Toggle
+                      type={Toggle.Types.YES_NO}
+                      value={calc.useSecondaryYAxis || false}
+                      onChange={useSecondaryYAxis => this.updateCalculatedValue(index, 'useSecondaryYAxis', useSecondaryYAxis)}
+                    />
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Label text="Color" description="Preset or custom HEX" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f6fafb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginLeft: '20px' }}>
+                    <span style={{ fontSize: '14px', fontFamily: 'monospace' }}>#</span>
+                    <div style={{ width: '70px' }}>
+                      <TextInput
+                        value={calc.color ? calc.color.replace(/^#/, '') : ''}
+                        onChange={hex => {
+                          const cleaned = hex.replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                          this.updateCalculatedValue(index, 'color', cleaned ? '#' + cleaned : '');
+                        }}
+                        placeholder="RRGGBB"
+                        style={{ textAlign: 'left', paddingLeft: 0 }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Dropdown
+                      value={PREDEFINED_COLORS.find(c => c.value === calc.color) ? calc.color : (calc.color ? (isValidHexColor(calc.color) ? 'custom' : 'invalid') : '')}
+                      onChange={color => { if (color !== 'custom' && color !== 'invalid') { this.updateCalculatedValue(index, 'color', color); } }}
+                      placeHolder="Preset"
+                    >
+                      <Option value=""><span style={{ display: 'flex' }}>Auto</span></Option>
+                      {calc.color && !PREDEFINED_COLORS.find(c => c.value === calc.color) && !isValidHexColor(calc.color) && (
+                        <Option value="invalid">
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#c62828' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: '#ffebee', borderRadius: '2px', border: '1px solid #c62828', flexShrink: 0 }} />
+                            Invalid
+                          </span>
+                        </Option>
+                      )}
+                      {calc.color && !PREDEFINED_COLORS.find(c => c.value === calc.color) && isValidHexColor(calc.color) && (
+                        <Option value="custom">
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: calc.color, borderRadius: '2px', border: '1px solid #ccc', flexShrink: 0 }} />
+                            Custom
+                          </span>
+                        </Option>
+                      )}
+                      {PREDEFINED_COLORS.map(c => (
+                        <Option key={c.value} value={c.value}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '14px', height: '14px', backgroundColor: c.value, borderRadius: '2px', border: '1px solid #ccc', flexShrink: 0 }} />
+                            {c.label}
+                          </span>
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              </div>
+              {effectiveType === 'line' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Line Style" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={calc.lineStyle || 'solid'}
+                        onChange={lineStyle => this.updateCalculatedValue(index, 'lineStyle', lineStyle)}
+                      >
+                        {LINE_STYLES.map(style => (
+                          <Option key={style.value} value={style.value}>
+                            {style.label}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Label text="Stroke Width" />
+                    </div>
+                    <div>
+                      <Dropdown
+                        value={calc.strokeWidth || 2}
+                        onChange={strokeWidth => this.updateCalculatedValue(index, 'strokeWidth', strokeWidth)}
+                      >
+                        {STROKE_WIDTHS.map(sw => (
+                          <Option key={sw.value} value={sw.value}>
+                            {sw.label}
+                          </Option>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                </>
+              )}
+              {effectiveType === 'bar' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Label text="Bar Style" />
+                  </div>
+                  <div>
+                    <Dropdown
+                      value={calc.barStyle || 'solid'}
+                      onChange={barStyle => this.updateCalculatedValue(index, 'barStyle', barStyle)}
+                    >
+                      {BAR_STYLES.map(style => (
+                        <Option key={style.value} value={style.value}>
+                          {style.label}
+                        </Option>
+                      ))}
+                    </Dropdown>
+                  </div>
+                </div>
+              )}
+              {hasCircular && (
+                <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#fff3cd', color: '#856404' }}>
+                  <strong>Circular Reference Detected</strong>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
+                    This calculated value references another calculated value that references it back, creating a circular dependency. This will result in null values.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   renderColumnSelectionSection() {
     const { chartType } = this.state;
     const allColumns = this.getAllColumns();
     const numericColumns = this.getNumericColumns();
-    const numericAndPointerColumns = this.getNumericAndPointerColumns();
     const stringAndPointerColumns = this.getStringAndPointerColumns();
 
     return (
@@ -379,250 +1018,16 @@ export default class GraphDialog extends React.Component {
         )}
 
         {(chartType === 'bar' || chartType === 'line' || chartType === 'pie' || chartType === 'doughnut' || chartType === 'radar') && (
-          <Field label={<Label text="Values" />} input={
-            <MultiSelect
-              value={this.state.valueColumn}
-              onChange={valueColumn => this.setState({ valueColumn })}
-              placeHolder="Select field(s)"
-              formatSelection={selection => selection.length === 1 ? selection[0] : `${selection.length} fields`}
-            >
-              {numericAndPointerColumns.map(col => (
-                <MultiSelectOption key={col} value={col}>
-                  {col}
-                </MultiSelectOption>
-              ))}
-            </MultiSelect>
-          } />
-        )}
-
-        {(chartType === 'bar' || chartType === 'line' || chartType === 'pie' || chartType === 'doughnut' || chartType === 'radar') && (
-          <Field label={<Label text="Aggregation Type" />} input={
-            <Dropdown
-              value={this.state.aggregationType}
-              onChange={aggregationType => this.setState({ aggregationType })}
-            >
-              {AGGREGATION_TYPES.map(type => (
-                <Option key={type.value} value={type.value}>
-                  {type.label}
-                </Option>
-              ))}
-            </Dropdown>
-          } />
-        )}
-
-        {(chartType === 'bar' || chartType === 'line' || chartType === 'pie' || chartType === 'doughnut' || chartType === 'radar') && (
           <>
-            {this.state.calculatedValues.map((calc, index) => {
-              const isExpanded = calc.expanded !== false;
-              const displayName = calc.name || `Calculated Value ${index + 1}`;
-              // Get available fields for this calculated value (only previous ones)
-              const numericAndCalculatedFields = this.getNumericAndCalculatedFields(index);
-              // Check for circular reference
-              const hasCircular = this.hasCircularReference(index);
-              // Check for formula errors
-              const formulaError = this.getFormulaError(index);
-              // Compute effective chart type for this calculated value
-              const effectiveType = calc.useSecondaryYAxis && this.state.secondaryYAxisType
-                ? this.state.secondaryYAxisType
-                : this.state.chartType;
+            {/* Render series boxes */}
+            {this.state.series.map((s, index) => this.renderSeriesBox(s, index))}
 
-              return (
-                <div key={index} style={{ paddingTop: '10px', paddingLeft: '10px', paddingRight: '10px', paddingBottom: isExpanded ? '0' : '10px', borderTop: '1px solid #e3e3e3', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: index === this.state.calculatedValues.length - 1 ? '1px solid #e3e3e3' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '8px' : '0', cursor: 'pointer' }} onClick={() => this.toggleCalculatedValue(index)}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
-                      <Label text={displayName} />
-                    </div>
-                    <Button value="Remove" onClick={(e) => { e.stopPropagation(); this.removeCalculatedValue(index); }} />
-                  </div>
-                  {isExpanded && (
-                    <div style={{ border: 'none', paddingBottom: '8px' }}>
-                      <div style={{ border: '1px solid #e3e3e3' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <Label text="Name" />
-                          </div>
-                          <div>
-                            <TextInput
-                              value={calc.name}
-                              onChange={name => this.updateCalculatedValue(index, 'name', name)}
-                              placeholder="Enter name"
-                            />
-                          </div>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <Label text="Operator" />
-                          </div>
-                          <div>
-                            <Dropdown
-                              value={calc.operator}
-                              onChange={operator => this.updateCalculatedValue(index, 'operator', operator)}
-                            >
-                              {CALCULATED_VALUE_OPERATORS.map(op => (
-                                <Option key={op.value} value={op.value}>
-                                  {op.label}
-                                </Option>
-                              ))}
-                            </Dropdown>
-                          </div>
-                        </div>
-                        {calc.operator === 'formula' ? (
-                          <>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Label text="Formula" description="e.g., price * quantity" />
-                              </div>
-                              <div>
-                                <TextInput
-                                  value={calc.formula || ''}
-                                  onChange={formula => this.updateCalculatedValue(index, 'formula', formula)}
-                                  placeholder="e.g., round(price * quantity, 2)"
-                                />
-                              </div>
-                            </div>
-                            {formulaError && (
-                              <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#ffebee', color: '#c62828' }}>
-                                <strong>Formula Error</strong>
-                                <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
-                                  {formulaError}
-                                </p>
-                              </div>
-                            )}
-                          </>
-                        ) : calc.operator === 'percent' ? (
-                          <>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Label text="Numerator" />
-                              </div>
-                              <div>
-                                <Dropdown
-                                  value={calc.fields && calc.fields[0] ? calc.fields[0] : ''}
-                                  onChange={numerator => {
-                                    const newFields = [numerator, calc.fields && calc.fields[1] ? calc.fields[1] : ''];
-                                    this.updateCalculatedValue(index, 'fields', newFields);
-                                  }}
-                                  placeHolder="Select field"
-                                >
-                                  {numericAndCalculatedFields.map(col => (
-                                    <Option key={col} value={col}>
-                                      {col}
-                                    </Option>
-                                  ))}
-                                </Dropdown>
-                              </div>
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <Label text="Denominator" />
-                              </div>
-                              <div>
-                                <Dropdown
-                                  value={calc.fields && calc.fields[1] ? calc.fields[1] : ''}
-                                  onChange={denominator => {
-                                    const newFields = [calc.fields && calc.fields[0] ? calc.fields[0] : '', denominator];
-                                    this.updateCalculatedValue(index, 'fields', newFields);
-                                  }}
-                                  placeHolder="Select field"
-                                >
-                                  {numericAndCalculatedFields.map(col => (
-                                    <Option key={col} value={col}>
-                                      {col}
-                                    </Option>
-                                  ))}
-                                </Dropdown>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <Label text="Fields" />
-                            </div>
-                            <div>
-                              <MultiSelect
-                                value={calc.fields}
-                                onChange={fields => this.updateCalculatedValue(index, 'fields', fields)}
-                                placeHolder="Select field(s)"
-                                formatSelection={selection => selection.length === 1 ? selection[0] : `${selection.length} fields`}
-                              >
-                                {numericAndCalculatedFields.map(col => (
-                                  <MultiSelectOption key={col} value={col}>
-                                    {col}
-                                  </MultiSelectOption>
-                                ))}
-                              </MultiSelect>
-                            </div>
-                          </div>
-                        )}
-                        {(this.state.chartType === 'bar' || this.state.chartType === 'line') && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <Label text="Secondary Y Axis" description="Display on right axis" />
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6fafb', minHeight: '80px' }}>
-                              <Toggle
-                                type={Toggle.Types.YES_NO}
-                                value={calc.useSecondaryYAxis || false}
-                                onChange={useSecondaryYAxis => this.updateCalculatedValue(index, 'useSecondaryYAxis', useSecondaryYAxis)}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {effectiveType === 'line' && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <Label text="Line Style" />
-                            </div>
-                            <div>
-                              <Dropdown
-                                value={calc.lineStyle || 'solid'}
-                                onChange={lineStyle => this.updateCalculatedValue(index, 'lineStyle', lineStyle)}
-                              >
-                                {LINE_STYLES.map(style => (
-                                  <Option key={style.value} value={style.value}>
-                                    {style.label}
-                                  </Option>
-                                ))}
-                              </Dropdown>
-                            </div>
-                          </div>
-                        )}
-                        {effectiveType === 'bar' && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #e3e3e3' }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <Label text="Bar Style" />
-                            </div>
-                            <div>
-                              <Dropdown
-                                value={calc.barStyle || 'solid'}
-                                onChange={barStyle => this.updateCalculatedValue(index, 'barStyle', barStyle)}
-                              >
-                                {BAR_STYLES.map(style => (
-                                  <Option key={style.value} value={style.value}>
-                                    {style.label}
-                                  </Option>
-                                ))}
-                              </Dropdown>
-                            </div>
-                          </div>
-                        )}
-                        {hasCircular && (
-                          <div style={{ borderTop: '1px solid #e3e3e3', padding: '12px', background: '#fff3cd', color: '#856404' }}>
-                            <strong>⚠ Circular Reference Detected</strong>
-                            <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
-                              This calculated value references another calculated value that references it back, creating a circular dependency. This will result in null values.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            <div style={{ borderTop: this.state.calculatedValues.length === 0 ? '1px solid #e3e3e3' : 'none', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', minHeight: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f6fafb' }}>
+            {/* Render calculated value boxes */}
+            {this.state.calculatedValues.map((calc, index) => this.renderCalculatedValueBox(calc, index))}
+
+            {/* Add buttons */}
+            <div style={{ borderTop: (this.state.series.length === 0 && this.state.calculatedValues.length === 0) ? '1px solid #e3e3e3' : 'none', borderLeft: '1px solid #e3e3e3', borderRight: '1px solid #e3e3e3', borderBottom: '1px solid #e3e3e3', minHeight: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', background: '#f6fafb' }}>
+              <Button value="+ Add Series" onClick={this.addSeries} />
               <Button value="+ Add Calculated Value" onClick={this.addCalculatedValue} />
             </div>
           </>
@@ -668,7 +1073,7 @@ export default class GraphDialog extends React.Component {
             text="Show Legend"
             description="Display chart legend"
           />
-        }         input={
+        } input={
           <Toggle
             type={Toggle.Types.YES_NO}
             value={this.state.showLegend}
@@ -681,7 +1086,7 @@ export default class GraphDialog extends React.Component {
             text="Show Grid"
             description="Display grid lines"
           />
-        }         input={
+        } input={
           <Toggle
             type={Toggle.Types.YES_NO}
             value={this.state.showGrid}
@@ -694,7 +1099,7 @@ export default class GraphDialog extends React.Component {
             text="Show Axis Labels"
             description="Display axis labels"
           />
-        }         input={
+        } input={
           <Toggle
             type={Toggle.Types.YES_NO}
             value={this.state.showAxisLabels !== false}
@@ -708,7 +1113,7 @@ export default class GraphDialog extends React.Component {
               text="Stacked"
               description="Stack multiple series"
             />
-          }           input={
+          } input={
             <Toggle
               type={Toggle.Types.YES_NO}
               value={this.state.isStacked}
@@ -747,25 +1152,6 @@ export default class GraphDialog extends React.Component {
           } />
         )}
 
-        {(this.state.chartType === 'bar' || this.state.chartType === 'line') && (
-          <Field label={
-            <Label
-              text="Secondary Y-Axis Chart Type"
-              description="Chart type for secondary axis series"
-            />
-          } input={
-            <Dropdown
-              value={this.state.secondaryYAxisType || ''}
-              onChange={secondaryYAxisType => this.setState({ secondaryYAxisType: secondaryYAxisType || null })}
-              placeHolder="Same as chart type"
-            >
-              <Option value="">Same as chart type</Option>
-              <Option value="bar">Bar</Option>
-              <Option value="line">Line</Option>
-            </Dropdown>
-          } />
-        )}
-
         <Field label={
           <Label
             text="Max Data Points"
@@ -782,7 +1168,6 @@ export default class GraphDialog extends React.Component {
               }
             }}
             onBlur={() => {
-              // Reset display to valid value on blur
               this.setState({ maxDataPointsInput: null });
             }}
             placeholder="1000"
