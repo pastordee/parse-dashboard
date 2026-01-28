@@ -1,3 +1,10 @@
+# [8.3.0-alpha.36](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.35...8.3.0-alpha.36) (2026-01-28)
+
+
+### Bug Fixes
+
+* Group-by not using custom aggregation type for single-series graph ([#3159](https://github.com/parse-community/parse-dashboard/issues/3159)) ([b8e8891](https://github.com/parse-community/parse-dashboard/commit/b8e8891791423b87112233e6fe8b5aa92cbded6e))
+
 # [8.3.0-alpha.35](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.34...8.3.0-alpha.35) (2026-01-28)
 
 
