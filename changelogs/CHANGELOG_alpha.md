@@ -1,3 +1,10 @@
+# [8.3.0-alpha.35](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.34...8.3.0-alpha.35) (2026-01-28)
+
+
+### Features
+
+* Add dialog to execute Cloud Job with parameters ([#3158](https://github.com/parse-community/parse-dashboard/issues/3158)) ([da419e0](https://github.com/parse-community/parse-dashboard/commit/da419e023f691c43abf97d725ef821ff9ee07726))
+
 # [8.3.0-alpha.34](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.33...8.3.0-alpha.34) (2026-01-28)
 
 
