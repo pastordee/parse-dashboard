@@ -1,3 +1,10 @@
+# [8.3.0-alpha.39](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.38...8.3.0-alpha.39) (2026-02-03)
+
+
+### Bug Fixes
+
+* Info panel auto-scrolling not pausing during UI interaction like text selection or context menu display ([#3165](https://github.com/parse-community/parse-dashboard/issues/3165)) ([bfe4e8a](https://github.com/parse-community/parse-dashboard/commit/bfe4e8a8c85f18b9d75107529976be2951a75a05))
+
 # [8.3.0-alpha.38](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.37...8.3.0-alpha.38) (2026-01-28)
 
 
