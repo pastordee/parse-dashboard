@@ -1,3 +1,10 @@
+# [8.3.0-alpha.40](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.39...8.3.0-alpha.40) (2026-02-04)
+
+
+### Features
+
+* Add support for server side storage of Cloud Config parameter history ([#3169](https://github.com/parse-community/parse-dashboard/issues/3169)) ([964e540](https://github.com/parse-community/parse-dashboard/commit/964e540d9ca9b790a6317310d044d82d15ef50d9))
+
 # [8.3.0-alpha.39](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.38...8.3.0-alpha.39) (2026-02-03)
 
 
