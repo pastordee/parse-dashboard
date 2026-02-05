@@ -808,14 +808,38 @@ export default class DataBrowser extends React.Component {
       return;
     }
 
-    // Check if the event target is an input, textarea, or select element
-    const target = e.target;
-    const isInputElement = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT');
-
-    // Ignore all keyboard events when focus is on input/textarea/select elements
-    // This allows normal text editing behavior in filter inputs and dropdown navigation
-    if (isInputElement) {
+    // Ignore keyboard events when a modal is open
+    // Modals handle their own keyboard navigation and should not affect the data browser
+    if (document.querySelector('[data-modal="true"]')) {
       return;
+    }
+
+    // Check if the event target is an input, textarea, or select element
+    // Allow checkboxes since they don't accept text input
+    const target = e.target;
+    const isTextInputElement = target && (
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      (target.tagName === 'INPUT' && target.type !== 'checkbox')
+    );
+
+    // Ignore most keyboard events when focus is on text input elements
+    // This allows normal text editing behavior in filter inputs and dropdown navigation
+    if (isTextInputElement) {
+      return;
+    }
+
+    // Handle "Run script on selected rows" shortcut
+    // Only works when in editable mode (onEditSelectedRow exists) and rows are selected
+    const shortcuts = this.state.keyboardShortcuts;
+    if (shortcuts && matchesShortcut(e, shortcuts.dataBrowserRunScriptOnSelectedRows)) {
+      const selection = this.props.selection || {};
+      const selectionLength = Object.keys(selection).length;
+      if (selectionLength > 0 && this.props.onExecuteScriptRows && this.props.onEditSelectedRow) {
+        this.props.onExecuteScriptRows(selection);
+        e.preventDefault();
+        return;
+      }
     }
 
     // Escape key stops auto-scrolling
@@ -900,6 +924,7 @@ export default class DataBrowser extends React.Component {
         e.preventDefault();
       }
     }
+
     if (this.state.editing) {
       switch (e.keyCode) {
         case 27: // ESC
@@ -2835,6 +2860,7 @@ export default class DataBrowser extends React.Component {
           stopAutoScroll={this.stopAutoScroll}
           toggleGraphPanel={this.toggleGraphPanelVisibility}
           isGraphPanelVisible={this.state.isGraphPanelVisible}
+          runScriptShortcut={this.state.keyboardShortcuts?.dataBrowserRunScriptOnSelectedRows?.key?.toUpperCase()}
           {...other}
           onRefresh={this.handleRefresh}
         />
