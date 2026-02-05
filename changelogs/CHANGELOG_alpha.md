@@ -1,3 +1,10 @@
+# [8.3.0-alpha.42](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.41...8.3.0-alpha.42) (2026-02-05)
+
+
+### Features
+
+* Allow to use ESC key to cancel, Cmd + Enter key to submit, Tab key to navigate a modal dialog ([#3172](https://github.com/parse-community/parse-dashboard/issues/3172)) ([debdc09](https://github.com/parse-community/parse-dashboard/commit/debdc098c1b9f78358a35f043b7885528ecdb519))
+
 # [8.3.0-alpha.41](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.40...8.3.0-alpha.41) (2026-02-05)
 
 
