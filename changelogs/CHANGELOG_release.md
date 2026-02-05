@@ -1,3 +1,10 @@
+# [8.4.0](https://github.com/parse-community/parse-dashboard/compare/8.3.0...8.4.0) (2026-02-05)
+
+
+### Features
+
+* Add syntax highlighting, formatting, auto-indentation for Cloud Config parameter values of type Object and Array ([#3176](https://github.com/parse-community/parse-dashboard/issues/3176)) ([538e8b3](https://github.com/parse-community/parse-dashboard/commit/538e8b370dd9b4d39c908487357e609bdbe8353a))
+
 # [8.3.0](https://github.com/parse-community/parse-dashboard/compare/8.2.0...8.3.0) (2026-02-05)
 
 
