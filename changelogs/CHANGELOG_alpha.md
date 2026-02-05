@@ -1,3 +1,10 @@
+# [8.3.0-alpha.43](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.42...8.3.0-alpha.43) (2026-02-05)
+
+
+### Bug Fixes
+
+* Setting a keyboard shortcut to its default value creates an unnecessary dashboard config storage entry ([#3173](https://github.com/parse-community/parse-dashboard/issues/3173)) ([4949053](https://github.com/parse-community/parse-dashboard/commit/49490538dde28ef91963324429877764e44d3f1a))
+
 # [8.3.0-alpha.42](https://github.com/parse-community/parse-dashboard/compare/8.3.0-alpha.41...8.3.0-alpha.42) (2026-02-05)
 
 
