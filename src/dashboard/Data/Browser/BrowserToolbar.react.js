@@ -96,8 +96,15 @@ const BrowserToolbar = ({
   toggleBatchNavigate,
   showPanelCheckbox,
   toggleShowPanelCheckbox,
+  autoScrollEnabled,
+  toggleAutoScroll,
+  autoScrollRequireHover,
+  toggleAutoScrollRequireHover,
+  isAutoScrolling,
+  stopAutoScroll,
   toggleGraphPanel,
   isGraphPanelVisible,
+  runScriptShortcut,
 }) => {
   const selectionLength = Object.keys(selection).length;
   const isPendingEditCloneRows = editCloneRows && editCloneRows.length > 0;
@@ -298,6 +305,8 @@ const BrowserToolbar = ({
       classwiseCloudFunctions={classwiseCloudFunctions}
       appId={appId}
       appName={appName}
+      isAutoScrolling={isAutoScrolling}
+      stopAutoScroll={stopAutoScroll}
     >
       {onAddRow && (
         <a className={classes.join(' ')} onClick={onClick}>
@@ -387,25 +396,6 @@ const BrowserToolbar = ({
           <MenuItem
             text={
               <span>
-                {scrollToTop && (
-                  <Icon
-                    name="check"
-                    width={12}
-                    height={12}
-                    fill="#ffffffff"
-                    className="menuCheck"
-                  />
-                )}
-                Scroll to top
-              </span>
-            }
-            onClick={() => {
-              toggleScrollToTop();
-            }}
-          />
-          <MenuItem
-            text={
-              <span>
                 {autoLoadFirstRow && (
                   <Icon
                     name="check"
@@ -420,25 +410,6 @@ const BrowserToolbar = ({
             }
             onClick={() => {
               toggleAutoLoadFirstRow();
-            }}
-          />
-          <MenuItem
-            text={
-              <span>
-                {syncPanelScroll && (
-                  <Icon
-                    name="check"
-                    width={12}
-                    height={12}
-                    fill="#ffffffff"
-                    className="menuCheck"
-                  />
-                )}
-                Sync panel scrolling
-              </span>
-            }
-            onClick={() => {
-              toggleSyncPanelScroll();
             }}
           />
           <MenuItem
@@ -479,6 +450,85 @@ const BrowserToolbar = ({
               toggleShowPanelCheckbox();
             }}
           />
+          <Separator />
+          <MenuItem
+            text={
+              <span>
+                {scrollToTop && (
+                  <Icon
+                    name="check"
+                    width={12}
+                    height={12}
+                    fill="#ffffffff"
+                    className="menuCheck"
+                  />
+                )}
+                Scroll to top
+              </span>
+            }
+            onClick={() => {
+              toggleScrollToTop();
+            }}
+          />
+          <MenuItem
+            text={
+              <span>
+                {syncPanelScroll && (
+                  <Icon
+                    name="check"
+                    width={12}
+                    height={12}
+                    fill="#ffffffff"
+                    className="menuCheck"
+                  />
+                )}
+                Sync panel scrolling
+              </span>
+            }
+            onClick={() => {
+              toggleSyncPanelScroll();
+            }}
+          />
+          <BrowserMenu title="Auto-scroll" setCurrent={setCurrent}>
+            <MenuItem
+              text={
+                <span>
+                  {autoScrollEnabled && (
+                    <Icon
+                      name="check"
+                      width={12}
+                      height={12}
+                      fill="#ffffffff"
+                      className="menuCheck"
+                    />
+                  )}
+                  Enabled
+                </span>
+              }
+              onClick={() => {
+                toggleAutoScroll();
+              }}
+            />
+            <MenuItem
+              text={
+                <span>
+                  {autoScrollRequireHover && (
+                    <Icon
+                      name="check"
+                      width={12}
+                      height={12}
+                      fill="#ffffffff"
+                      className="menuCheck"
+                    />
+                  )}
+                  Require hover
+                </span>
+              }
+              onClick={() => {
+                toggleAutoScrollRequireHover();
+              }}
+            />
+          </BrowserMenu>
         </BrowserMenu>
       </BrowserMenu>
       <div className={styles.toolbarSeparator} />
@@ -574,6 +624,7 @@ const BrowserToolbar = ({
               : `Run script on ${selectionLength} selected rows...`
           }
           onClick={() => onExecuteScriptRows(selection)}
+          shortcut={runScriptShortcut}
         />
       </BrowserMenu>
       <div className={styles.toolbarSeparator} />
