@@ -1,3 +1,10 @@
+## [8.4.1-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.4.0...8.4.1-alpha.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* Auto-formatting not applied when Cloud Config parameter value is outdated and re-fetched from server ([#3182](https://github.com/parse-community/parse-dashboard/issues/3182)) ([84eab36](https://github.com/parse-community/parse-dashboard/commit/84eab36680c6a3ce854276127764e4668c83b9b1))
+
 # [8.4.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.3.0...8.4.0-alpha.1) (2026-02-05)
 
 
