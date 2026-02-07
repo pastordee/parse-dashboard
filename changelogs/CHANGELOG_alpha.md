@@ -1,3 +1,10 @@
+# [8.5.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.3...8.5.0-alpha.4) (2026-02-07)
+
+
+### Bug Fixes
+
+* Role linking in ACL fails with type error ([#3095](https://github.com/parse-community/parse-dashboard/issues/3095)) ([2070d29](https://github.com/parse-community/parse-dashboard/commit/2070d2937de4440920494ebef8c63ea96bcbac37))
+
 # [8.5.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.2...8.5.0-alpha.3) (2026-02-07)
 
 
