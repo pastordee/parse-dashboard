@@ -1,6 +1,7 @@
+import Icon from 'components/Icon/Icon.react';
 import LoaderDots from 'components/LoaderDots/LoaderDots.react';
 import Parse from 'parse';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './AggregationPanel.scss';
 import {
   AudioElement,
@@ -28,10 +29,16 @@ const AggregationPanel = ({
   panelTitle = null,
   style,
   onContextMenu,
+  onReload,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [nestedData, setNestedData] = useState(null);
   const [isLoadingNested, setIsLoadingNested] = useState(false);
+  const [showReloadButton, setShowReloadButton] = useState(false);
+  const [reloadCount, setReloadCount] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const reloadTimerRef = useRef(null);
+  const elapsedIntervalRef = useRef(null);
 
   useEffect(() => {
     if (Object.keys(errorAggregatedData).length !== 0) {
@@ -44,6 +51,26 @@ const AggregationPanel = ({
     () => depth === 0 && selectedObjectId && isLoadingCloudFunction && showAggregatedData,
     [depth, selectedObjectId, isLoadingCloudFunction, showAggregatedData]
   );
+
+  const isLoading = depth === 0 ? isLoadingInfoPanel : isLoadingNested;
+
+  useEffect(() => {
+    clearTimeout(reloadTimerRef.current);
+    clearInterval(elapsedIntervalRef.current);
+    if (isLoading) {
+      setShowReloadButton(false);
+      setElapsedSeconds(0);
+      elapsedIntervalRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1_000);
+      reloadTimerRef.current = setTimeout(() => setShowReloadButton(true), 3_000);
+    } else {
+      setShowReloadButton(false);
+      setElapsedSeconds(0);
+    }
+    return () => {
+      clearTimeout(reloadTimerRef.current);
+      clearInterval(elapsedIntervalRef.current);
+    };
+  }, [isLoading, reloadCount]);
 
   const shouldShowAggregatedData = useMemo(
     () =>
@@ -92,6 +119,16 @@ const AggregationPanel = ({
     setIsExpanded(false);
     fetchNestedData();
   }, [fetchNestedData]);
+
+  const handleReload = useCallback(() => {
+    setShowReloadButton(false);
+    setReloadCount(c => c + 1);
+    if (depth === 0 && onReload) {
+      onReload();
+    } else {
+      fetchNestedData();
+    }
+  }, [depth, onReload, fetchNestedData]);
 
   const renderSegmentContent = (segment, index) => (
     <div key={index} className={styles.segmentContainer} style={segment.style}>
@@ -179,6 +216,17 @@ const AggregationPanel = ({
             {isLoadingNested ? (
               <div className={styles.loader}>
                 <LoaderDots />
+                {showReloadButton && (
+                  <div className={styles.reloadControls}>
+                    <span className={styles.elapsedTimer}>{elapsedSeconds}s</span>
+                    <button
+                      onClick={handleReload}
+                      className={styles.reloadButton}
+                    >
+                      <Icon name="refresh-solid" width={20} height={20} fill="#169cee" />
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               nestedData &&
@@ -213,6 +261,17 @@ const AggregationPanel = ({
       {isLoadingInfoPanel ? (
         <div className={styles.center}>
           <LoaderDots />
+          {showReloadButton && onReload && (
+            <div className={styles.reloadControls}>
+              <span className={styles.elapsedTimer}>{elapsedSeconds}s</span>
+              <button
+                onClick={handleReload}
+                className={styles.reloadButton}
+              >
+                <Icon name="refresh-outline" width={20} height={20} fill="#169cee" />
+              </button>
+            </div>
+          )}
         </div>
       ) : shouldShowAggregatedData ? (
         <div className={styles.mainContent}>
