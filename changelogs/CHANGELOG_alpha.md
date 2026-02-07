@@ -1,3 +1,10 @@
+# [8.5.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.4.1-alpha.2...8.5.0-alpha.1) (2026-02-07)
+
+
+### Features
+
+* Add reload button to info panel on long loading time ([#3184](https://github.com/parse-community/parse-dashboard/issues/3184)) ([3712d96](https://github.com/parse-community/parse-dashboard/commit/3712d96f2992c9134585f6d45d2e2e04e6692ec1))
+
 ## [8.4.1-alpha.2](https://github.com/parse-community/parse-dashboard/compare/8.4.1-alpha.1...8.4.1-alpha.2) (2026-02-06)
 
 
