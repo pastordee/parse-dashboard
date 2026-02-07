@@ -1,3 +1,10 @@
+# [8.5.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.1...8.5.0-alpha.2) (2026-02-07)
+
+
+### Bug Fixes
+
+* Security migration from csurf to csrf-sync ([#3188](https://github.com/parse-community/parse-dashboard/issues/3188)) ([a95d8a3](https://github.com/parse-community/parse-dashboard/commit/a95d8a32a2b45bec98f9e8b8e936c9d34073792b))
+
 # [8.5.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.4.1-alpha.2...8.5.0-alpha.1) (2026-02-07)
 
 
