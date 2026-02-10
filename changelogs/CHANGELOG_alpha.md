@@ -1,3 +1,10 @@
+# [8.5.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.5...8.5.0-alpha.6) (2026-02-10)
+
+
+### Features
+
+* Add option to reload all or only selected rows after invoking script ([#3200](https://github.com/parse-community/parse-dashboard/issues/3200)) ([173b953](https://github.com/parse-community/parse-dashboard/commit/173b95378ddd36a4ac865a698efdfadd29516ea0))
+
 # [8.5.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.4...8.5.0-alpha.5) (2026-02-10)
 
 
