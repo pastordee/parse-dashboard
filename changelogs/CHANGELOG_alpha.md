@@ -1,3 +1,10 @@
+# [8.5.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.4...8.5.0-alpha.5) (2026-02-10)
+
+
+### Features
+
+* Add keyboard shortcut to scroll info panels to top ([#3199](https://github.com/parse-community/parse-dashboard/issues/3199)) ([7535626](https://github.com/parse-community/parse-dashboard/commit/7535626ff28d73eb9196b7f5653cb5a078b33213))
+
 # [8.5.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.3...8.5.0-alpha.4) (2026-02-07)
 
 
