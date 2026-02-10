@@ -1,3 +1,10 @@
+# [8.5.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.6...8.5.0-alpha.7) (2026-02-10)
+
+
+### Features
+
+* Add support for script execution invoking dashboard form for user input ([#3201](https://github.com/parse-community/parse-dashboard/issues/3201)) ([159f99d](https://github.com/parse-community/parse-dashboard/commit/159f99dfa56fcdb0f7ec0df7c3bfb89bfdbc0af3))
+
 # [8.5.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.5...8.5.0-alpha.6) (2026-02-10)
 
 
