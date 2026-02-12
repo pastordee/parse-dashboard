@@ -1,3 +1,15 @@
+# [9.0.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.5.0...9.0.0-alpha.1) (2026-02-12)
+
+
+### Features
+
+* Remove Node 18 support ([#3212](https://github.com/parse-community/parse-dashboard/issues/3212)) ([a5c1bb2](https://github.com/parse-community/parse-dashboard/commit/a5c1bb2d597df1e8670aa5f61640fa7961812530))
+
+
+### BREAKING CHANGES
+
+* Removes support for Node 18. ([a5c1bb2](a5c1bb2))
+
 # [8.5.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.6...8.5.0-alpha.7) (2026-02-10)
 
 
