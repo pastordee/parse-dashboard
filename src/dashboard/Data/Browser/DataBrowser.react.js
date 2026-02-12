@@ -201,6 +201,9 @@ export default class DataBrowser extends React.Component {
       optionKeyPressed: false, // Whether the Option/Alt key is currently pressed (pauses auto-scroll)
     };
 
+    // Flag to skip panel clearing in componentDidUpdate during selective object refresh
+    this._skipPanelClear = false;
+
     this.handleResizeDiv = this.handleResizeDiv.bind(this);
     this.handleResizeStart = this.handleResizeStart.bind(this);
     this.handleResizeStop = this.handleResizeStop.bind(this);
@@ -209,6 +212,7 @@ export default class DataBrowser extends React.Component {
     this.handleHeaderDragDrop = this.handleHeaderDragDrop.bind(this);
     this.handleResize = this.handleResize.bind(this);
     this.handleRefresh = this.handleRefresh.bind(this);
+    this.handleRefreshObjects = this.handleRefreshObjects.bind(this);
     this.togglePanelVisibility = this.togglePanelVisibility.bind(this);
     this.setCurrent = this.setCurrent.bind(this);
     this.setEditing = this.setEditing.bind(this);
@@ -459,32 +463,24 @@ export default class DataBrowser extends React.Component {
     );
 
     if (shouldClearPanels) {
-      // Clear panel data and selection to show "No object selected"
-      this.props.setAggregationPanelData({});
-      this.props.setLoadingInfoPanel(false);
-      this.setState({
-        selectedObjectId: undefined,
-        showAggregatedData: true, // Keep true to show "No object selected" message
-        multiPanelData: {},
-        displayedObjectIds: [],
-        prefetchCache: {}, // Clear cache to prevent memory leak
-      });
-    }
-
-    if (
-      this.state.current === null &&
-      this.state.selectedObjectId !== undefined &&
-      prevState.selectedObjectId !== undefined
-    ) {
-      this.setState({
-        selectedObjectId: undefined,
-        showAggregatedData: true, // Keep true to show "No object selected" message
-      });
-      this.props.setAggregationPanelData({});
-      if (this.props.errorAggregatedData != {}) {
-        this.props.setErrorAggregatedData({});
+      if (this._skipPanelClear) {
+        this._skipPanelClear = false;
+      } else {
+        // Clear panel data and selection to show "No object selected"
+        this.props.setAggregationPanelData({});
+        this.props.setLoadingInfoPanel(false);
+        this.setState({
+          selectedObjectId: undefined,
+          showAggregatedData: true, // Keep true to show "No object selected" message
+          multiPanelData: {},
+          displayedObjectIds: [],
+          prefetchCache: {}, // Clear cache to prevent memory leak
+        });
       }
     }
+
+    // Note: We intentionally do NOT clear selectedObjectId when current becomes null.
+    // Clicking toolbar menus sets current=null, but the info panel should persist.
 
     if (this.state.current && this.state.current !== prevState.current) {
       if (this.state.current.col !== this.state.lastSelectedCol) {
@@ -561,13 +557,13 @@ export default class DataBrowser extends React.Component {
     // Store the fetched panel data in multiPanelData when it changes
     if (
       this.props.AggregationPanelData !== prevProps.AggregationPanelData &&
-      this.state.selectedObjectId &&
+      this.props.lastFetchedObjectId &&
       Object.keys(this.props.AggregationPanelData).length > 0
     ) {
       this.setState(prev => ({
         multiPanelData: {
           ...prev.multiPanelData,
-          [this.state.selectedObjectId]: this.props.AggregationPanelData
+          [this.props.lastFetchedObjectId]: this.props.AggregationPanelData
         }
       }));
     }
@@ -674,6 +670,50 @@ export default class DataBrowser extends React.Component {
     }
 
     await this.props.onRefresh();
+  }
+
+  async handleRefreshObjects(objectIds) {
+    // Clear prefetch cache for the affected objects
+    if (this.state.isPanelVisible) {
+      const newPrefetchCache = { ...this.state.prefetchCache };
+      objectIds.forEach(id => {
+        delete newPrefetchCache[id];
+      });
+
+      // Clear multi-panel data for affected objects
+      const newMultiPanelData = { ...this.state.multiPanelData };
+      objectIds.forEach(id => {
+        delete newMultiPanelData[id];
+      });
+
+      this.setState({ prefetchCache: newPrefetchCache, multiPanelData: newMultiPanelData });
+
+      // Re-fetch info panel data for affected objects that are currently displayed
+      const appId = this.props.app.applicationId;
+      const className = this.props.className;
+
+      if (this.state.selectedObjectId && objectIds.includes(this.state.selectedObjectId)) {
+        this.props.callCloudFunction(this.state.selectedObjectId, className, appId);
+      }
+
+      if (this.state.panelCount > 1) {
+        this.state.displayedObjectIds.forEach(displayedId => {
+          if (objectIds.includes(displayedId)) {
+            this.fetchDataForMultiPanel(displayedId);
+          }
+        });
+      }
+    }
+
+    // Set flag to prevent componentDidUpdate from clearing panels when data prop changes
+    this._skipPanelClear = true;
+
+    // Refresh the table data for just these objects
+    try {
+      await this.props.onRefreshObjects(objectIds);
+    } finally {
+      this._skipPanelClear = false;
+    }
   }
 
   togglePanelVisibility() {
@@ -829,9 +869,33 @@ export default class DataBrowser extends React.Component {
       return;
     }
 
+    // Handle shortcuts that work regardless of cell selection
+    const shortcuts = this.state.keyboardShortcuts;
+
+    // Scroll info panels to top shortcut (only if panels are visible)
+    if (shortcuts && matchesShortcut(e, shortcuts.dataBrowserScrollInfoPanelsToTop)) {
+      if (this.state.isPanelVisible) {
+        // Scroll outer container
+        if (this.aggregationPanelRef?.current) {
+          this.aggregationPanelRef.current.scrollTop = 0;
+        }
+        // Scroll each individual panel column
+        this.panelColumnRefs.forEach((ref) => {
+          if (ref?.current) {
+            ref.current.scrollTop = 0;
+          }
+        });
+        // Pause auto-scroll with 1s resume delay
+        if (this.state.isAutoScrolling) {
+          this.pauseAutoScrollWithResume();
+        }
+        e.preventDefault();
+      }
+      return;
+    }
+
     // Handle "Run script on selected rows" shortcut
     // Only works when in editable mode (onEditSelectedRow exists) and rows are selected
-    const shortcuts = this.state.keyboardShortcuts;
     if (shortcuts && matchesShortcut(e, shortcuts.dataBrowserRunScriptOnSelectedRows)) {
       const selection = this.props.selection || {};
       const selectionLength = Object.keys(selection).length;
@@ -1277,7 +1341,9 @@ export default class DataBrowser extends React.Component {
                   className,
                   objectId,
                   this.props.showNote,
-                  this.props.onRefresh
+                  this.props.reloadDataTableAfterScript ? this.props.onRefresh : null,
+                  this.props.reloadDataTableAfterScript ? null : this.handleRefreshObjects,
+                  this.props.onScriptModalResponse
                 );
               }
             },
@@ -2634,6 +2700,7 @@ export default class DataBrowser extends React.Component {
             isGraphPanelVisible={this.state.isGraphPanelVisible && !!this.state.graphConfig}
             graphPanelWidth={this.state.graphPanelWidth}
             {...other}
+            onRefreshObjects={this.handleRefreshObjects}
           />
           {this.state.isPanelVisible && (
             <ResizableBox
@@ -2681,6 +2748,7 @@ export default class DataBrowser extends React.Component {
                             appName={this.props.appName}
                             className={this.props.className}
                             onContextMenu={this.handleAggregationPanelTextContextMenu}
+                            onReload={() => this.props.callCloudFunction(this.state.selectedObjectId, this.props.className, this.props.app.applicationId)}
                           />
                         );
                       }
@@ -2744,6 +2812,7 @@ export default class DataBrowser extends React.Component {
                                 appName={this.props.appName}
                                 className={this.props.className}
                                 onContextMenu={this.handleAggregationPanelTextContextMenu}
+                                onReload={() => this.props.callCloudFunction(objectId, this.props.className, this.props.app.applicationId)}
                               />
                             </div>
                             {index < this.state.displayedObjectIds.length - 1 && (
@@ -2767,6 +2836,7 @@ export default class DataBrowser extends React.Component {
                     appName={this.props.appName}
                     className={this.props.className}
                     onContextMenu={this.handleAggregationPanelTextContextMenu}
+                    onReload={() => this.props.callCloudFunction(this.state.selectedObjectId, this.props.className, this.props.app.applicationId)}
                   />
                 )}
               </div>
@@ -2883,7 +2953,9 @@ export default class DataBrowser extends React.Component {
                 this.state.selectedScript.className,
                 this.state.selectedScript.objectId,
                 this.props.showNote,
-                this.props.onRefresh
+                this.props.reloadDataTableAfterScript ? this.props.onRefresh : null,
+                this.props.reloadDataTableAfterScript ? null : this.handleRefreshObjects,
+                this.props.onScriptModalResponse
               );
               this.setState({ showScriptConfirmationDialog: false, selectedScript: null });
             }}

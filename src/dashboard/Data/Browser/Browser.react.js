@@ -20,6 +20,7 @@ import DeleteRowsDialog from 'dashboard/Data/Browser/DeleteRowsDialog.react';
 import DropClassDialog from 'dashboard/Data/Browser/DropClassDialog.react';
 import EditRowDialog from 'dashboard/Data/Browser/EditRowDialog.react';
 import ExecuteScriptRowsDialog from 'dashboard/Data/Browser/ExecuteScriptRowsDialog.react';
+import ScriptResponseModal from 'dashboard/Data/Browser/ScriptResponseModal.react';
 import ExportDialog from 'dashboard/Data/Browser/ExportDialog.react';
 import ExportSchemaDialog from 'dashboard/Data/Browser/ExportSchemaDialog.react';
 import ExportSelectedRowsDialog from 'dashboard/Data/Browser/ExportSelectedRowsDialog.react';
@@ -43,6 +44,7 @@ import subscribeTo from 'lib/subscribeTo';
 import { withRouter } from 'lib/withRouter';
 import FilterPreferencesManager from 'lib/FilterPreferencesManager';
 import { prefersServerStorage } from 'lib/StoragePreferences';
+import { isFormResponse, executeScriptCallback } from 'lib/ScriptUtils';
 import Parse from 'parse';
 import React from 'react';
 import { Helmet } from 'react-helmet';
@@ -185,6 +187,8 @@ class Browser extends DashboardView {
 
       processedScripts: 0,
 
+      reloadDataTableAfterScript: window.localStorage?.getItem('reloadDataTableAfterScript') === 'true',
+
       rowCheckboxDragging: false,
       draggedRowSelection: false,
 
@@ -198,6 +202,8 @@ class Browser extends DashboardView {
       classFilters: {}, // Map of className -> filters array
       selectedCellsCount: 0,
       selectedData: [],
+
+      scriptResponseModal: null,
 
       // Cloud Config array params for context menu
       arrayConfigParams: [],
@@ -235,6 +241,11 @@ class Browser extends DashboardView {
     this.showExecuteScriptRowsDialog = this.showExecuteScriptRowsDialog.bind(this);
     this.confirmExecuteScriptRows = this.confirmExecuteScriptRows.bind(this);
     this.cancelExecuteScriptRowsDialog = this.cancelExecuteScriptRowsDialog.bind(this);
+    this.handleScriptModalResponse = this.handleScriptModalResponse.bind(this);
+    this.cancelScriptResponseModal = this.cancelScriptResponseModal.bind(this);
+    this.confirmScriptResponseModal = this.confirmScriptResponseModal.bind(this);
+    this.refreshObjects = this.refreshObjects.bind(this);
+    this.toggleReloadDataTableAfterScript = this.toggleReloadDataTableAfterScript.bind(this);
     this.confirmAttachSelectedRows = this.confirmAttachSelectedRows.bind(this);
     this.cancelAttachSelectedRows = this.cancelAttachSelectedRows.bind(this);
     this.showCloneSelectedRowsDialog = this.showCloneSelectedRowsDialog.bind(this);
@@ -289,8 +300,8 @@ class Browser extends DashboardView {
     this.handleAddToArrayConfig = this.handleAddToArrayConfig.bind(this);
     this.handleConfirmAddToConfig = this.handleConfirmAddToConfig.bind(this);
 
-    // Handle for the ongoing info panel cloud function request
-    this.currentInfoPanelQuery = null;
+    // Map of objectId -> promise for ongoing info panel cloud function requests
+    this.infoPanelQueries = {};
 
     this.dataBrowserRef = React.createRef();
 
@@ -382,10 +393,8 @@ class Browser extends DashboardView {
     if (this.currentQuery) {
       this.currentQuery.cancel();
     }
-    if (this.currentInfoPanelQuery) {
-      this.currentInfoPanelQuery.cancel?.();
-      this.currentInfoPanelQuery = null;
-    }
+    Object.values(this.infoPanelQueries).forEach(q => q.cancel?.());
+    this.infoPanelQueries = {};
     this.removeLocation();
     window.removeEventListener('mouseup', this.onMouseUpRowCheckBox);
   }
@@ -447,9 +456,10 @@ class Browser extends DashboardView {
   }
 
   fetchAggregationPanelData(objectId, className, appId) {
-    if (this.currentInfoPanelQuery) {
-      this.currentInfoPanelQuery.cancel?.();
-      this.currentInfoPanelQuery = null;
+    // Cancel any existing request for this specific objectId
+    if (this.infoPanelQueries[objectId]) {
+      this.infoPanelQueries[objectId].cancel?.();
+      delete this.infoPanelQueries[objectId];
     }
 
     this.setState({
@@ -472,14 +482,14 @@ class Browser extends DashboardView {
 
     const promise = Parse.Cloud.run(cloudCodeFunction, params, options);
     promise.cancel = () => requestTask?.abort();
-    this.currentInfoPanelQuery = promise;
+    this.infoPanelQueries[objectId] = promise;
     promise.then(
       result => {
-        if (this.currentInfoPanelQuery !== promise) {
+        if (this.infoPanelQueries[objectId] !== promise) {
           return;
         }
         if (result && result.panel && result.panel && result.panel.segments) {
-          this.setState({ AggregationPanelData: result, isLoadingInfoPanel: false });
+          this.setState({ AggregationPanelData: result, isLoadingInfoPanel: false, lastFetchedObjectId: objectId });
         } else {
           this.setState({
             isLoadingInfoPanel: false,
@@ -489,7 +499,7 @@ class Browser extends DashboardView {
         }
       },
       error => {
-        if (this.currentInfoPanelQuery !== promise) {
+        if (this.infoPanelQueries[objectId] !== promise) {
           return;
         }
         this.setState({
@@ -499,8 +509,8 @@ class Browser extends DashboardView {
         this.showNote(this.state.errorAggregatedData, true);
       }
     ).finally(() => {
-      if (this.currentInfoPanelQuery === promise) {
-        this.currentInfoPanelQuery = null;
+      if (this.infoPanelQueries[objectId] === promise) {
+        delete this.infoPanelQueries[objectId];
       }
     });
   }
@@ -1228,6 +1238,34 @@ class Browser extends DashboardView {
       this.fetchData(this.props.params.className, prevFilters);
     }
     return true;
+  }
+
+  async refreshObjects(objectIds) {
+    const { useMasterKey } = this.state;
+    const className = this.props.params.className;
+    const query = new Parse.Query(className);
+    query.containedIn('objectId', objectIds);
+    this.excludeFields(query, className);
+    try {
+      const freshObjects = await query.find({ useMasterKey });
+      const freshMap = {};
+      freshObjects.forEach(obj => {
+        freshMap[obj.id] = obj;
+      });
+      this.setState(prevState => ({
+        data: prevState.data.map(obj => freshMap[obj.id] || obj),
+      }));
+    } catch (e) {
+      this.showNote(e.message, true);
+    }
+  }
+
+  toggleReloadDataTableAfterScript() {
+    this.setState(prevState => {
+      const newValue = !prevState.reloadDataTableAfterScript;
+      window.localStorage?.setItem('reloadDataTableAfterScript', newValue);
+      return { reloadDataTableAfterScript: newValue };
+    });
   }
 
   async fetchParseData(source, filters) {
@@ -2130,6 +2168,38 @@ class Browser extends DashboardView {
     });
   }
 
+  handleScriptModalResponse({ response, script, className, objectIds }) {
+    this.setState({
+      showExecuteScriptRowsDialog: false,
+      scriptResponseModal: {
+        form: response.form,
+        payload: response.payload,
+        script,
+        className,
+        objectIds,
+      },
+    });
+  }
+
+  cancelScriptResponseModal() {
+    this.setState({ scriptResponseModal: null });
+  }
+
+  confirmScriptResponseModal(formData) {
+    const { form, payload, script, className, objectIds } = this.state.scriptResponseModal;
+    this.setState({ scriptResponseModal: null, selection: {} });
+    executeScriptCallback(
+      form.cloudCodeFunction || script.cloudCodeFunction,
+      className,
+      objectIds,
+      payload,
+      formData,
+      this.showNote,
+      this.state.reloadDataTableAfterScript ? this.refresh : null,
+      this.state.reloadDataTableAfterScript ? null : (ids) => this.dataBrowserRef.current?.handleRefreshObjects(ids)
+    );
+  }
+
   async confirmExecuteScriptRows(script) {
     const batchSize = script.executionBatchSize || 1;
     try {
@@ -2137,13 +2207,64 @@ class Browser extends DashboardView {
         Parse.Object.extend(this.props.params.className).createWithoutData(key)
       );
 
-      let totalErrorCount = 0;
-      let batchCount = 0;
-      const totalBatchCount = Math.ceil(objects.length / batchSize);
+      // Probe first object for modal response
+      const probeResponse = await Parse.Cloud.run(
+        script.cloudCodeFunction,
+        { object: objects[0].toPointer() },
+        { useMasterKey: true }
+      ).catch(error => ({ __probeError: error }));
 
-      for (let i = 0; i < objects.length; i += batchSize) {
+      if (isFormResponse(probeResponse)) {
+        this.handleScriptModalResponse({
+          response: probeResponse,
+          script,
+          className: this.props.params.className,
+          objectIds: objects.map(o => o.id),
+        });
+        return;
+      }
+
+      // Handle probe result for first object
+      this.setState(prevState => ({
+        processedScripts: prevState.processedScripts + 1,
+      }));
+
+      if (probeResponse?.__probeError) {
+        const error = probeResponse.__probeError;
+        const errorMessage = `Error running script "${script.title}" on "${objects[0].id}": ${error.message}`;
+        this.showNote(errorMessage, true);
+      } else {
+        const note =
+          (typeof probeResponse === 'object' ? JSON.stringify(probeResponse) : probeResponse) ||
+          `Ran script "${script.title}" on "${objects[0].id}".`;
+        this.showNote(note);
+      }
+
+      // Continue with remaining objects
+      const remainingObjects = objects.slice(1);
+      if (remainingObjects.length === 0) {
+        const objectIds = objects.map(obj => obj.id);
+        if (this.state.reloadDataTableAfterScript) {
+          this.setState(
+            { selection: {}, showExecuteScriptRowsDialog: false },
+            () => this.refresh()
+          );
+        } else {
+          this.setState(
+            { selection: {}, showExecuteScriptRowsDialog: false },
+            () => this.dataBrowserRef.current?.handleRefreshObjects(objectIds)
+          );
+        }
+        return;
+      }
+
+      let totalErrorCount = probeResponse?.__probeError ? 1 : 0;
+      let batchCount = 0;
+      const totalBatchCount = Math.ceil(remainingObjects.length / batchSize) + 1;
+
+      for (let i = 0; i < remainingObjects.length; i += batchSize) {
         batchCount++;
-        const batch = objects.slice(i, i + batchSize);
+        const batch = remainingObjects.slice(i, i + batchSize);
         const promises = batch.map(object =>
           Parse.Cloud.run(
             script.cloudCodeFunction,
@@ -2185,7 +2306,7 @@ class Browser extends DashboardView {
 
         if (objects.length > 1) {
           this.showNote(
-            `Ran script "${script.title}" on ${batch.length} objects in batch ${batchCount}/${totalBatchCount} with ${batchErrorCount} errors.`,
+            `Ran script "${script.title}" on ${batch.length} objects in batch ${batchCount + 1}/${totalBatchCount} with ${batchErrorCount} errors.`,
             batchErrorCount > 0
           );
         }
@@ -2193,14 +2314,22 @@ class Browser extends DashboardView {
 
       if (objects.length > 1) {
         this.showNote(
-          `Ran script "${script.title}" on ${objects.length} objects in ${batchCount} batches with ${totalErrorCount} errors.`,
+          `Ran script "${script.title}" on ${objects.length} objects in ${batchCount + 1} batches with ${totalErrorCount} errors.`,
           totalErrorCount > 0
         );
       }
-      this.setState(
-        { selection: {}, showExecuteScriptRowsDialog: false },
-        () => this.refresh()
-      );
+      const objectIds = objects.map(obj => obj.id);
+      if (this.state.reloadDataTableAfterScript) {
+        this.setState(
+          { selection: {}, showExecuteScriptRowsDialog: false },
+          () => this.refresh()
+        );
+      } else {
+        this.setState(
+          { selection: {}, showExecuteScriptRowsDialog: false },
+          () => this.dataBrowserRef.current?.handleRefreshObjects(objectIds)
+        );
+      }
     } catch (e) {
       this.showNote(e.message, true);
       console.log(`Could not run ${script.title}: ${e}`);
@@ -2816,6 +2945,10 @@ class Browser extends DashboardView {
               onExport={this.showExport}
               onChangeCLP={this.handleCLPChange}
               onRefresh={this.refresh}
+              onRefreshObjects={this.refreshObjects}
+              reloadDataTableAfterScript={this.state.reloadDataTableAfterScript}
+              toggleReloadDataTableAfterScript={this.toggleReloadDataTableAfterScript}
+              onScriptModalResponse={this.handleScriptModalResponse}
               onAttachRows={this.showAttachRowsDialog}
               onAttachSelectedRows={this.showAttachSelectedRowsDialog}
               onExecuteScriptRows={this.showExecuteScriptRowsDialog}
@@ -2870,6 +3003,7 @@ class Browser extends DashboardView {
               setLoadingInfoPanel={this.setLoadingInfoPanel}
               AggregationPanelData={this.state.AggregationPanelData}
               setAggregationPanelData={this.setAggregationPanelData}
+              lastFetchedObjectId={this.state.lastFetchedObjectId}
               setErrorAggregatedData={this.setErrorAggregatedData}
               errorAggregatedData={this.state.errorAggregatedData}
               appName={this.props.params.appId}
@@ -3008,6 +3142,15 @@ class Browser extends DashboardView {
           selection={this.state.selection}
           onCancel={this.cancelAttachSelectedRows}
           onConfirm={this.confirmAttachSelectedRows}
+        />
+      );
+    } else if (this.state.scriptResponseModal) {
+      extras = (
+        <ScriptResponseModal
+          form={this.state.scriptResponseModal.form}
+          objectIds={this.state.scriptResponseModal.objectIds}
+          onCancel={this.cancelScriptResponseModal}
+          onConfirm={this.confirmScriptResponseModal}
         />
       );
     } else if (this.state.showExecuteScriptRowsDialog) {
