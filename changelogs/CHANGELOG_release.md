@@ -1,3 +1,21 @@
+# [8.5.0](https://github.com/parse-community/parse-dashboard/compare/8.4.0...8.5.0) (2026-02-12)
+
+
+### Bug Fixes
+
+* Auto-formatting not applied when Cloud Config parameter value is outdated and re-fetched from server ([#3182](https://github.com/parse-community/parse-dashboard/issues/3182)) ([84eab36](https://github.com/parse-community/parse-dashboard/commit/84eab36680c6a3ce854276127764e4668c83b9b1))
+* Clicking reload button in info panel may display fetched data in incorrect panel ([#3189](https://github.com/parse-community/parse-dashboard/issues/3189)) ([b348ef5](https://github.com/parse-community/parse-dashboard/commit/b348ef5dad5731c66e50f3b4c67ff0afd3884a86))
+* Role linking in ACL fails with type error ([#3095](https://github.com/parse-community/parse-dashboard/issues/3095)) ([2070d29](https://github.com/parse-community/parse-dashboard/commit/2070d2937de4440920494ebef8c63ea96bcbac37))
+* Security migration from csurf to csrf-sync ([#3188](https://github.com/parse-community/parse-dashboard/issues/3188)) ([a95d8a3](https://github.com/parse-community/parse-dashboard/commit/a95d8a32a2b45bec98f9e8b8e936c9d34073792b))
+* View configuration dialog looses focus while typing and lacks syntax highlighting ([#3183](https://github.com/parse-community/parse-dashboard/issues/3183)) ([715fe8d](https://github.com/parse-community/parse-dashboard/commit/715fe8d60cfe1dcb82012d290e8b95c4a5fc1446))
+
+### Features
+
+* Add keyboard shortcut to scroll info panels to top ([#3199](https://github.com/parse-community/parse-dashboard/issues/3199)) ([7535626](https://github.com/parse-community/parse-dashboard/commit/7535626ff28d73eb9196b7f5653cb5a078b33213))
+* Add option to reload all or only selected rows after invoking script ([#3200](https://github.com/parse-community/parse-dashboard/issues/3200)) ([173b953](https://github.com/parse-community/parse-dashboard/commit/173b95378ddd36a4ac865a698efdfadd29516ea0))
+* Add reload button to info panel on long loading time ([#3184](https://github.com/parse-community/parse-dashboard/issues/3184)) ([3712d96](https://github.com/parse-community/parse-dashboard/commit/3712d96f2992c9134585f6d45d2e2e04e6692ec1))
+* Add support for script execution invoking dashboard form for user input ([#3201](https://github.com/parse-community/parse-dashboard/issues/3201)) ([159f99d](https://github.com/parse-community/parse-dashboard/commit/159f99dfa56fcdb0f7ec0df7c3bfb89bfdbc0af3))
+
 # [8.4.0](https://github.com/parse-community/parse-dashboard/compare/8.3.0...8.4.0) (2026-02-05)
 
 
