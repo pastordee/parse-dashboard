@@ -1559,10 +1559,51 @@ A drop-down to select a single item from a list.
 | Parameter | Value  | Optional | Description                      |
 |-----------|--------|----------|----------------------------------|
 | `element`    | `String` | No       | Must be `"dropDown"`.         |
+| `name`       | `String` | No       | The key used in `formData`.   |
 | `label`     | `String` | No       | The display label shown next to the dropdown. |
+| `description` | `String` | Yes      | Secondary text below the label. |
 |  `items` | `Array` | No | The selectable options. |
 |  `items[].title` | `String` | No | The display text of the option. |
 |  `items[].value` | `String` | No | The value of the option. |
+
+###### Checkbox
+
+A checkbox for boolean input.
+
+| Parameter | Value  | Optional | Default | Description                      |
+|-----------|--------|----------|---------|----------------------------------|
+| `element`     | `String` | No       | -       | Must be `"checkbox"`.         |
+| `name`        | `String` | No       | -       | The key used in `formData`.   |
+| `label`       | `String` | No       | -       | The display label.            |
+| `description` | `String` | Yes      | -       | Secondary text below the label. |
+| `default`     | `Boolean`| Yes      | `false` | The initial checked state.    |
+
+###### Toggle
+
+A toggle switch for boolean input.
+
+| Parameter    | Value    | Optional | Default | Description                      |
+|-------------|----------|----------|---------|----------------------------------|
+| `element`      | `String` | No       | -       | Must be `"toggle"`.           |
+| `name`         | `String` | No       | -       | The key used in `formData`.   |
+| `label`        | `String` | No       | -       | The display label.            |
+| `description`  | `String` | Yes      | -       | Secondary text below the label. |
+| `default`      | `Boolean`| Yes      | `false` | The initial toggle state.     |
+| `labelTrue`    | `String` | Yes      | `"Yes"` | Label for the `true` side.    |
+| `labelFalse`   | `String` | Yes      | `"No"`  | Label for the `false` side.   |
+
+###### Text Input
+
+A single-line text input.
+
+| Parameter    | Value    | Optional | Default | Description                      |
+|-------------|----------|----------|---------|----------------------------------|
+| `element`      | `String` | No       | -       | Must be `"textInput"`.        |
+| `name`         | `String` | No       | -       | The key used in `formData`.   |
+| `label`        | `String` | No       | -       | The display label.            |
+| `description`  | `String` | Yes      | -       | Secondary text below the label. |
+| `placeholder`  | `String` | Yes      | `""`    | Placeholder text.             |
+| `default`      | `String` | Yes      | `""`    | The initial value.            |
 
 ### Graph
 
