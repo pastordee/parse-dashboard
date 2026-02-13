@@ -1,3 +1,10 @@
+# [9.0.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.2...9.0.0-alpha.3) (2026-02-13)
+
+
+### Features
+
+* Add support for checkbox, toggle, text input elements to script form ([#3219](https://github.com/parse-community/parse-dashboard/issues/3219)) ([b9366bc](https://github.com/parse-community/parse-dashboard/commit/b9366bc9cf4b24650f991b0883c1ba1f2897969d))
+
 # [9.0.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.1...9.0.0-alpha.2) (2026-02-13)
 
 
