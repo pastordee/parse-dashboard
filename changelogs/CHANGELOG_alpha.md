@@ -1,3 +1,10 @@
+# [9.0.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.4...9.0.0-alpha.5) (2026-02-14)
+
+
+### Bug Fixes
+
+* Cloud Config parameter modal overlays non-printable character info box ([#3221](https://github.com/parse-community/parse-dashboard/issues/3221)) ([983253e](https://github.com/parse-community/parse-dashboard/commit/983253e85e5fe7aefeb34051bebee1ddd2fa4274))
+
 # [9.0.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.3...9.0.0-alpha.4) (2026-02-14)
 
 
