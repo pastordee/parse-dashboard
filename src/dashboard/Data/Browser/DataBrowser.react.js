@@ -23,6 +23,7 @@ import { ResizableBox } from 'react-resizable';
 import ScriptConfirmationModal from '../../../components/ScriptConfirmationModal/ScriptConfirmationModal.react';
 import styles from './Databrowser.scss';
 import KeyboardShortcutsManager, { matchesShortcut } from 'lib/KeyboardShortcutsPreferences';
+import ServerConfigStorage from 'lib/ServerConfigStorage';
 
 import AggregationPanel from '../../../components/AggregationPanel/AggregationPanel';
 import { buildRelatedTextFieldsMenuItem } from '../../../lib/RelatedRecordsUtils';
@@ -199,6 +200,8 @@ export default class DataBrowser extends React.Component {
       mouseOverPanelHeader: false, // Whether the mouse is over the panel header row
       commandKeyPressed: false, // Whether the Command/Meta key is currently pressed
       optionKeyPressed: false, // Whether the Option/Alt key is currently pressed (pauses auto-scroll)
+      reverseAutoScrollActive: false, // Whether Cmd+Option are both held (reverses auto-scroll direction)
+      reverseAutoScrollSpeedFactor: 1, // Speed multiplier for reverse auto-scroll
     };
 
     // Flag to skip panel clearing in componentDidUpdate during selective object refresh
@@ -265,6 +268,7 @@ export default class DataBrowser extends React.Component {
     this.handlePanelHeaderMouseLeave = this.handlePanelHeaderMouseLeave.bind(this);
     this.handleOptionKeyDown = this.handleOptionKeyDown.bind(this);
     this.handleOptionKeyUp = this.handleOptionKeyUp.bind(this);
+    this.handleWindowBlur = this.handleWindowBlur.bind(this);
     this.handleMouseButtonDown = this.handleMouseButtonDown.bind(this);
     this.handleMouseButtonUp = this.handleMouseButtonUp.bind(this);
     this.saveOrderTimeout = null;
@@ -366,6 +370,7 @@ export default class DataBrowser extends React.Component {
     window.addEventListener('mouseup', this.handleMouseButtonUp);
     // Native context menu detection for auto-scroll pause
     this.nativeContextMenuTracker = this.setupNativeContextMenuDetection();
+    window.addEventListener('blur', this.handleWindowBlur);
 
     // Load keyboard shortcuts from server
     try {
@@ -374,6 +379,20 @@ export default class DataBrowser extends React.Component {
       this.setState({ keyboardShortcuts: shortcuts });
     } catch (error) {
       console.warn('Failed to load keyboard shortcuts:', error);
+    }
+
+    // Load data browser settings from server
+    try {
+      const serverStorage = new ServerConfigStorage(this.props.app);
+      const panelSettings = await serverStorage.getConfig(
+        'browser.panels.settings',
+        this.props.app.applicationId
+      );
+      if (panelSettings !== null && typeof panelSettings === 'object' && typeof panelSettings.reverseAutoScrollSpeedFactor === 'number' && panelSettings.reverseAutoScrollSpeedFactor > 0) {
+        this.setState({ reverseAutoScrollSpeedFactor: panelSettings.reverseAutoScrollSpeedFactor });
+      }
+    } catch (error) {
+      console.warn('Failed to load data browser settings:', error);
     }
 
     // Load graphs on initial mount
@@ -409,6 +428,7 @@ export default class DataBrowser extends React.Component {
     document.body.removeEventListener('keyup', this.handleOptionKeyUp);
     window.removeEventListener('mousedown', this.handleMouseButtonDown);
     window.removeEventListener('mouseup', this.handleMouseButtonUp);
+    window.removeEventListener('blur', this.handleWindowBlur);
     if (this.nativeContextMenuTracker) {
       this.nativeContextMenuTracker.dispose();
     }
@@ -1581,17 +1601,29 @@ export default class DataBrowser extends React.Component {
 
   handleAutoScrollKeyDown(e) {
     // Command/Meta key = keyCode 91 (left) or 93 (right)
-    // Only track that Command key is held; don't stop auto-scroll or enter
-    // recording mode until the user actually scrolls (handled in handleAutoScrollWheel)
-    if ((e.keyCode === 91 || e.keyCode === 93) && this.state.autoScrollEnabled && this.state.isPanelVisible && !this.state.isRecordingAutoScroll) {
-      this.setState({ commandKeyPressed: true });
+    if ((e.keyCode === 91 || e.keyCode === 93) && this.state.autoScrollEnabled && this.state.isPanelVisible) {
+      if (this.state.optionKeyPressed && this.state.isAutoScrolling) {
+        // Option already held + Cmd pressed = activate reverse auto-scroll
+        // Clear optionKeyPressed to unblock auto-scroll
+        this.setState({
+          commandKeyPressed: true,
+          optionKeyPressed: false,
+          reverseAutoScrollActive: true,
+        });
+      } else if (!this.state.isRecordingAutoScroll) {
+        // Normal behavior: track Command key for potential scroll recording
+        this.setState({ commandKeyPressed: true });
+      }
     }
   }
 
   handleAutoScrollKeyUp(e) {
     // Command/Meta key = keyCode 91 (left) or 93 (right)
     if (e.keyCode === 91 || e.keyCode === 93) {
-      if (this.state.isRecordingAutoScroll) {
+      if (this.state.reverseAutoScrollActive) {
+        // Deactivate reverse mode; skip recording-mode logic
+        this.setState({ commandKeyPressed: false, reverseAutoScrollActive: false });
+      } else if (this.state.isRecordingAutoScroll) {
         const { recordedScrollDelta, recordingScrollStart, recordingScrollEnd } = this.state;
 
         // Only start auto-scroll if we actually recorded some scrolling
@@ -1770,19 +1802,42 @@ export default class DataBrowser extends React.Component {
     }, 50);
   }
 
+  handleWindowBlur() {
+    // Reset all modifier key tracking state when the window loses focus,
+    // since keyup events won't fire while the window is not focused
+    if (this.state.commandKeyPressed || this.state.optionKeyPressed || this.state.reverseAutoScrollActive) {
+      this.setState({
+        commandKeyPressed: false,
+        optionKeyPressed: false,
+        reverseAutoScrollActive: false,
+      });
+    }
+  }
+
   handleOptionKeyDown(e) {
     // Option/Alt key = keyCode 18
-    // Track Option key state to pause auto-scroll while held
-    if (e.keyCode === 18 && !this.state.optionKeyPressed) {
-      this.setState({ optionKeyPressed: true });
+    if (e.keyCode === 18) {
+      if (this.state.commandKeyPressed && this.state.isAutoScrolling) {
+        // Cmd already held + Option pressed = activate reverse auto-scroll
+        // Don't set optionKeyPressed (which would block auto-scroll)
+        this.setState({ reverseAutoScrollActive: true });
+      } else if (!this.state.optionKeyPressed) {
+        // Normal behavior: track Option key to pause auto-scroll
+        this.setState({ optionKeyPressed: true });
+      }
     }
   }
 
   handleOptionKeyUp(e) {
     // Option/Alt key = keyCode 18
-    // Track Option key release to resume auto-scroll
-    if (e.keyCode === 18 && this.state.optionKeyPressed) {
-      this.setState({ optionKeyPressed: false });
+    if (e.keyCode === 18) {
+      if (this.state.reverseAutoScrollActive) {
+        // Deactivate reverse mode; don't trigger normal option-pause cleanup
+        this.setState({ reverseAutoScrollActive: false });
+      } else if (this.state.optionKeyPressed) {
+        // Normal behavior: release Option key pause
+        this.setState({ optionKeyPressed: false });
+      }
     }
   }
 
@@ -1836,6 +1891,7 @@ export default class DataBrowser extends React.Component {
       recordedScrollDelta: 0,
       recordingScrollStart: null,
       recordingScrollEnd: null,
+      reverseAutoScrollActive: false,
     });
   }
 
@@ -1878,7 +1934,13 @@ export default class DataBrowser extends React.Component {
     }
 
     // Animate scroll smoothly using requestAnimationFrame
-    const scrollAmount = this.state.autoScrollAmount;
+    // Capture reverse state at step start so it stays consistent with scrollAmount
+    // throughout the animation (prevents jump if state changes mid-frame)
+    const isReversing = this.state.reverseAutoScrollActive;
+    let scrollAmount = this.state.autoScrollAmount;
+    if (isReversing) {
+      scrollAmount = -scrollAmount * this.state.reverseAutoScrollSpeedFactor;
+    }
     // Animation duration: 300ms base, scaled by scroll amount (max 500ms)
     const duration = Math.min(300 + Math.abs(scrollAmount) * 0.5, 500);
     const startTime = performance.now();
@@ -1886,10 +1948,14 @@ export default class DataBrowser extends React.Component {
 
     // Get starting positions for multi-panel sync
     const panelStartPositions = [];
+    let maxPanelStartScrollTop = 0;
     if (this.state.panelCount > 1 && this.state.syncPanelScroll) {
       this.panelColumnRefs.forEach((ref) => {
         if (ref && ref.current) {
           panelStartPositions.push(ref.current.scrollTop);
+          if (ref.current.scrollTop > maxPanelStartScrollTop) {
+            maxPanelStartScrollTop = ref.current.scrollTop;
+          }
         } else {
           panelStartPositions.push(null);
         }
@@ -1906,6 +1972,13 @@ export default class DataBrowser extends React.Component {
         return;
       }
 
+      // If reverse state changed mid-animation, restart the step immediately
+      // from the current scroll position with the correct direction
+      if (this.state.reverseAutoScrollActive !== isReversing) {
+        this.performAutoScrollStep();
+        return;
+      }
+
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
@@ -1918,11 +1991,23 @@ export default class DataBrowser extends React.Component {
 
       // Sync scroll to other panels
       if (this.state.panelCount > 1 && this.state.syncPanelScroll) {
-        this.panelColumnRefs.forEach((ref, index) => {
-          if (ref && ref.current && panelStartPositions[index] !== null) {
-            ref.current.scrollTop = panelStartPositions[index] + (scrollAmount * easeOut);
-          }
-        });
+        if (isReversing) {
+          // During reverse auto-scroll, use the max scrollTop as the base for all panels
+          // so that shorter panels stay put until the longest panel catches up,
+          // matching the behavior of manual wheel scrolling (handleWrapperWheel)
+          const newPanelScrollTop = maxPanelStartScrollTop + (scrollAmount * easeOut);
+          this.panelColumnRefs.forEach((ref) => {
+            if (ref && ref.current) {
+              ref.current.scrollTop = newPanelScrollTop;
+            }
+          });
+        } else {
+          this.panelColumnRefs.forEach((ref, index) => {
+            if (ref && ref.current && panelStartPositions[index] !== null) {
+              ref.current.scrollTop = panelStartPositions[index] + (scrollAmount * easeOut);
+            }
+          });
+        }
       }
 
       if (progress < 1) {
