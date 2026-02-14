@@ -1,3 +1,10 @@
+# [9.0.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.3...9.0.0-alpha.4) (2026-02-14)
+
+
+### Features
+
+* Add support for reversing info panel auto-scroll direction while holding Command+Option keys ([#3220](https://github.com/parse-community/parse-dashboard/issues/3220)) ([7ebd121](https://github.com/parse-community/parse-dashboard/commit/7ebd1210b47f483182da80b3f2fb31b1c1b4bf16))
+
 # [9.0.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.2...9.0.0-alpha.3) (2026-02-13)
 
 
