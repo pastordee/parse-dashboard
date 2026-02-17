@@ -1,3 +1,10 @@
+# [9.0.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.5...9.0.0-alpha.6) (2026-02-17)
+
+
+### Features
+
+* Add Regex string validation when editing Cloud Config parameter ([#3222](https://github.com/parse-community/parse-dashboard/issues/3222)) ([067b9d1](https://github.com/parse-community/parse-dashboard/commit/067b9d114aa0f6de24940fa6d4a2b3e667c8b3b5))
+
 # [9.0.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.4...9.0.0-alpha.5) (2026-02-14)
 
 
