@@ -1,3 +1,10 @@
+# [9.0.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.7...9.0.0-alpha.8) (2026-02-19)
+
+
+### Bug Fixes
+
+* Incomplete authentication on AI Agent endpoint ([GHSA-qwc3-h9mg-4582](https://github.com/parse-community/parse-dashboard/security/advisories/GHSA-qwc3-h9mg-4582)) ([#3224](https://github.com/parse-community/parse-dashboard/issues/3224)) ([f92a9ef](https://github.com/parse-community/parse-dashboard/commit/f92a9ef5246d57e51696bd881a15f3b133b2bb50))
+
 # [9.0.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.6...9.0.0-alpha.7) (2026-02-19)
 
 
