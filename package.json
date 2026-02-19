@@ -1,6 +1,6 @@
 {
   "name": "parse-dashboard",
-  "version": "8.5.0",
+  "version": "9.0.0-alpha.8",
   "repository": {
     "type": "git",
     "url": "https://github.com/parse-community/parse-dashboard"
@@ -55,7 +55,7 @@
     "graphql": "16.12.0",
     "immutable": "5.1.4",
     "immutable-devtools": "0.1.5",
-    "inquirer": "12.9.0",
+    "inquirer": "13.2.2",
     "js-beautify": "1.15.4",
     "node-fetch": "3.3.2",
     "otpauth": "8.0.3",
@@ -155,7 +155,7 @@
     "parse-dashboard": "./bin/parse-dashboard"
   },
   "engines": {
-    "node": ">=18.20.4 <19.0.0 || >=20.18.0 <21.0.0 || >=22.12.0 <23.0.0 || >=24.0.0 <25.0.0"
+    "node": ">=20.18.0 <21.0.0 || >=22.12.0 <23.0.0 || >=24.0.0 <25.0.0"
   },
   "main": "Parse-Dashboard/app.js",
   "jest": {

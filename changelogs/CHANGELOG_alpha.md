@@ -1,3 +1,64 @@
+# [9.0.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.7...9.0.0-alpha.8) (2026-02-19)
+
+
+### Bug Fixes
+
+* Incomplete authentication on AI Agent endpoint ([GHSA-qwc3-h9mg-4582](https://github.com/parse-community/parse-dashboard/security/advisories/GHSA-qwc3-h9mg-4582)) ([#3224](https://github.com/parse-community/parse-dashboard/issues/3224)) ([f92a9ef](https://github.com/parse-community/parse-dashboard/commit/f92a9ef5246d57e51696bd881a15f3b133b2bb50))
+
+# [9.0.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.6...9.0.0-alpha.7) (2026-02-19)
+
+
+### Features
+
+* Add option to block saving Cloud Config parameter if validation fails ([#3225](https://github.com/parse-community/parse-dashboard/issues/3225)) ([41691aa](https://github.com/parse-community/parse-dashboard/commit/41691aafbd516a3e63cf30a1739e30985e7ca4ea))
+
+# [9.0.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.5...9.0.0-alpha.6) (2026-02-17)
+
+
+### Features
+
+* Add Regex string validation when editing Cloud Config parameter ([#3222](https://github.com/parse-community/parse-dashboard/issues/3222)) ([067b9d1](https://github.com/parse-community/parse-dashboard/commit/067b9d114aa0f6de24940fa6d4a2b3e667c8b3b5))
+
+# [9.0.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.4...9.0.0-alpha.5) (2026-02-14)
+
+
+### Bug Fixes
+
+* Cloud Config parameter modal overlays non-printable character info box ([#3221](https://github.com/parse-community/parse-dashboard/issues/3221)) ([983253e](https://github.com/parse-community/parse-dashboard/commit/983253e85e5fe7aefeb34051bebee1ddd2fa4274))
+
+# [9.0.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.3...9.0.0-alpha.4) (2026-02-14)
+
+
+### Features
+
+* Add support for reversing info panel auto-scroll direction while holding Command+Option keys ([#3220](https://github.com/parse-community/parse-dashboard/issues/3220)) ([7ebd121](https://github.com/parse-community/parse-dashboard/commit/7ebd1210b47f483182da80b3f2fb31b1c1b4bf16))
+
+# [9.0.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.2...9.0.0-alpha.3) (2026-02-13)
+
+
+### Features
+
+* Add support for checkbox, toggle, text input elements to script form ([#3219](https://github.com/parse-community/parse-dashboard/issues/3219)) ([b9366bc](https://github.com/parse-community/parse-dashboard/commit/b9366bc9cf4b24650f991b0883c1ba1f2897969d))
+
+# [9.0.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/9.0.0-alpha.1...9.0.0-alpha.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* Non-printable character box missing when editing Cloud Config parameter ([#3218](https://github.com/parse-community/parse-dashboard/issues/3218)) ([719ac09](https://github.com/parse-community/parse-dashboard/commit/719ac0948344c8956ccc9bbf8a0242131fc01962))
+
+# [9.0.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/8.5.0...9.0.0-alpha.1) (2026-02-12)
+
+
+### Features
+
+* Remove Node 18 support ([#3212](https://github.com/parse-community/parse-dashboard/issues/3212)) ([a5c1bb2](https://github.com/parse-community/parse-dashboard/commit/a5c1bb2d597df1e8670aa5f61640fa7961812530))
+
+
+### BREAKING CHANGES
+
+* Removes support for Node 18. ([a5c1bb2](a5c1bb2))
+
 # [8.5.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/8.5.0-alpha.6...8.5.0-alpha.7) (2026-02-10)
 
 
