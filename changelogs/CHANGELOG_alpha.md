@@ -1,3 +1,10 @@
+## [9.0.1-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.3...9.0.1-alpha.4) (2026-02-20)
+
+
+### Bug Fixes
+
+* Security upgrade transitive dependency undici ([#3229](https://github.com/parse-community/parse-dashboard/issues/3229)) ([8e1be1f](https://github.com/parse-community/parse-dashboard/commit/8e1be1f8bee5aef85e4a2ed686b5007d9d814f7e))
+
 ## [9.0.1-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.2...9.0.1-alpha.3) (2026-02-19)
 
 
