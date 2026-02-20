@@ -1,3 +1,10 @@
+## [9.0.1-alpha.7](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.6...9.0.1-alpha.7) (2026-02-20)
+
+
+### Bug Fixes
+
+* Security removal dependency svg-prep ([#3236](https://github.com/parse-community/parse-dashboard/issues/3236)) ([abb08c6](https://github.com/parse-community/parse-dashboard/commit/abb08c63b3a5b2c0102560ca21353bc7885cc63e))
+
 ## [9.0.1-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.5...9.0.1-alpha.6) (2026-02-20)
 
 
