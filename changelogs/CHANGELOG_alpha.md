@@ -1,3 +1,10 @@
+## [9.0.1-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.5...9.0.1-alpha.6) (2026-02-20)
+
+
+### Bug Fixes
+
+* Security upgrade transitive dependency ajv ([#3231](https://github.com/parse-community/parse-dashboard/issues/3231)) ([d1e5e41](https://github.com/parse-community/parse-dashboard/commit/d1e5e4156f5b0485afe8021e9525565922530d36))
+
 ## [9.0.1-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.4...9.0.1-alpha.5) (2026-02-20)
 
 
