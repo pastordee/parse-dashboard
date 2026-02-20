@@ -82,7 +82,7 @@
     "regenerator-runtime": "0.14.1"
   },
   "devDependencies": {
-    "@actions/core": "2.0.1",
+    "@actions/core": "3.0.0",
     "@babel/core": "7.29.0",
     "@babel/eslint-parser": "7.28.6",
     "@babel/plugin-proposal-decorators": "7.29.0",
@@ -94,7 +94,7 @@
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/commit-analyzer": "13.0.1",
     "@semantic-release/git": "10.0.1",
-    "@semantic-release/github": "12.0.3",
+    "@semantic-release/github": "12.0.6",
     "@semantic-release/npm": "13.1.4",
     "@semantic-release/release-notes-generator": "14.1.0",
     "@types/jest": "30.0.0",
@@ -131,8 +131,8 @@
     "yaml": "2.8.2"
   },
   "scripts": {
-    "ci:check": "node ./ci/ciCheck.js",
-    "ci:checkNodeEngine": "node ./ci/nodeEngineCheck.js",
+    "ci:check": "node ./ci/ciCheck.mjs",
+    "ci:checkNodeEngine": "node ./ci/nodeEngineCheck.mjs",
     "dev": "node ./Parse-Dashboard/index.js & webpack --config webpack/build.config.js --devtool eval-source-map --progress --watch",
     "dashboard": "node ./Parse-Dashboard/index.js & webpack --config webpack/build.config.js --progress --watch",
     "pig": "http-server ./PIG -p 4041 -s & webpack --config webpack/PIG.config.js --progress --watch",
