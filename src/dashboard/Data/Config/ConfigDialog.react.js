@@ -26,6 +26,7 @@ import semver from 'semver/preload.js';
 import { dateStringUTC } from 'lib/DateUtils';
 import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
 import ServerConfigStorage from 'lib/ServerConfigStorage';
+import ConfigConflictDiff from 'dashboard/Data/Config/ConfigConflictDiff.react';
 import { CurrentApp } from 'context/currentApp';
 
 const FORMATTING_CONFIG_KEY = 'config.formatting.syntax';
@@ -126,6 +127,8 @@ export default class ConfigDialog extends React.Component {
       masterKeyOnly: false,
       selectedIndex: null,
       wordWrap: false,
+      showDiff: false,
+      confirmOverride: false,
       error: null,
       syntaxColors: null,
     };
@@ -142,6 +145,8 @@ export default class ConfigDialog extends React.Component {
         masterKeyOnly: props.masterKeyOnly,
         selectedIndex: 0,
         wordWrap: false,
+        showDiff: false,
+        confirmOverride: false,
         error: initialError,
         syntaxColors: null,
       };
@@ -326,6 +331,7 @@ export default class ConfigDialog extends React.Component {
       type: this.state.type,
       value: GET_VALUE[this.state.type](this.state.value),
       masterKeyOnly: this.state.masterKeyOnly,
+      ...(this.props.conflict && this.state.confirmOverride ? { override: true } : {}),
     });
   }
 
@@ -358,8 +364,16 @@ export default class ConfigDialog extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // Update parameter value or masterKeyOnly if they have changed
-    if (this.props.value !== prevProps.value || this.props.masterKeyOnly !== prevProps.masterKeyOnly) {
+    // When a conflict is detected (or server value changes during conflict),
+    // don't reset the editor value — preserve user edits.
+    // Auto-enable the Diff toggle and reset the override confirmation.
+    if (this.props.conflict && (!prevProps.conflict || this.props.value !== prevProps.value)) {
+      this.setState({ showDiff: true, confirmOverride: false });
+      return;
+    }
+
+    // Update parameter value or masterKeyOnly if they have changed (non-conflict)
+    if (!this.props.conflict && (this.props.value !== prevProps.value || this.props.masterKeyOnly !== prevProps.masterKeyOnly)) {
       let updatedValue = this.props.value;
       let error = null;
 
@@ -449,6 +463,27 @@ export default class ConfigDialog extends React.Component {
             { detectNonPrintable: effectiveDetectNonPrintable, detectNonAlphanumeric: effectiveDetectNonAlphanumeric, detectRegex: effectiveDetectRegex }
           )}
         />
+        {this.state.showDiff && this.props.param.length > 0 && (
+          <Field
+            label={
+              <Label
+                text="Diff"
+                description="Changes compared to the saved version."
+              />
+            }
+            input={
+              <ConfigConflictDiff
+                serverValue={
+                  (this.state.type === 'Object' || this.state.type === 'Array')
+                    ? (() => { try { return JSON.parse(this.props.value); } catch { return this.props.value; } })()
+                    : this.props.value
+                }
+                userValue={this.state.value}
+                type={this.state.type}
+              />
+            }
+          />
+        )}
 
         {
           /*
@@ -500,47 +535,77 @@ export default class ConfigDialog extends React.Component {
     );
 
     const isJsonType = this.state.type === 'Object' || this.state.type === 'Array';
+    const isDiffableType = isJsonType || this.state.type === 'String';
+    const isExistingParam = this.props.param && this.props.param.length > 0;
     const customFooter = (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '17px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {isJsonType && (
-            <>
-              <Button
-                value="Format"
-                onClick={this.formatValue.bind(this)}
-                disabled={!this.canFormatValue()}
-              />
-              <Button
-                value="Compact"
-                onClick={this.compactValue.bind(this)}
-                disabled={!this.canFormatValue()}
-              />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+      <div>
+        {this.props.conflict && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 28px', borderTop: '1px solid #e1e4e8', background: '#ffeef0' }}>
+            <span style={{ color: '#cb2431', fontSize: '13px' }}>
+              Server value changed while editing, see diff view - overwrite it?
+            </span>
+            <Toggle
+              type={Toggle.Types.YES_NO}
+              value={this.state.confirmOverride}
+              onChange={confirmOverride => this.setState({ confirmOverride })}
+              additionalStyles={{ margin: '0px' }}
+            />
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '17px 28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {isJsonType && (
+              <>
+                <Button
+                  value="Format"
+                  onClick={this.formatValue.bind(this)}
+                  disabled={!this.canFormatValue()}
+                />
+                <Button
+                  value="Compact"
+                  onClick={this.compactValue.bind(this)}
+                  disabled={!this.canFormatValue()}
+                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <Toggle
+                    type={Toggle.Types.HIDE_LABELS}
+                    value={this.state.wordWrap}
+                    onChange={wordWrap => this.setState({ wordWrap })}
+                    additionalStyles={{ margin: '0px' }}
+                    colorLeft="#cbcbcb"
+                    colorRight="#00db7c"
+                  />
+                  <span style={{ color: this.state.wordWrap ? '#333' : '#999' }}>Wrap</span>
+                </label>
+                {this.state.error && (
+                  <span style={{ color: '#d73a49', fontSize: '13px' }}>{this.state.error}</span>
+                )}
+              </>
+            )}
+            {isDiffableType && isExistingParam && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                 <Toggle
                   type={Toggle.Types.HIDE_LABELS}
-                  value={this.state.wordWrap}
-                  onChange={wordWrap => this.setState({ wordWrap })}
+                  value={this.state.showDiff}
+                  onChange={showDiff => this.setState({ showDiff })}
                   additionalStyles={{ margin: '0px' }}
                   colorLeft="#cbcbcb"
                   colorRight="#00db7c"
                 />
-                <span style={{ color: this.state.wordWrap ? '#333' : '#999' }}>Wrap</span>
+                <span style={{ color: this.state.showDiff ? '#333' : '#999' }}>Diff</span>
               </label>
-              {this.state.error && (
-                <span style={{ color: '#d73a49', fontSize: '13px' }}>{this.state.error}</span>
-              )}
-            </>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Button value="Cancel" onClick={this.props.onCancel} />
-          <Button
-            primary={true}
-            color="blue"
-            value={newParam ? 'Create' : 'Save'}
-            onClick={this.submit.bind(this)}
-            disabled={!this.valid() || this.props.loading}
-          />
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '12px', marginLeft: '20px' }}>
+            <Button value="Cancel" onClick={this.props.onCancel} />
+            <Button
+              primary={true}
+              color="blue"
+              value={newParam ? 'Create' : 'Save'}
+              onClick={this.submit.bind(this)}
+              disabled={!this.valid() || this.props.loading || (this.props.conflict && !this.state.confirmOverride)}
+            />
+          </div>
         </div>
       </div>
     );
@@ -553,7 +618,7 @@ export default class ConfigDialog extends React.Component {
         iconSize={30}
         subtitle={'Dynamically configure parts of your app'}
         customFooter={customFooter}
-        disabled={!this.valid() || this.props.loading}
+        disabled={!this.valid() || this.props.loading || (this.props.conflict && !this.state.confirmOverride)}
         onCancel={this.props.onCancel}
         onConfirm={this.submit.bind(this)}
       >
