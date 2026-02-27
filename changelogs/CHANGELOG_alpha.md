@@ -1,3 +1,10 @@
+# [9.1.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.7...9.1.0-alpha.1) (2026-02-27)
+
+
+### Features
+
+* Add diff view to Cloud Config parameter dialog for better conflict handling ([#3239](https://github.com/parse-community/parse-dashboard/issues/3239)) ([f007a68](https://github.com/parse-community/parse-dashboard/commit/f007a6836a5477c014b2139600fda03073bde4be))
+
 ## [9.0.1-alpha.7](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.6...9.0.1-alpha.7) (2026-02-20)
 
 
