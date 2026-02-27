@@ -1,3 +1,10 @@
+# [9.1.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.1...9.1.0-alpha.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* Layout issues when resizing Cloud Config parameter dialog ([#3241](https://github.com/parse-community/parse-dashboard/issues/3241)) ([c6e95d9](https://github.com/parse-community/parse-dashboard/commit/c6e95d9e1f3ac8f5e68cd1cc2c70664abc670dd0))
+
 # [9.1.0-alpha.1](https://github.com/parse-community/parse-dashboard/compare/9.0.1-alpha.7...9.1.0-alpha.1) (2026-02-27)
 
 
