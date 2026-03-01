@@ -1,3 +1,10 @@
+# [9.1.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.2...9.1.0-alpha.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* Date value cannot be pasted into date field in data browser ([#3243](https://github.com/parse-community/parse-dashboard/issues/3243)) ([e902bea](https://github.com/parse-community/parse-dashboard/commit/e902bea4302d025898dce44aedcc904617f7ee74))
+
 # [9.1.0-alpha.2](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.1...9.1.0-alpha.2) (2026-02-27)
 
 
