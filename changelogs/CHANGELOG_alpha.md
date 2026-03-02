@@ -1,3 +1,10 @@
+# [9.1.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.3...9.1.0-alpha.4) (2026-03-02)
+
+
+### Features
+
+* Add support for data import in data browser ([#3244](https://github.com/parse-community/parse-dashboard/issues/3244)) ([16f60f4](https://github.com/parse-community/parse-dashboard/commit/16f60f45b00ad98d95178efe7601f283c57d0a07))
+
 # [9.1.0-alpha.3](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.2...9.1.0-alpha.3) (2026-03-01)
 
 
