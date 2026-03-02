@@ -1,3 +1,10 @@
+# [9.1.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.5...9.1.0-alpha.6) (2026-03-02)
+
+
+### Bug Fixes
+
+* Column resizing mouse cursor in data browser not visible in Safari browser ([#3246](https://github.com/parse-community/parse-dashboard/issues/3246)) ([e6fb4d7](https://github.com/parse-community/parse-dashboard/commit/e6fb4d7b85452e93368299bcd8f73418eaee5da5))
+
 # [9.1.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.4...9.1.0-alpha.5) (2026-03-02)
 
 
