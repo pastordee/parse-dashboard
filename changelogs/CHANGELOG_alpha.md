@@ -1,3 +1,10 @@
+# [9.1.0-alpha.7](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.6...9.1.0-alpha.7) (2026-03-02)
+
+
+### Features
+
+* Add confirmation dialog when closing Cloud Config edit parameter dialog without saving changes ([#3247](https://github.com/parse-community/parse-dashboard/issues/3247)) ([9ec03e0](https://github.com/parse-community/parse-dashboard/commit/9ec03e09f40c0af2380fa841b902c99119e31ea6))
+
 # [9.1.0-alpha.6](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.5...9.1.0-alpha.6) (2026-03-02)
 
 
