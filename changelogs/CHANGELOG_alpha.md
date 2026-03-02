@@ -1,3 +1,10 @@
+# [9.1.0-alpha.5](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.4...9.1.0-alpha.5) (2026-03-02)
+
+
+### Bug Fixes
+
+* Edit icon does not disappear when hovering out of saved filter name in data browser sidebar ([#3245](https://github.com/parse-community/parse-dashboard/issues/3245)) ([d3dcfce](https://github.com/parse-community/parse-dashboard/commit/d3dcfce23c1ad7876604aa2018d1ba3efe2cf8e6))
+
 # [9.1.0-alpha.4](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.3...9.1.0-alpha.4) (2026-03-02)
 
 
