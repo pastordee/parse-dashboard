@@ -1,3 +1,10 @@
+# [9.1.0-alpha.9](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.8...9.1.0-alpha.9) (2026-03-14)
+
+
+### Bug Fixes
+
+* Security upgrade undici ([#3265](https://github.com/parse-community/parse-dashboard/issues/3265)) ([df23ef8](https://github.com/parse-community/parse-dashboard/commit/df23ef816c146aeeae1dd7269fa64c14f8923778))
+
 # [9.1.0-alpha.8](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.7...9.1.0-alpha.8) (2026-03-06)
 
 
