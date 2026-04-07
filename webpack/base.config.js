@@ -48,7 +48,9 @@ module.exports = {
           {
             loader: 'css-loader',
             options: {
-              modules: true,
+              modules: {
+                namedExport: false,
+              },
               importLoaders: 2,
             },
           },
@@ -76,7 +78,7 @@ module.exports = {
       },
       {
         test: /\.flow$/,
-        use: 'null-loader',
+        type: 'asset/source',
       },
     ],
   },
