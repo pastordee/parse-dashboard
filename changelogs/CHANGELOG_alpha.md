@@ -1,3 +1,10 @@
+# [9.1.0-alpha.12](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.11...9.1.0-alpha.12) (2026-04-07)
+
+
+### Features
+
+* Graph support for nested Object field values ([#3326](https://github.com/parse-community/parse-dashboard/issues/3326)) ([4562381](https://github.com/parse-community/parse-dashboard/commit/456238143523d296b499b5d7c20e42a3b09d44d9))
+
 # [9.1.0-alpha.11](https://github.com/parse-community/parse-dashboard/compare/9.1.0-alpha.10...9.1.0-alpha.11) (2026-03-25)
 
 
