@@ -1,3 +1,10 @@
+## [9.1.1](https://github.com/parse-community/parse-dashboard/compare/9.1.0...9.1.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* Broken CSS styling for components with underscore class names ([#3328](https://github.com/parse-community/parse-dashboard/issues/3328)) ([2048abe](https://github.com/parse-community/parse-dashboard/commit/2048abe1322f27f08497d62f141c2540cf7a4eb6))
+
 # [9.1.0](https://github.com/parse-community/parse-dashboard/compare/9.0.0...9.1.0) (2026-04-07)
 
 
