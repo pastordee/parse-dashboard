@@ -27,6 +27,7 @@ const BrowserToolbar = ({
   perms,
   schema,
   filters,
+  savedFilters,
   selection,
   relation,
   setCurrent,
@@ -43,6 +44,7 @@ const BrowserToolbar = ({
   onCloneSelectedRows,
   onExportSelectedRows,
   onExportSchema,
+  onImport,
   onExport,
   onRemoveColumn,
   onDeleteRows,
@@ -74,7 +76,6 @@ const BrowserToolbar = ({
   logout,
   toggleMasterKeyUsage,
 
-  selectedData,
   allClasses,
   allClassesSchema,
 
@@ -96,6 +97,17 @@ const BrowserToolbar = ({
   toggleBatchNavigate,
   showPanelCheckbox,
   toggleShowPanelCheckbox,
+  autoScrollEnabled,
+  toggleAutoScroll,
+  autoScrollRequireHover,
+  toggleAutoScrollRequireHover,
+  isAutoScrolling,
+  stopAutoScroll,
+  toggleGraphPanel,
+  isGraphPanelVisible,
+  runScriptShortcut,
+  reloadDataTableAfterScript,
+  toggleReloadDataTableAfterScript,
 }) => {
   const selectionLength = Object.keys(selection).length;
   const isPendingEditCloneRows = editCloneRows && editCloneRows.length > 0;
@@ -288,7 +300,6 @@ const BrowserToolbar = ({
       section={relation ? `Relation <${relation.targetClassName}>` : 'Class'}
       subsection={subsection}
       details={details.join(' \u2022 ')}
-      selectedData={selectedData}
       togglePanel={togglePanel}
       isPanelVisible={isPanelVisible}
       addPanel={addPanel}
@@ -297,6 +308,8 @@ const BrowserToolbar = ({
       classwiseCloudFunctions={classwiseCloudFunctions}
       appId={appId}
       appName={appName}
+      isAutoScrolling={isAutoScrolling}
+      stopAutoScroll={stopAutoScroll}
     >
       {onAddRow && (
         <a className={classes.join(' ')} onClick={onClick}>
@@ -366,7 +379,7 @@ const BrowserToolbar = ({
       {onAddRow && <div className={styles.toolbarSeparator} />}
       {onAddRow && (
         <BrowserMenu
-          title="Export"
+          title="Data"
           icon="down-solid"
           disabled={isUnique || isPendingEditCloneRows}
           setCurrent={setCurrent}
@@ -378,30 +391,17 @@ const BrowserToolbar = ({
           />
           <MenuItem text={'Export all rows'} onClick={() => onExportSelectedRows({ '*': true })} />
           <MenuItem text={'Export schema'} onClick={() => onExportSchema()} />
+          {!relation && (
+            <>
+              <Separator />
+              <MenuItem text={'Import'} onClick={() => onImport()} />
+            </>
+          )}
         </BrowserMenu>
       )}
       {onAddRow && <div className={styles.toolbarSeparator} />}
       <BrowserMenu setCurrent={setCurrent} title="Settings" icon="gear-solid">
         <BrowserMenu title="Info Panel" setCurrent={setCurrent}>
-          <MenuItem
-            text={
-              <span>
-                {scrollToTop && (
-                  <Icon
-                    name="check"
-                    width={12}
-                    height={12}
-                    fill="#ffffffff"
-                    className="menuCheck"
-                  />
-                )}
-                Scroll to top
-              </span>
-            }
-            onClick={() => {
-              toggleScrollToTop();
-            }}
-          />
           <MenuItem
             text={
               <span>
@@ -419,25 +419,6 @@ const BrowserToolbar = ({
             }
             onClick={() => {
               toggleAutoLoadFirstRow();
-            }}
-          />
-          <MenuItem
-            text={
-              <span>
-                {syncPanelScroll && (
-                  <Icon
-                    name="check"
-                    width={12}
-                    height={12}
-                    fill="#ffffffff"
-                    className="menuCheck"
-                  />
-                )}
-                Sync panel scrolling
-              </span>
-            }
-            onClick={() => {
-              toggleSyncPanelScroll();
             }}
           />
           <MenuItem
@@ -478,7 +459,107 @@ const BrowserToolbar = ({
               toggleShowPanelCheckbox();
             }}
           />
+          <Separator />
+          <MenuItem
+            text={
+              <span>
+                {scrollToTop && (
+                  <Icon
+                    name="check"
+                    width={12}
+                    height={12}
+                    fill="#ffffffff"
+                    className="menuCheck"
+                  />
+                )}
+                Scroll to top
+              </span>
+            }
+            onClick={() => {
+              toggleScrollToTop();
+            }}
+          />
+          <MenuItem
+            text={
+              <span>
+                {syncPanelScroll && (
+                  <Icon
+                    name="check"
+                    width={12}
+                    height={12}
+                    fill="#ffffffff"
+                    className="menuCheck"
+                  />
+                )}
+                Sync panel scrolling
+              </span>
+            }
+            onClick={() => {
+              toggleSyncPanelScroll();
+            }}
+          />
+          <BrowserMenu title="Auto-scroll" setCurrent={setCurrent}>
+            <MenuItem
+              text={
+                <span>
+                  {autoScrollEnabled && (
+                    <Icon
+                      name="check"
+                      width={12}
+                      height={12}
+                      fill="#ffffffff"
+                      className="menuCheck"
+                    />
+                  )}
+                  Enabled
+                </span>
+              }
+              onClick={() => {
+                toggleAutoScroll();
+              }}
+            />
+            <MenuItem
+              text={
+                <span>
+                  {autoScrollRequireHover && (
+                    <Icon
+                      name="check"
+                      width={12}
+                      height={12}
+                      fill="#ffffffff"
+                      className="menuCheck"
+                    />
+                  )}
+                  Require hover
+                </span>
+              }
+              onClick={() => {
+                toggleAutoScrollRequireHover();
+              }}
+            />
+          </BrowserMenu>
         </BrowserMenu>
+      </BrowserMenu>
+      <div className={styles.toolbarSeparator} />
+      <BrowserMenu setCurrent={setCurrent} title="Graph" icon="analytics-solid">
+        <MenuItem
+          text={
+            <span>
+              {isGraphPanelVisible && (
+                <Icon
+                  name="check"
+                  width={12}
+                  height={12}
+                  fill="#ffffffff"
+                  className="menuCheck"
+                />
+              )}
+              Show Graph Panel
+            </span>
+          }
+          onClick={toggleGraphPanel}
+          disableMouseDown={true}
+        />
       </BrowserMenu>
       <div className={styles.toolbarSeparator} />
       <a className={classes.join(' ')} onClick={isPendingEditCloneRows ? null : onRefresh}>
@@ -490,6 +571,7 @@ const BrowserToolbar = ({
         setCurrent={setCurrent}
         schema={schemaSimplifiedData}
         filters={filters}
+        savedFilters={savedFilters}
         onChange={onFilterChange}
         onSaveFilter={onFilterSave}
         onDeleteFilter={onDeleteFilter}
@@ -551,6 +633,26 @@ const BrowserToolbar = ({
               : `Run script on ${selectionLength} selected rows...`
           }
           onClick={() => onExecuteScriptRows(selection)}
+          shortcut={runScriptShortcut}
+        />
+        <Separator />
+        <MenuItem
+          disableMouseDown={true}
+          text={
+            <span>
+              {reloadDataTableAfterScript && (
+                <Icon
+                  name="check"
+                  width={12}
+                  height={12}
+                  fill="#ffffffff"
+                  className="menuCheck"
+                />
+              )}
+              Reload all rows after run
+            </span>
+          }
+          onClick={() => toggleReloadDataTableAfterScript()}
         />
       </BrowserMenu>
       <div className={styles.toolbarSeparator} />

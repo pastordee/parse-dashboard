@@ -20,12 +20,22 @@ import DeleteRowsDialog from 'dashboard/Data/Browser/DeleteRowsDialog.react';
 import DropClassDialog from 'dashboard/Data/Browser/DropClassDialog.react';
 import EditRowDialog from 'dashboard/Data/Browser/EditRowDialog.react';
 import ExecuteScriptRowsDialog from 'dashboard/Data/Browser/ExecuteScriptRowsDialog.react';
+import ScriptResponseModal from 'dashboard/Data/Browser/ScriptResponseModal.react';
 import ExportDialog from 'dashboard/Data/Browser/ExportDialog.react';
 import ExportSchemaDialog from 'dashboard/Data/Browser/ExportSchemaDialog.react';
 import ExportSelectedRowsDialog from 'dashboard/Data/Browser/ExportSelectedRowsDialog.react';
+import ImportDataDialog from 'dashboard/Data/Browser/ImportDataDialog.react';
+import {
+  parseImportJSON,
+  parseImportCSV,
+  buildBatchRequests,
+  sendBatchImport,
+  checkDuplicates,
+} from 'lib/importData';
 import Notification from 'dashboard/Data/Browser/Notification.react';
 import PointerKeyDialog from 'dashboard/Data/Browser/PointerKeyDialog.react';
 import RemoveColumnDialog from 'dashboard/Data/Browser/RemoveColumnDialog.react';
+import AddArrayEntryDialog from 'dashboard/Data/Config/AddArrayEntryDialog.react';
 import { List, Map } from 'immutable';
 import { get } from 'lib/AJAX';
 import * as ClassPreferences from 'lib/ClassPreferences';
@@ -35,9 +45,14 @@ import generatePath from 'lib/generatePath';
 import prettyNumber from 'lib/prettyNumber';
 import queryFromFilters from 'lib/queryFromFilters';
 import { ActionTypes } from 'lib/stores/SchemaStore';
+import { ActionTypes as ConfigActionTypes } from 'lib/stores/ConfigStore';
+import { getStore } from 'lib/stores/StoreManager';
 import stringCompare from 'lib/stringCompare';
 import subscribeTo from 'lib/subscribeTo';
 import { withRouter } from 'lib/withRouter';
+import FilterPreferencesManager from 'lib/FilterPreferencesManager';
+import { prefersServerStorage } from 'lib/StoragePreferences';
+import { isFormResponse, executeScriptCallback } from 'lib/ScriptUtils';
 import Parse from 'parse';
 import React from 'react';
 import { Helmet } from 'react-helmet';
@@ -45,6 +60,7 @@ import { useBeforeUnload } from 'react-router-dom';
 import BrowserFooter from './BrowserFooter.react';
 
 const SELECTED_ROWS_MESSAGE = 'There are selected rows. Are you sure you want to leave this page?';
+const EMPTY_FILTERS_ARRAY = [];
 
 function SelectedRowsNavigationPrompt({ when }) {
   const message = SELECTED_ROWS_MESSAGE;
@@ -129,6 +145,7 @@ class Browser extends DashboardView {
     this.subsection = 'Browser';
     this.noteTimeout = null;
     this.currentQuery = null;
+    this.filterPreferencesManager = null;
     const limit = window.localStorage?.getItem('browserLimit');
 
     this.state = {
@@ -143,6 +160,7 @@ class Browser extends DashboardView {
       showPointerKeyDialog: false,
       rowsToDelete: null,
       rowsToExport: null,
+      showImportDialog: false,
 
       relation: null,
       counts: {},
@@ -178,6 +196,8 @@ class Browser extends DashboardView {
 
       processedScripts: 0,
 
+      reloadDataTableAfterScript: window.localStorage?.getItem('reloadDataTableAfterScript') === 'true',
+
       rowCheckboxDragging: false,
       draggedRowSelection: false,
 
@@ -188,7 +208,21 @@ class Browser extends DashboardView {
       AggregationPanelData: {},
       isLoadingInfoPanel: false,
       errorAggregatedData: {},
+      classFilters: {}, // Map of className -> filters array
+      selectedCellsCount: 0,
+      selectedData: [],
+
+      scriptResponseModal: null,
+
+      // Cloud Config array params for context menu
+      arrayConfigParams: [],
+      showAddToConfigDialog: false,
+      addToConfigParam: '',
+      addToConfigLastType: null,
+      addToConfigPrefillValue: '',
     };
+
+    this._isMounted = false;
 
     this.addLocation = this.addLocation.bind(this);
     this.allClassesSchema = this.getAllClassesSchema.bind(this);
@@ -199,6 +233,7 @@ class Browser extends DashboardView {
     this.fetchRelationCount = this.fetchRelationCount.bind(this);
     this.fetchNextPage = this.fetchNextPage.bind(this);
     this.updateFilters = this.updateFilters.bind(this);
+    this.updateURL = this.updateURL.bind(this);
     this.showRemoveColumn = this.showRemoveColumn.bind(this);
     this.showDeleteRows = this.showDeleteRows.bind(this);
     this.showDropClass = this.showDropClass.bind(this);
@@ -215,6 +250,11 @@ class Browser extends DashboardView {
     this.showExecuteScriptRowsDialog = this.showExecuteScriptRowsDialog.bind(this);
     this.confirmExecuteScriptRows = this.confirmExecuteScriptRows.bind(this);
     this.cancelExecuteScriptRowsDialog = this.cancelExecuteScriptRowsDialog.bind(this);
+    this.handleScriptModalResponse = this.handleScriptModalResponse.bind(this);
+    this.cancelScriptResponseModal = this.cancelScriptResponseModal.bind(this);
+    this.confirmScriptResponseModal = this.confirmScriptResponseModal.bind(this);
+    this.refreshObjects = this.refreshObjects.bind(this);
+    this.toggleReloadDataTableAfterScript = this.toggleReloadDataTableAfterScript.bind(this);
     this.confirmAttachSelectedRows = this.confirmAttachSelectedRows.bind(this);
     this.cancelAttachSelectedRows = this.cancelAttachSelectedRows.bind(this);
     this.showCloneSelectedRowsDialog = this.showCloneSelectedRowsDialog.bind(this);
@@ -224,6 +264,9 @@ class Browser extends DashboardView {
     this.showExportSchemaDialog = this.showExportSchemaDialog.bind(this);
     this.confirmExportSelectedRows = this.confirmExportSelectedRows.bind(this);
     this.cancelExportSelectedRows = this.cancelExportSelectedRows.bind(this);
+    this.showImportDialog = this.showImportDialog.bind(this);
+    this.confirmImport = this.confirmImport.bind(this);
+    this.cancelImportDialog = this.cancelImportDialog.bind(this);
     this.getClassRelationColumns = this.getClassRelationColumns.bind(this);
     this.showCreateClass = this.showCreateClass.bind(this);
     this.refresh = this.refresh.bind(this);
@@ -264,9 +307,15 @@ class Browser extends DashboardView {
     this.classAndCloudFuntionMap = this.classAndCloudFuntionMap.bind(this);
     this.fetchAggregationPanelData = this.fetchAggregationPanelData.bind(this);
     this.setAggregationPanelData = this.setAggregationPanelData.bind(this);
+    this.handleCellSelectionChange = this.handleCellSelectionChange.bind(this);
+    this.fetchArrayConfigParams = this.fetchArrayConfigParams.bind(this);
+    this.handleAddToArrayConfig = this.handleAddToArrayConfig.bind(this);
+    this.handleConfirmAddToConfig = this.handleConfirmAddToConfig.bind(this);
 
-    // Handle for the ongoing info panel cloud function request
-    this.currentInfoPanelQuery = null;
+    // Map of objectId -> promise for ongoing info panel cloud function requests
+    this.infoPanelQueries = {};
+
+    this.importDialogRef = null;
 
     this.dataBrowserRef = React.createRef();
 
@@ -292,22 +341,74 @@ class Browser extends DashboardView {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     this.addLocation(this.props.params.appId);
     window.addEventListener('mouseup', this.onMouseUpRowCheckBox);
     get('/parse-dashboard-config.json').then(data => {
       this.setState({ configData: data });
       this.classAndCloudFuntionMap(this.state.configData);
     });
+
+    // Fetch Cloud Config array params for context menu
+    this.fetchArrayConfigParams();
+
+    // Initialize FilterPreferencesManager
+    if (this.context) {
+      this.filterPreferencesManager = new FilterPreferencesManager(this.context);
+      // Load all class filters if schema is already available
+      if (this.props.schema?.data?.get('classes')) {
+        this.loadAllClassFilters();
+      }
+    }
+  }
+
+  async loadAllClassFilters(propsToUse) {
+    if (!this.filterPreferencesManager) {
+      return;
+    }
+
+    // Use provided props or fall back to this.props
+    const props = propsToUse || this.props;
+    const schema = props.schema;
+    if (!schema || !schema.data) {
+      return;
+    }
+
+    const classFilters = {};
+
+    // Load filters for all classes
+    const classList = schema.data.get('classes');
+    if (classList) {
+      const classNames = Object.keys(classList.toObject());
+      await Promise.all(
+        classNames.map(async (className) => {
+          try {
+            const filters = await this.filterPreferencesManager.getFilters(
+              this.context.applicationId,
+              className
+            );
+            classFilters[className] = filters || [];
+          } catch (error) {
+            console.error(`Failed to load filters for class ${className}:`, error);
+            classFilters[className] = [];
+          }
+        })
+      );
+    }
+
+    // Check if component is still mounted before updating state
+    if (this._isMounted) {
+      this.setState({ classFilters });
+    }
   }
 
   componentWillUnmount() {
+    this._isMounted = false;
     if (this.currentQuery) {
       this.currentQuery.cancel();
     }
-    if (this.currentInfoPanelQuery) {
-      this.currentInfoPanelQuery.cancel?.();
-      this.currentInfoPanelQuery = null;
-    }
+    Object.values(this.infoPanelQueries).forEach(q => q.cancel?.());
+    this.infoPanelQueries = {};
     this.removeLocation();
     window.removeEventListener('mouseup', this.onMouseUpRowCheckBox);
   }
@@ -340,6 +441,20 @@ class Browser extends DashboardView {
       );
       this.redirectToFirstClass(nextProps.schema.data.get('classes'), nextContext);
     }
+
+    // Load filters when schema becomes available or changes
+    if (
+      nextProps.schema?.data?.get('classes') &&
+      (!this.props.schema?.data?.get('classes') ||
+        this.props.params.appId !== nextProps.params.appId)
+    ) {
+      this.loadAllClassFilters(nextProps);
+    }
+
+    // Refresh Cloud Config array params when app changes
+    if (this.props.params.appId !== nextProps.params.appId) {
+      this.fetchArrayConfigParams();
+    }
   }
 
   setLoadingInfoPanel(bool) {
@@ -355,9 +470,10 @@ class Browser extends DashboardView {
   }
 
   fetchAggregationPanelData(objectId, className, appId) {
-    if (this.currentInfoPanelQuery) {
-      this.currentInfoPanelQuery.cancel?.();
-      this.currentInfoPanelQuery = null;
+    // Cancel any existing request for this specific objectId
+    if (this.infoPanelQueries[objectId]) {
+      this.infoPanelQueries[objectId].cancel?.();
+      delete this.infoPanelQueries[objectId];
     }
 
     this.setState({
@@ -380,14 +496,14 @@ class Browser extends DashboardView {
 
     const promise = Parse.Cloud.run(cloudCodeFunction, params, options);
     promise.cancel = () => requestTask?.abort();
-    this.currentInfoPanelQuery = promise;
+    this.infoPanelQueries[objectId] = promise;
     promise.then(
       result => {
-        if (this.currentInfoPanelQuery !== promise) {
+        if (this.infoPanelQueries[objectId] !== promise) {
           return;
         }
         if (result && result.panel && result.panel && result.panel.segments) {
-          this.setState({ AggregationPanelData: result, isLoadingInfoPanel: false });
+          this.setState({ AggregationPanelData: result, isLoadingInfoPanel: false, lastFetchedObjectId: objectId });
         } else {
           this.setState({
             isLoadingInfoPanel: false,
@@ -397,7 +513,7 @@ class Browser extends DashboardView {
         }
       },
       error => {
-        if (this.currentInfoPanelQuery !== promise) {
+        if (this.infoPanelQueries[objectId] !== promise) {
           return;
         }
         this.setState({
@@ -407,8 +523,8 @@ class Browser extends DashboardView {
         this.showNote(this.state.errorAggregatedData, true);
       }
     ).finally(() => {
-      if (this.currentInfoPanelQuery === promise) {
-        this.currentInfoPanelQuery = null;
+      if (this.infoPanelQueries[objectId] === promise) {
+        delete this.infoPanelQueries[objectId];
       }
     });
   }
@@ -416,6 +532,11 @@ class Browser extends DashboardView {
   setAggregationPanelData(data) {
     this.setState({ AggregationPanelData: data });
   }
+
+  handleCellSelectionChange(selectedCellsCount, selectedData) {
+    this.setState({ selectedCellsCount, selectedData });
+  }
+
   addLocation(appId) {
     if (window.localStorage) {
       const currentSearch = this.props.location?.search;
@@ -490,6 +611,7 @@ class Browser extends DashboardView {
 
   async prefetchData(props, context) {
     const filters = this.extractFiltersFromQuery(props);
+    const pagination = this.extractPaginationFromQuery(props);
     const { className, entityId, relationName } = props.params;
     const isRelationRoute = entityId && relationName;
 
@@ -504,6 +626,11 @@ class Browser extends DashboardView {
       const parent = await parentObjectQuery.get(entityId, { useMasterKey });
       relation = parent.relation(relationName);
     }
+
+    // Use pagination from URL if available, otherwise keep current state or use defaults
+    const skip = pagination.skip;
+    const limit = pagination.limit !== null ? pagination.limit : this.state.limit;
+
     this.setState(
       {
         data: isEditFilterMode ? [] : null, // Set empty array in edit mode to avoid loading
@@ -512,6 +639,8 @@ class Browser extends DashboardView {
         ordering: ColumnPreferences.getColumnSort(false, context.applicationId, className),
         selection: {},
         relation: isRelationRoute ? relation : null,
+        skip,
+        limit,
       },
       () => {
         // Only fetch data if not in edit filter mode
@@ -565,6 +694,66 @@ class Browser extends DashboardView {
       );
     }
     return filters;
+  }
+
+  extractPaginationFromQuery(props) {
+    const pagination = { skip: 0, limit: null };
+    if (!props || !props.location || !props.location.search) {
+      return pagination;
+    }
+    const query = new URLSearchParams(props.location.search);
+    if (query.has('skip')) {
+      const skip = parseInt(query.get('skip'), 10);
+      if (!isNaN(skip) && skip >= 0) {
+        pagination.skip = skip;
+      }
+    }
+    if (query.has('limit')) {
+      const limit = parseInt(query.get('limit'), 10);
+      if (!isNaN(limit) && limit > 0) {
+        pagination.limit = limit;
+      }
+    }
+    return pagination;
+  }
+
+  updateURL(newSkip = null, newLimit = null) {
+    const source = this.props.params.className;
+    if (!source || this.state.relation) {
+      return; // Don't update URL for relations
+    }
+
+    const skip = newSkip !== null ? newSkip : this.state.skip;
+    const limit = newLimit !== null ? newLimit : this.state.limit;
+
+    // Build query parameters preserving existing ones
+    const currentUrlParams = new URLSearchParams(window.location.search);
+    const queryParams = new URLSearchParams();
+
+    // Preserve filters and filterId
+    if (currentUrlParams.has('filters')) {
+      queryParams.set('filters', currentUrlParams.get('filters'));
+    }
+    if (currentUrlParams.has('filterId')) {
+      queryParams.set('filterId', currentUrlParams.get('filterId'));
+    }
+    if (currentUrlParams.has('editFilter')) {
+      queryParams.set('editFilter', currentUrlParams.get('editFilter'));
+    }
+
+    // Add pagination parameters (only if non-default)
+    if (skip > 0) {
+      queryParams.set('skip', skip.toString());
+    }
+    if (limit !== 100) { // Only include limit if it's not the default
+      queryParams.set('limit', limit.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `browser/${source}?${queryString}` : `browser/${source}`;
+
+    // Push new history entry instead of replacing to enable browser back button
+    this.props.navigate(generatePath(this.context, url));
   }
 
   redirectToFirstClass(classList, context) {
@@ -1065,6 +1254,34 @@ class Browser extends DashboardView {
     return true;
   }
 
+  async refreshObjects(objectIds) {
+    const { useMasterKey } = this.state;
+    const className = this.props.params.className;
+    const query = new Parse.Query(className);
+    query.containedIn('objectId', objectIds);
+    this.excludeFields(query, className);
+    try {
+      const freshObjects = await query.find({ useMasterKey });
+      const freshMap = {};
+      freshObjects.forEach(obj => {
+        freshMap[obj.id] = obj;
+      });
+      this.setState(prevState => ({
+        data: prevState.data.map(obj => freshMap[obj.id] || obj),
+      }));
+    } catch (e) {
+      this.showNote(e.message, true);
+    }
+  }
+
+  toggleReloadDataTableAfterScript() {
+    this.setState(prevState => {
+      const newValue = !prevState.reloadDataTableAfterScript;
+      window.localStorage?.setItem('reloadDataTableAfterScript', newValue);
+      return { reloadDataTableAfterScript: newValue };
+    });
+  }
+
   async fetchParseData(source, filters) {
     if (this.currentQuery) {
       this.currentQuery.cancel();
@@ -1268,33 +1485,32 @@ class Browser extends DashboardView {
       const currentUrlParams = new URLSearchParams(window.location.search);
       const currentFilterId = currentUrlParams.get('filterId');
 
-      let url = `browser/${source}`;
-      if (filters.size === 0) {
-        // If no filters, don't include any query parameters
-        url = `browser/${source}`;
-      } else {
-        // Build query parameters
-        const queryParams = new URLSearchParams();
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+
+      if (filters.size > 0) {
         queryParams.set('filters', _filters);
-
-        // Preserve filterId if it exists in current URL
-        if (currentFilterId) {
-          queryParams.set('filterId', currentFilterId);
-        }
-
-        url = `browser/${source}?${queryParams.toString()}`;
       }
+
+      // Preserve filterId if it exists in current URL
+      if (currentFilterId) {
+        queryParams.set('filterId', currentFilterId);
+      }
+
+      // Preserve pagination if not default (skip is reset to 0 when filters change)
+      if (this.state.limit !== 100) {
+        queryParams.set('limit', this.state.limit.toString());
+      }
+
+      const queryString = queryParams.toString();
+      const url = queryString ? `browser/${source}?${queryString}` : `browser/${source}`;
 
       // filters param change is making the fetch call
       this.props.navigate(generatePath(this.context, url));
     }
-
-    this.setState({
-      skip: 0,
-    });
   }
 
-  saveFilters(filters, name, relativeDate, filterId = null) {
+  async saveFilters(filters, name, relativeDate, filterId = null) {
     const jsonFilters = filters.toJSON();
     if (relativeDate && jsonFilters?.length) {
       for (let i = 0; i < jsonFilters.length; i++) {
@@ -1314,10 +1530,26 @@ class Browser extends DashboardView {
     }
 
     const _filters = JSON.stringify(jsonFilters);
+    const className = this.props.params.className;
+
+    // Use server-loaded filters from state if available, otherwise fallback to local storage
+    const existingFilters = this.state.classFilters[className] || [];
+
     const preferences = ClassPreferences.getPreferences(
       this.context.applicationId,
-      this.props.params.className
+      className
     );
+
+    // Initialize preferences.filters from state if needed
+    if (!preferences.filters) {
+      preferences.filters = [];
+    }
+
+    // Merge server filters into preferences for the update logic
+    // Use server filters as source of truth
+    const serverFilterIds = new Set(existingFilters.filter(f => f.id).map(f => f.id));
+    const localOnlyFilters = preferences.filters.filter(f => !f.id || !serverFilterIds.has(f.id));
+    preferences.filters = [...existingFilters, ...localOnlyFilters];
 
     let newFilterId = filterId;
 
@@ -1364,15 +1596,16 @@ class Browser extends DashboardView {
         });
       }
     } else {
-      // Check if this is updating a legacy filter (no filterId but filter content matches existing filter without ID)
-      const existingLegacyFilterIndex = preferences.filters.findIndex(filter =>
-        !filter.id && filter.name === name && filter.filter === _filters
+      // Check if this is updating an existing filter by name and content match
+      // (legacy filters get auto-assigned UUIDs when read, so we match by content)
+      const existingFilterIndex = preferences.filters.findIndex(filter =>
+        filter.name === name && filter.filter === _filters
       );
 
-      if (existingLegacyFilterIndex !== -1) {
-        // Convert legacy filter to modern filter by adding an ID
-        newFilterId = crypto.randomUUID();
-        preferences.filters[existingLegacyFilterIndex] = {
+      if (existingFilterIndex !== -1) {
+        // Update existing filter, keeping its ID
+        newFilterId = preferences.filters[existingFilterIndex].id;
+        preferences.filters[existingFilterIndex] = {
           name,
           id: newFilterId,
           filter: _filters,
@@ -1388,11 +1621,31 @@ class Browser extends DashboardView {
       }
     }
 
-    ClassPreferences.updatePreferences(
-      preferences,
-      this.context.applicationId,
-      this.props.params.className
-    );
+    // Use FilterPreferencesManager if available, otherwise fallback to local storage
+    if (this.filterPreferencesManager) {
+      const filterToSave = {
+        id: newFilterId,
+        name,
+        className: this.props.params.className,
+        filter: _filters,
+      };
+      await this.filterPreferencesManager.saveFilter(
+        this.context.applicationId,
+        this.props.params.className,
+        filterToSave,
+        preferences.filters
+      );
+    } else {
+      // Fallback to local storage
+      ClassPreferences.updatePreferences(
+        preferences,
+        this.context.applicationId,
+        this.props.params.className
+      );
+    }
+
+    // Reload filters for this class to update the sidebar
+    await this.reloadClassFilters(this.props.params.className);
 
     super.forceUpdate();
 
@@ -1400,7 +1653,28 @@ class Browser extends DashboardView {
     return newFilterId;
   }
 
-  deleteFilter(filterIdOrObject) {
+  async reloadClassFilters(className) {
+    if (!this.filterPreferencesManager) {
+      return;
+    }
+
+    try {
+      const filters = await this.filterPreferencesManager.getFilters(
+        this.context.applicationId,
+        className
+      );
+      this.setState(prevState => ({
+        classFilters: {
+          ...prevState.classFilters,
+          [className]: filters || []
+        }
+      }));
+    } catch (error) {
+      console.error(`Failed to reload filters for class ${className}:`, error);
+    }
+  }
+
+  async deleteFilter(filterIdOrObject) {
     const preferences = ClassPreferences.getPreferences(
       this.context.applicationId,
       this.props.params.className
@@ -1425,12 +1699,26 @@ class Browser extends DashboardView {
         }
       }
 
-      ClassPreferences.updatePreferences(
-        { ...preferences, filters: updatedFilters },
-        this.context.applicationId,
-        this.props.params.className
-      );
+      // Use FilterPreferencesManager if available, otherwise fallback to local storage
+      if (this.filterPreferencesManager) {
+        await this.filterPreferencesManager.deleteFilter(
+          this.context.applicationId,
+          this.props.params.className,
+          filterIdOrObject,
+          updatedFilters
+        );
+      } else {
+        // Fallback to local storage
+        ClassPreferences.updatePreferences(
+          { ...preferences, filters: updatedFilters },
+          this.context.applicationId,
+          this.props.params.className
+        );
+      }
     }
+
+    // Reload filters for this class to update the sidebar
+    await this.reloadClassFilters(this.props.params.className);
 
     super.forceUpdate();
   }
@@ -1796,7 +2084,9 @@ class Browser extends DashboardView {
       this.state.showCloneSelectedRowsDialog ||
       this.state.showEditRowDialog ||
       this.state.showPermissionsDialog ||
-      this.state.showExportSelectedRowsDialog
+      this.state.showExportSelectedRowsDialog ||
+      this.state.showImportDialog ||
+      this.state.showAddToConfigDialog
     );
   }
 
@@ -1893,6 +2183,38 @@ class Browser extends DashboardView {
     });
   }
 
+  handleScriptModalResponse({ response, script, className, objectIds }) {
+    this.setState({
+      showExecuteScriptRowsDialog: false,
+      scriptResponseModal: {
+        form: response.form,
+        payload: response.payload,
+        script,
+        className,
+        objectIds,
+      },
+    });
+  }
+
+  cancelScriptResponseModal() {
+    this.setState({ scriptResponseModal: null });
+  }
+
+  confirmScriptResponseModal(formData) {
+    const { form, payload, script, className, objectIds } = this.state.scriptResponseModal;
+    this.setState({ scriptResponseModal: null, selection: {} });
+    executeScriptCallback(
+      form.cloudCodeFunction || script.cloudCodeFunction,
+      className,
+      objectIds,
+      payload,
+      formData,
+      this.showNote,
+      this.state.reloadDataTableAfterScript ? this.refresh : null,
+      this.state.reloadDataTableAfterScript ? null : (ids) => this.dataBrowserRef.current?.handleRefreshObjects(ids)
+    );
+  }
+
   async confirmExecuteScriptRows(script) {
     const batchSize = script.executionBatchSize || 1;
     try {
@@ -1900,13 +2222,64 @@ class Browser extends DashboardView {
         Parse.Object.extend(this.props.params.className).createWithoutData(key)
       );
 
-      let totalErrorCount = 0;
-      let batchCount = 0;
-      const totalBatchCount = Math.ceil(objects.length / batchSize);
+      // Probe first object for modal response
+      const probeResponse = await Parse.Cloud.run(
+        script.cloudCodeFunction,
+        { object: objects[0].toPointer() },
+        { useMasterKey: true }
+      ).catch(error => ({ __probeError: error }));
 
-      for (let i = 0; i < objects.length; i += batchSize) {
+      if (isFormResponse(probeResponse)) {
+        this.handleScriptModalResponse({
+          response: probeResponse,
+          script,
+          className: this.props.params.className,
+          objectIds: objects.map(o => o.id),
+        });
+        return;
+      }
+
+      // Handle probe result for first object
+      this.setState(prevState => ({
+        processedScripts: prevState.processedScripts + 1,
+      }));
+
+      if (probeResponse?.__probeError) {
+        const error = probeResponse.__probeError;
+        const errorMessage = `Error running script "${script.title}" on "${objects[0].id}": ${error.message}`;
+        this.showNote(errorMessage, true);
+      } else {
+        const note =
+          (typeof probeResponse === 'object' ? JSON.stringify(probeResponse) : probeResponse) ||
+          `Ran script "${script.title}" on "${objects[0].id}".`;
+        this.showNote(note);
+      }
+
+      // Continue with remaining objects
+      const remainingObjects = objects.slice(1);
+      if (remainingObjects.length === 0) {
+        const objectIds = objects.map(obj => obj.id);
+        if (this.state.reloadDataTableAfterScript) {
+          this.setState(
+            { selection: {}, showExecuteScriptRowsDialog: false },
+            () => this.refresh()
+          );
+        } else {
+          this.setState(
+            { selection: {}, showExecuteScriptRowsDialog: false },
+            () => this.dataBrowserRef.current?.handleRefreshObjects(objectIds)
+          );
+        }
+        return;
+      }
+
+      let totalErrorCount = probeResponse?.__probeError ? 1 : 0;
+      let batchCount = 0;
+      const totalBatchCount = Math.ceil(remainingObjects.length / batchSize) + 1;
+
+      for (let i = 0; i < remainingObjects.length; i += batchSize) {
         batchCount++;
-        const batch = objects.slice(i, i + batchSize);
+        const batch = remainingObjects.slice(i, i + batchSize);
         const promises = batch.map(object =>
           Parse.Cloud.run(
             script.cloudCodeFunction,
@@ -1948,7 +2321,7 @@ class Browser extends DashboardView {
 
         if (objects.length > 1) {
           this.showNote(
-            `Ran script "${script.title}" on ${batch.length} objects in batch ${batchCount}/${totalBatchCount} with ${batchErrorCount} errors.`,
+            `Ran script "${script.title}" on ${batch.length} objects in batch ${batchCount + 1}/${totalBatchCount} with ${batchErrorCount} errors.`,
             batchErrorCount > 0
           );
         }
@@ -1956,14 +2329,22 @@ class Browser extends DashboardView {
 
       if (objects.length > 1) {
         this.showNote(
-          `Ran script "${script.title}" on ${objects.length} objects in ${batchCount} batches with ${totalErrorCount} errors.`,
+          `Ran script "${script.title}" on ${objects.length} objects in ${batchCount + 1} batches with ${totalErrorCount} errors.`,
           totalErrorCount > 0
         );
       }
-      this.setState(
-        { selection: {}, showExecuteScriptRowsDialog: false },
-        () => this.refresh()
-      );
+      const objectIds = objects.map(obj => obj.id);
+      if (this.state.reloadDataTableAfterScript) {
+        this.setState(
+          { selection: {}, showExecuteScriptRowsDialog: false },
+          () => this.refresh()
+        );
+      } else {
+        this.setState(
+          { selection: {}, showExecuteScriptRowsDialog: false },
+          () => this.dataBrowserRef.current?.handleRefreshObjects(objectIds)
+        );
+      }
     } catch (e) {
       this.showNote(e.message, true);
       console.log(`Could not run ${script.title}: ${e}`);
@@ -2052,6 +2433,149 @@ class Browser extends DashboardView {
     this.setState({
       showExportSchemaDialog: true,
     });
+  }
+
+  showImportDialog() {
+    this.setState({ showImportDialog: true });
+  }
+
+  cancelImportDialog() {
+    this.setState({ showImportDialog: false });
+    this.refresh();
+  }
+
+  async confirmImport(importOptions) {
+    const className = this.props.params.className;
+    const classColumns = this.getClassColumns(className, false);
+    const schema = {};
+    classColumns.forEach(column => {
+      schema[column.name] = column;
+    });
+    const knownColumns = classColumns.map(c => c.name);
+
+    // Parse the file
+    let parseResult;
+    if (importOptions.fileType === '.json') {
+      parseResult = parseImportJSON(importOptions.content);
+    } else {
+      parseResult = parseImportCSV(importOptions.content, schema);
+    }
+
+    if (parseResult.error) {
+      this.showNote(parseResult.error, true);
+      if (this.importDialogRef) {
+        this.importDialogRef.resetForm();
+      }
+      return;
+    }
+
+    // Check for unknown columns if fail mode
+    if (importOptions.unknownColumns === 'fail') {
+      const unknownCols = [];
+      for (const row of parseResult.rows) {
+        for (const key of Object.keys(row)) {
+          if (!knownColumns.includes(key) && !unknownCols.includes(key)) {
+            unknownCols.push(key);
+          }
+        }
+      }
+      if (unknownCols.length > 0) {
+        this.showNote(`Unknown columns found: ${unknownCols.join(', ')}. Import aborted.`, true);
+        if (this.importDialogRef) {
+          this.importDialogRef.resetForm();
+        }
+        return;
+      }
+    }
+
+    try {
+      // Track rows before duplicate filtering for skip count
+      const totalRowsBefore = parseResult.rows.length;
+
+      // Check for duplicates if needed
+      if (importOptions.preserveObjectIds && importOptions.duplicateHandling !== 'overwrite') {
+        const objectIds = parseResult.rows
+          .map(r => r.objectId)
+          .filter(Boolean);
+
+        if (objectIds.length > 0) {
+          const existing = await checkDuplicates(objectIds, className);
+
+          if (importOptions.duplicateHandling === 'fail' && existing.length > 0) {
+            this.showNote(
+              `Duplicate objectIds found: ${existing.slice(0, 5).join(', ')}${existing.length > 5 ? '...' : ''}. Import aborted.`,
+              true
+            );
+            if (this.importDialogRef) {
+              this.importDialogRef.resetForm();
+            }
+            return;
+          }
+
+          if (importOptions.duplicateHandling === 'skip') {
+            const existingSet = new Set(existing);
+            parseResult.rows = parseResult.rows.filter(r => !existingSet.has(r.objectId));
+            if (parseResult.rows.length === 0) {
+              this.showNote('All rows already exist. Nothing to import.', true);
+              if (this.importDialogRef) {
+                this.importDialogRef.resetForm();
+              }
+              return;
+            }
+          }
+        }
+      }
+
+      const skippedCount = totalRowsBefore - parseResult.rows.length;
+
+      // Build batch requests
+      const requests = buildBatchRequests(parseResult.rows, className, {
+        preserveObjectIds: importOptions.preserveObjectIds,
+        preserveTimestamps: importOptions.preserveTimestamps,
+        duplicateHandling: importOptions.duplicateHandling,
+        unknownColumns: importOptions.unknownColumns,
+        knownColumns,
+      });
+
+      // Set dialog to importing state
+      if (this.importDialogRef) {
+        this.importDialogRef.setImporting();
+      }
+
+      // Send batch import
+      const results = await sendBatchImport(requests, {
+        serverURL: this.context.serverURL,
+        applicationId: this.context.applicationId,
+        masterKey: this.context.masterKey,
+        maintenanceKey: importOptions.preserveTimestamps ? this.context.maintenanceKey : undefined,
+        continueOnError: importOptions.continueOnError,
+        onProgress: (progress) => {
+          if (this.importDialogRef) {
+            this.importDialogRef.setProgress(progress);
+          }
+        },
+      });
+
+      // Show results in dialog with skip count included
+      if (this.importDialogRef) {
+        this.importDialogRef.setResults({
+          ...results,
+          skipped: results.skipped + skippedCount,
+        });
+      }
+    } catch (error) {
+      const msg = typeof error === 'string' ? error : error.message;
+      this.showNote(msg || 'Import failed due to a network error.', true);
+      if (this.importDialogRef) {
+        this.importDialogRef.setResults({
+          imported: 0,
+          skipped: 0,
+          failed: 0,
+          errors: [],
+          stopped: true,
+        });
+      }
+    }
   }
 
   cancelExportSelectedRows() {
@@ -2263,13 +2787,24 @@ class Browser extends DashboardView {
     }
     const allCategories = [];
     for (const row of [...special, ...categories]) {
-      const { filters = [] } = ClassPreferences.getPreferences(
-        this.context.applicationId,
-        row.name
-      );
-      // Set filters sorted alphabetically
-      row.filters = filters.sort((a, b) => a.name.localeCompare(b.name));
-      allCategories.push(row);
+      let filters = this.state.classFilters[row.name];
+
+      // Fallback to local storage ONLY if not using server storage and filters not loaded yet
+      if (filters === undefined &&
+          (!this.filterPreferencesManager?.isServerConfigEnabled() ||
+           !prefersServerStorage(this.context.applicationId))) {
+        const prefs = ClassPreferences.getPreferences(this.context.applicationId, row.name);
+        filters = prefs?.filters || [];
+      } else if (filters === undefined) {
+        filters = [];
+      }
+
+      // Set filters sorted alphabetically and create a new row object to trigger re-render
+      const sortedFilters = filters.sort((a, b) => a.name.localeCompare(b.name));
+      allCategories.push({
+        ...row,
+        filters: sortedFilters
+      });
     }
 
     return (
@@ -2326,6 +2861,106 @@ class Browser extends DashboardView {
     this.noteTimeout = setTimeout(() => {
       this.setState({ lastError: null, lastNote: null });
     }, 3500);
+  }
+
+  async fetchArrayConfigParams() {
+    try {
+      const configStore = getStore('Config');
+      await configStore.dispatch(ConfigActionTypes.FETCH, {}, this.context);
+      // Check if component is still mounted before updating state
+      if (!this._isMounted) {
+        return;
+      }
+      const configData = configStore.getData(this.context);
+      if (configData) {
+        const params = configData.get('params');
+        const masterKeyOnly = configData.get('masterKeyOnly');
+        const arrayParams = [];
+        if (params) {
+          params.forEach((value, key) => {
+            if (Array.isArray(value)) {
+              arrayParams.push({
+                name: key,
+                value: value,
+                masterKeyOnly: masterKeyOnly?.get(key) || false,
+              });
+            }
+          });
+        }
+        // Sort alphabetically by name
+        arrayParams.sort((a, b) => a.name.localeCompare(b.name));
+        this.setState({ arrayConfigParams: arrayParams });
+      }
+    } catch (error) {
+      console.error('Failed to fetch config params:', error);
+    }
+  }
+
+  getEntryType(value) {
+    if (Array.isArray(value)) {
+      return 'array';
+    }
+    if (value === null) {
+      return 'null';
+    }
+    return typeof value;
+  }
+
+  handleAddToArrayConfig(param, selectedText) {
+    const { arrayConfigParams } = this.state;
+    const paramData = arrayConfigParams.find(p => p.name === param);
+    let lastType = null;
+    if (paramData && paramData.value.length > 0) {
+      lastType = this.getEntryType(paramData.value[paramData.value.length - 1]);
+    }
+
+    // If the last item in the array is a string, wrap the prefilled text in quotes
+    let prefillValue = selectedText;
+    if (lastType === 'string') {
+      prefillValue = `"${selectedText}"`;
+    }
+
+    this.setState({
+      showAddToConfigDialog: true,
+      addToConfigParam: param,
+      addToConfigLastType: lastType,
+      addToConfigPrefillValue: prefillValue,
+    });
+  }
+
+  async handleConfirmAddToConfig(value) {
+    try {
+      const param = this.state.addToConfigParam;
+      const configStore = getStore('Config');
+      const configData = configStore.getData(this.context);
+      const masterKeyOnlyMap = configData?.get('masterKeyOnly');
+      const masterKeyOnly = masterKeyOnlyMap?.get(param) || false;
+
+      await Parse._request(
+        'PUT',
+        'config',
+        {
+          params: {
+            [param]: { __op: 'AddUnique', objects: [Parse._encode(value)] },
+          },
+          masterKeyOnly: { [param]: masterKeyOnly },
+        },
+        { useMasterKey: true }
+      );
+
+      this.showNote(`Entry added to ${param}`, false);
+      // Refresh config params
+      await this.fetchArrayConfigParams();
+    } catch (error) {
+      this.showNote(`Failed to add entry: ${error.message}`, true);
+    } finally {
+      this.setState({
+        showAddToConfigDialog: false,
+        addToConfigParam: '',
+        addToConfigLastType: null,
+        addToConfigPrefillValue: '',
+      });
+    }
   }
 
   showEditRowDialog(selectRow, objectId) {
@@ -2458,6 +3093,7 @@ class Browser extends DashboardView {
               perms={this.state.clp[className]}
               schema={this.props.schema}
               filters={this.state.filters}
+              savedFilters={this.state.classFilters[className] || EMPTY_FILTERS_ARRAY}
               onFilterChange={this.updateFilters}
               onFilterSave={(...args) => this.saveFilters(...args)}
               onDeleteFilter={this.deleteFilter}
@@ -2467,6 +3103,10 @@ class Browser extends DashboardView {
               onExport={this.showExport}
               onChangeCLP={this.handleCLPChange}
               onRefresh={this.refresh}
+              onRefreshObjects={this.refreshObjects}
+              reloadDataTableAfterScript={this.state.reloadDataTableAfterScript}
+              toggleReloadDataTableAfterScript={this.toggleReloadDataTableAfterScript}
+              onScriptModalResponse={this.handleScriptModalResponse}
               onAttachRows={this.showAttachRowsDialog}
               onAttachSelectedRows={this.showAttachSelectedRowsDialog}
               onExecuteScriptRows={this.showExecuteScriptRowsDialog}
@@ -2475,6 +3115,7 @@ class Browser extends DashboardView {
               onEditPermissions={this.onDialogToggle}
               onExportSelectedRows={this.showExportSelectedRowsDialog}
               onExportSchema={this.showExportSchemaDialog}
+              onImport={this.showImportDialog}
               onSaveNewRow={this.saveNewRow}
               onShowPointerKey={this.showPointerKeyDialog}
               onAbortAddRow={this.abortAddRow}
@@ -2521,26 +3162,34 @@ class Browser extends DashboardView {
               setLoadingInfoPanel={this.setLoadingInfoPanel}
               AggregationPanelData={this.state.AggregationPanelData}
               setAggregationPanelData={this.setAggregationPanelData}
+              lastFetchedObjectId={this.state.lastFetchedObjectId}
               setErrorAggregatedData={this.setErrorAggregatedData}
               errorAggregatedData={this.state.errorAggregatedData}
               appName={this.props.params.appId}
               limit={this.state.limit}
               skip={this.state.skip}
+              onCellSelectionChange={this.handleCellSelectionChange}
+              arrayConfigParams={this.state.arrayConfigParams}
+              onAddToArrayConfig={this.handleAddToArrayConfig}
             />
             <BrowserFooter
               skip={this.state.skip}
               setSkip={skip => {
-                this.setState({ skip });
-                this.updateOrdering(this.state.ordering);
+                this.setState({ skip }, () => {
+                  this.updateURL(skip, null);
+                });
               }}
               count={count}
               limit={this.state.limit}
               setLimit={limit => {
-                this.setState({ limit });
-                this.updateOrdering(this.state.ordering);
+                this.setState({ limit, skip: 0 }, () => {
+                  this.updateURL(0, limit);
+                });
               }}
               hasSelectedRows={Object.keys(this.state.selection).length > 0}
               selectedRowsMessage={SELECTED_ROWS_MESSAGE}
+              selectedCellsCount={this.state.selectedCellsCount}
+              selectedData={this.state.selectedData}
             />
           </>
         );
@@ -2654,6 +3303,15 @@ class Browser extends DashboardView {
           onConfirm={this.confirmAttachSelectedRows}
         />
       );
+    } else if (this.state.scriptResponseModal) {
+      extras = (
+        <ScriptResponseModal
+          form={this.state.scriptResponseModal.form}
+          objectIds={this.state.scriptResponseModal.objectIds}
+          onCancel={this.cancelScriptResponseModal}
+          onConfirm={this.confirmScriptResponseModal}
+        />
+      );
     } else if (this.state.showExecuteScriptRowsDialog) {
       extras = (
         <ExecuteScriptRowsDialog
@@ -2746,6 +3404,33 @@ class Browser extends DashboardView {
           onConfirm={(type, indentation) =>
             this.confirmExportSelectedRows(this.state.rowsToExport, type, indentation)
           }
+        />
+      );
+    } else if (this.state.showImportDialog) {
+      extras = (
+        <ImportDataDialog
+          ref={(ref) => { this.importDialogRef = ref; }}
+          className={className}
+          maintenanceKey={this.context.maintenanceKey}
+          onCancel={this.cancelImportDialog}
+          onConfirm={this.confirmImport}
+        />
+      );
+    } else if (this.state.showAddToConfigDialog) {
+      extras = (
+        <AddArrayEntryDialog
+          onCancel={() =>
+            this.setState({
+              showAddToConfigDialog: false,
+              addToConfigParam: '',
+              addToConfigLastType: null,
+              addToConfigPrefillValue: '',
+            })
+          }
+          onConfirm={this.handleConfirmAddToConfig}
+          lastType={this.state.addToConfigLastType}
+          param={this.state.addToConfigParam}
+          initialValue={this.state.addToConfigPrefillValue}
         />
       );
     }

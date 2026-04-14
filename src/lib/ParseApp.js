@@ -32,6 +32,7 @@ export default class ParseApp {
     dashboardURL,
     javascriptKey,
     masterKey,
+    maintenanceKey,
     restKey,
     windowsKey,
     webhookKey,
@@ -63,6 +64,7 @@ export default class ParseApp {
     this.clientKey = clientKey;
     this.javascriptKey = javascriptKey;
     this.masterKey = masterKey;
+    this.maintenanceKey = maintenanceKey;
     this.restKey = restKey;
     this.windowsKey = windowsKey;
     this.webhookKey = webhookKey;
@@ -370,35 +372,6 @@ export default class ParseApp {
     return AJAX.put(path, data);
   }
 
-  saveSettingsFields(fields) {
-    const path = '/apps/' + this.slug;
-    const appFields = {};
-    for (const f in fields) {
-      appFields['parse_app[' + f + ']'] = fields[f];
-    }
-    const promise = AJAX.put(path, appFields);
-    promise.then(({ successes }) => {
-      for (const f in fields) {
-        this.settings.fields[f] = successes[f];
-      }
-    });
-    return promise;
-  }
-
-  fetchSettingsFields() {
-    // Cache it for a minute
-    if (new Date() - this.settings.lastFetched < 60000) {
-      return Promise.resolve(this.settings.fields);
-    }
-    const path = '/apps/' + this.slug + '/dashboard_ajax/settings';
-    return AJAX.get(path).then(fields => {
-      for (const f in fields) {
-        this.settings.fields[f] = fields[f];
-        this.settings.lastFetched = new Date();
-      }
-      return Promise.resolve(fields);
-    });
-  }
 
   cleanUpFiles() {
     const path = '/apps/' + this.slug + '/cleanup_files';

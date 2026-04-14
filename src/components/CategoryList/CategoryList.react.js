@@ -20,6 +20,8 @@ export default class CategoryList extends React.Component {
     this.listWrapperRef = React.createRef();
     this.state = {
       openClasses: [],
+      hoveredFilter: null,
+      hoveredClass: null,
     };
   }
 
@@ -36,7 +38,8 @@ export default class CategoryList extends React.Component {
 
   componentDidUpdate(prevProps) {
     // Auto-expand if the URL params changed (e.g., user navigated to a different filter)
-    if (prevProps.params !== this.props.params) {
+    // OR if categories changed (e.g., filters finished loading asynchronously)
+    if (prevProps.params !== this.props.params || prevProps.categories !== this.props.categories) {
       this._autoExpandForSelectedFilter();
     }
     this._updateHighlight();
@@ -87,7 +90,7 @@ export default class CategoryList extends React.Component {
 
           // If a matching filter is found, auto-expand this class
           if (matchIndex !== -1 && !this.state.openClasses.includes(id)) {
-            this.setState({ openClasses: [id] });
+            this.setState(prevState => ({ openClasses: [...prevState.openClasses, id] }));
           }
           break;
         }
@@ -169,18 +172,35 @@ export default class CategoryList extends React.Component {
           const link = generatePath(this.context, (this.props.linkPrefix || '') + (c.link || id));
           return (
             <div key={id}>
-              <div className={styles.link}>
+              <div
+                className={styles.link}
+                onMouseEnter={() => this.setState({ hoveredClass: id })}
+                onMouseLeave={() => this.setState({ hoveredClass: null })}
+              >
                 <Link
                   title={c.name}
                   to={{ pathname: link }}
                   className={className}
-                  onClick={() => this.props.classClicked()}
+                  onClick={() => {
+                    if (typeof this.props.classClicked === 'function') {
+                      this.props.classClicked();
+                    }
+                    // Toggle filter list when clicking on a class that has filters
+                    if ((c.filters || []).length > 0) {
+                      this.setState(prevState => ({
+                        openClasses: prevState.openClasses.includes(id)
+                          ? prevState.openClasses.filter(c => c !== id)
+                          : [...prevState.openClasses, id]
+                      }));
+                    }
+                  }}
                 >
                   {c.name}
                 </Link>
                 {c.onEdit && (
                   <a
                     className={styles.edit}
+                    style={{ opacity: this.state.hoveredClass === id ? 1 : 0 }}
                     onClick={e => {
                       e.preventDefault();
                       c.onEdit();
@@ -208,8 +228,14 @@ export default class CategoryList extends React.Component {
                   const url = id
                     ? `${this.props.linkPrefix}${c.name}?filters=${encodeURIComponent(filter)}&filterId=${id}`
                     : `${this.props.linkPrefix}${c.name}?filters=${encodeURIComponent(filter)}`;
+                  const filterKey = `${c.name}-${index}`;
                   return (
-                    <div key={index} className={styles.childLink}>
+                    <div
+                      key={index}
+                      className={styles.childLink}
+                      onMouseEnter={() => this.setState({ hoveredFilter: filterKey })}
+                      onMouseLeave={() => this.setState({ hoveredFilter: null })}
+                    >
                       <Link
                         className={selectedFilter === index ? styles.active : ''}
                         onClick={e => {
@@ -223,6 +249,7 @@ export default class CategoryList extends React.Component {
                       {this.props.onEditFilter && (
                         <a
                           className={styles.editFilter}
+                          style={{ opacity: this.state.hoveredFilter === filterKey ? 1 : 0 }}
                           onClick={e => {
                             e.preventDefault();
                             this.props.onEditFilter(c.name, filterData);
@@ -248,5 +275,6 @@ CategoryList.propTypes = {
   ),
   current: PropTypes.string.describe('Id of current category to be highlighted.'),
   linkPrefix: PropTypes.string.describe('Link prefix used to generate link path.'),
+  classClicked: PropTypes.func.describe('Callback function invoked when a class is clicked.'),
   onEditFilter: PropTypes.func.describe('Callback function for editing a filter.'),
 };
