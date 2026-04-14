@@ -1184,7 +1184,7 @@ You have direct access to the Parse database through function calls, so you can 
     });
 
     // Analytics dashboard routes - Only serve custom analytics if analyticsPage is configured
-    app.get('/apps/*/analytics_dashboard', function(req, res) {
+    app.get('/apps/:appId/analytics_dashboard', function(req, res) {
       console.log('🎯 Analytics dashboard route hit:', req.path, req.url);
       
       if (users && (!req.user || !req.user.isAuthenticated)) {
@@ -1197,8 +1197,7 @@ You have direct access to the Parse database through function calls, so you can 
       }
       
       // Extract app ID from URL
-      const appIdMatch = req.path.match(/\/apps\/([^\/]+)\/analytics_dashboard/);
-      const appId = appIdMatch ? appIdMatch[1] : null;
+      const appId = req.params.appId;
       console.log('📱 Extracted app ID:', appId);
       
       // Find the app configuration
@@ -1240,7 +1239,7 @@ You have direct access to the Parse database through function calls, so you can 
     });
 
     // Alternative analytics dashboard route (with slash instead of underscore)
-    app.get('/apps/*/analytics/dashboard', function(req, res) {
+    app.get('/apps/:appId/analytics/dashboard', function(req, res) {
       console.log('🎯 Alternative analytics route hit:', req.path, req.url);
       
       if (users && (!req.user || !req.user.isAuthenticated)) {
@@ -1253,8 +1252,7 @@ You have direct access to the Parse database through function calls, so you can 
       }
       
       // Extract app ID from URL
-      const appIdMatch = req.path.match(/\/apps\/([^\/]+)\/analytics\/dashboard/);
-      const appId = appIdMatch ? appIdMatch[1] : null;
+      const appId = req.params.appId;
       console.log('📱 Extracted app ID:', appId);
       
       // Find the app configuration
