@@ -1,3 +1,10 @@
+## [9.1.2-alpha.1](https://github.com/parse-community/parse-dashboard/compare/9.1.1...9.1.2-alpha.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* Chart not displayed when formula references an undefined field ([#3360](https://github.com/parse-community/parse-dashboard/issues/3360)) ([9666935](https://github.com/parse-community/parse-dashboard/commit/9666935659a28761c9e69242fe5aef730dffdfbc))
+
 ## [9.1.1-alpha.1](https://github.com/parse-community/parse-dashboard/compare/9.1.0...9.1.1-alpha.1) (2026-04-07)
 
 
