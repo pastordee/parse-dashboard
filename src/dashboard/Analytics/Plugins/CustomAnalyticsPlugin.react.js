@@ -3,6 +3,7 @@ import DashboardView from 'dashboard/DashboardView.react';
 import Loader from 'components/Loader/Loader.react';
 import { useParams } from 'react-router-dom';
 import { CurrentApp } from 'context/currentApp';
+import AppsManager from 'lib/AppsManager';
 import styles from '../Dashboard/AnalyticsDashboard.scss';
 
 // Wrapper component to inject useParams hook
@@ -31,8 +32,11 @@ class CustomAnalyticsPluginComponent extends DashboardView {
     try {
       const { pluginId } = this.props.params || {};
 
-      // Get the plugin config from app context
-      const plugins = this.context?.analytics?.customPlugins || [];
+      // Get the plugin config from app config via AppsManager
+      const appSlug = this.context ? this.context.slug : '';
+      const apps = AppsManager.apps();
+      const currentApp = apps.find(app => app.slug === appSlug);
+      const plugins = currentApp?.analytics?.customPlugins || [];
       const plugin = plugins.find(p => p.id === pluginId);
 
       if (!plugin) {

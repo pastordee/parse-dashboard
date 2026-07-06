@@ -213,8 +213,11 @@ export default class DashboardView extends React.Component {
     });
 
     // Add custom analytics plugins from app config
-    if (this.context?.analytics?.customPlugins) {
-      this.context.analytics.customPlugins.forEach(plugin => {
+    const apps = AppsManager.apps();
+    const currentApp = apps.find(app => app.slug === appSlug);
+
+    if (currentApp?.analytics?.customPlugins) {
+      currentApp.analytics.customPlugins.forEach(plugin => {
         analyticsSidebarSections.push({
           name: plugin.label,
           link: `/analytics/plugin/${plugin.id}`,
