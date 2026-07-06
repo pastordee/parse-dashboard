@@ -216,9 +216,9 @@ export default class DashboardView extends React.Component {
     // First try context, then fetch from API if available
     let customPlugins = this.context?.analytics?.customPlugins;
 
-    // Try to fetch from the analytics server's API endpoint
+    // Try to fetch from the analytics server's public config endpoint
     if (!customPlugins && this.context?.serverURL) {
-      fetch(`${this.context.serverURL}/api/app-config`)
+      fetch(`${this.context.serverURL}/analytics-config`)
         .then(res => res.json())
         .then(data => {
           customPlugins = data?.analytics?.customPlugins;
