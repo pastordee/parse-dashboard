@@ -21,6 +21,7 @@ export default class DashboardView extends React.Component {
     super();
     this.state = {
       route: '',
+      customPlugins: null,
     };
   }
 
@@ -214,7 +215,7 @@ export default class DashboardView extends React.Component {
 
     // Add custom analytics plugins from app config
     // First try context, then fetch from API if available
-    let customPlugins = this.context?.analytics?.customPlugins;
+    let customPlugins = this.context?.analytics?.customPlugins || this.state.customPlugins;
 
     // Try to fetch from the analytics server's public config endpoint
     if (!customPlugins && this.context?.serverURL) {
@@ -223,10 +224,10 @@ export default class DashboardView extends React.Component {
       fetch(`${rootURL}/analytics-config`)
         .then(res => res.json())
         .then(data => {
-          customPlugins = data?.analytics?.customPlugins;
-          if (customPlugins) {
-            // Re-render to show the plugins
-            this.forceUpdate();
+          const plugins = data?.analytics?.customPlugins;
+          if (plugins && !this.state.customPlugins) {
+            // Store in state to persist across renders
+            this.setState({ customPlugins: plugins });
           }
         })
         .catch(() => {
