@@ -42,6 +42,7 @@ import Retention from './Analytics/Retention/Retention.react';
 import SchemaOverview from './Data/Browser/SchemaOverview.react';
 import SecuritySettings from './Settings/SecuritySettings.react';
 import SlowQueries from './Analytics/SlowQueries/SlowQueries.react';
+import CustomAnalyticsPlugin from './Analytics/Plugins/CustomAnalyticsPlugin.react';
 import styles from 'dashboard/Apps/AppsIndex.scss';
 import UsersSettings from './Settings/UsersSettings.react';
 import Webhooks from './Data/Webhooks/Webhooks.react';
@@ -268,6 +269,7 @@ export default class Dashboard extends React.Component {
         <Route path="retention" element={<Retention />} />
         <Route path="performance" element={<Performance />} />
         <Route path="slow_queries" element={<SlowQueries />} />
+        <Route path="plugin/:pluginId" element={<CustomAnalyticsPlugin />} />
         <Route index element={<Navigate replace to="dashboard" />} />
         <Route path="explorer" element={<Navigate replace to="chart" />} />
       </Route>

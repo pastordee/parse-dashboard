@@ -212,6 +212,17 @@ export default class DashboardView extends React.Component {
       link: '/analytics/slow_queries'
     });
 
+    // Add custom analytics plugins from app config
+    if (this.context?.analytics?.customPlugins) {
+      this.context.analytics.customPlugins.forEach(plugin => {
+        analyticsSidebarSections.push({
+          name: plugin.label,
+          link: `/analytics/plugin/${plugin.id}`,
+          icon: plugin.icon || 'chart-bar'
+        });
+      });
+    }
+
     const settingsSections = [
       {
         name: 'Dashboard',
