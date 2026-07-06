@@ -12,6 +12,7 @@ import Icon from 'components/Icon/Icon.react';
 import baseStyles from 'stylesheets/base.scss';
 import Button from 'components/Button/Button.react';
 import { CurrentApp } from 'context/currentApp';
+import AppsManager from 'lib/AppsManager';
 
 export default class DashboardView extends React.Component {
   static contextType = CurrentApp;
