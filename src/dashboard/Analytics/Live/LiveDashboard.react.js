@@ -102,41 +102,49 @@ export default class LiveDashboard extends DashboardView {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const json = await response.json();
+      const data = json.data || json;
 
       console.log('Live stats data received:', data);
+
+      // Map endpoint response to component state format
+      const users = data.users || {};
+      const live = data.live || {};
+      const content = data.content || {};
+      const activity = data.activity || {};
+      const recent = data.recent || [];
 
       this.setState({
         loading: false,
         error: null,
         liveStats: {
-          totalUsers: data.liveStats?.totalUsers || 0,
-          downloads: data.liveStats?.downloads || 0,
-          onlineNow: data.liveStats?.onlineNow || 0,
-          activeToday: data.liveStats?.activeToday || 0,
-          activeThisWeek: data.liveStats?.activeThisWeek || 0,
-          newToday: data.liveStats?.newToday || 0,
+          totalUsers: users.total || 0,
+          downloads: users.downloads || 0,
+          onlineNow: users.onlineNow || 0,
+          activeToday: users.activeToday || 0,
+          activeThisWeek: users.activeThisWeek || 0,
+          newToday: users.newToday || 0,
         },
         platformBreakdown: {
-          ios: data.platformBreakdown?.ios || 0,
-          android: data.platformBreakdown?.android || 0,
-          unknown: data.platformBreakdown?.unknown || 0,
+          ios: users.ios || 0,
+          android: users.android || 0,
+          unknown: users.other || 0,
         },
-        liveStreams: Array.isArray(data.liveStreams) ? data.liveStreams : [],
-        prayerRooms: Array.isArray(data.prayerRooms) ? data.prayerRooms : [],
+        liveStreams: Array.isArray(live.streams) ? live.streams : [],
+        prayerRooms: Array.isArray(live.groups) ? live.groups : [],
         contentOverview: {
-          prayers: data.contentOverview?.prayers || 0,
-          posts: data.contentOverview?.posts || 0,
-          reels: data.contentOverview?.reels || 0,
-          sermons: data.contentOverview?.sermons || 0,
-          groups: data.contentOverview?.groups || 0,
+          prayers: content.prayers || 0,
+          posts: content.posts || 0,
+          reels: content.reels || 0,
+          sermons: content.sermons || 0,
+          groups: content.groups || 0,
         },
         activityBreakdown: {
-          today: data.activityBreakdown?.today || {},
-          thisWeek: data.activityBreakdown?.thisWeek || {},
-          thisMonth: data.activityBreakdown?.thisMonth || {},
+          today: activity.today || {},
+          thisWeek: activity.week || {},
+          thisMonth: activity.month || {},
         },
-        recentRegistrations: Array.isArray(data.recentRegistrations) ? data.recentRegistrations : [],
+        recentRegistrations: Array.isArray(recent) ? recent : [],
         lastUpdate: new Date(),
       });
     } catch (error) {
