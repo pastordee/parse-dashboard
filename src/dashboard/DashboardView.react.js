@@ -213,6 +213,12 @@ export default class DashboardView extends React.Component {
       link: '/analytics/slow_queries'
     });
 
+    analyticsSidebarSections.push({
+      name: 'Live',
+      link: '/analytics/live',
+      icon: 'pulse-solid'
+    });
+
     // Add custom analytics plugins from app config
     // First try context, then fetch from API if available
     let customPlugins = this.context?.analytics?.customPlugins || this.state.customPlugins;

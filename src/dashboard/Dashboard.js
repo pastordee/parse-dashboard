@@ -10,6 +10,7 @@ import AccountView from './AccountView.react';
 import Agent from './Data/Agent/Agent.react';
 import AnalyticsDashboard from './Analytics/Dashboard/AnalyticsDashboard.react';
 import AnalyticsOverview from './Analytics/Overview/Overview.react';
+import LiveDashboard from './Analytics/Live/LiveDashboard.react';
 import ApiConsole from './Data/ApiConsole/ApiConsole.react';
 import AppData from './AppData.react';
 import AppsIndex from './Apps/AppsIndex.react';
@@ -265,6 +266,7 @@ export default class Dashboard extends React.Component {
       <Route>
         <Route path="dashboard" element={<AnalyticsDashboard />} />
         <Route path="overview" element={<AnalyticsOverview />} />
+        <Route path="live" element={<LiveDashboard />} />
         <Route path="explorer/:displayType" element={<Explorer />} />
         <Route path="retention" element={<Retention />} />
         <Route path="performance" element={<Performance />} />
