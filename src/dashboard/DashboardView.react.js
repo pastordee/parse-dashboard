@@ -218,7 +218,9 @@ export default class DashboardView extends React.Component {
 
     // Try to fetch from the analytics server's public config endpoint
     if (!customPlugins && this.context?.serverURL) {
-      fetch(`${this.context.serverURL}/analytics-config`)
+      // Extract the root domain from serverURL (remove /parse suffix)
+      const rootURL = this.context.serverURL.replace(/\/parse$/, '');
+      fetch(`${rootURL}/analytics-config`)
         .then(res => res.json())
         .then(data => {
           customPlugins = data?.analytics?.customPlugins;
