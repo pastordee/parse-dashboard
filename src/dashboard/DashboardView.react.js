@@ -12,7 +12,6 @@ import Icon from 'components/Icon/Icon.react';
 import baseStyles from 'stylesheets/base.scss';
 import Button from 'components/Button/Button.react';
 import { CurrentApp } from 'context/currentApp';
-import AppsManager from 'lib/AppsManager';
 
 export default class DashboardView extends React.Component {
   static contextType = CurrentApp;
@@ -214,11 +213,8 @@ export default class DashboardView extends React.Component {
     });
 
     // Add custom analytics plugins from app config
-    const apps = AppsManager.apps();
-    const currentApp = apps.find(app => app.slug === appSlug);
-
-    if (currentApp?.analytics?.customPlugins) {
-      currentApp.analytics.customPlugins.forEach(plugin => {
+    if (this.context?.analytics?.customPlugins) {
+      this.context.analytics.customPlugins.forEach(plugin => {
         analyticsSidebarSections.push({
           name: plugin.label,
           link: `/analytics/plugin/${plugin.id}`,
