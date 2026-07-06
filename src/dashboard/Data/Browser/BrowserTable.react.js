@@ -120,7 +120,6 @@ export default class BrowserTable extends React.Component {
     }));
 
     const stickyLefts = [];
-    const handleLefts = [];
     const maxRowNumber =
       this.props.skip + (this.props.data ? this.props.data.length : this.props.limit);
     const rowNumberWidth = this.props.showRowNumber
@@ -130,13 +129,18 @@ export default class BrowserTable extends React.Component {
       let left = 30 + rowNumberWidth;
       headers.forEach((h, i) => {
         stickyLefts[i] = left;
-        handleLefts[i] = left + h.width;
         if (h.visible) {
           left += h.width;
         }
       });
     }
     let editor = null;
+    const isRowHighlighted = (rowIndex) =>
+      (this.props.current && this.props.current.row === rowIndex) ||
+      (this.props.selectedCells &&
+        this.props.selectedCells.rowStart >= 0 &&
+        rowIndex >= this.props.selectedCells.rowStart &&
+        rowIndex <= this.props.selectedCells.rowEnd);
     let table = <div ref={this.tableRef} />;
     if (this.props.data) {
       const rowWidth =
@@ -162,6 +166,7 @@ export default class BrowserTable extends React.Component {
                     appId={this.props.appId}
                     key={index}
                     isEditing={isEditingRow}
+                    isHighlighted={isRowHighlighted(index)}
                     className={this.props.className}
                     columns={this.props.columns}
                     schema={this.props.schema}
@@ -198,6 +203,9 @@ export default class BrowserTable extends React.Component {
                     markRequiredFieldRow={this.props.markRequiredFieldRow}
                     showNote={this.props.showNote}
                     onRefresh={this.props.onRefresh}
+                    onRefreshObjects={this.props.onRefreshObjects}
+                    reloadDataTableAfterScript={this.props.reloadDataTableAfterScript}
+                    onScriptModalResponse={this.props.onScriptModalResponse}
                     scripts={this.context.scripts}
                     selectedCells={this.props.selectedCells}
                     handleCellClick={this.props.handleCellClick}
@@ -208,6 +216,8 @@ export default class BrowserTable extends React.Component {
                     setShowAggregatedData={this.props.setShowAggregatedData}
                     setErrorAggregatedData={this.props.setErrorAggregatedData}
                     firstSelectedCell={this.props.firstSelectedCell}
+                    arrayConfigParams={this.props.arrayConfigParams}
+                    onAddToArrayConfig={this.props.onAddToArrayConfig}
                   />
                   <Button
                     value="Clone"
@@ -252,6 +262,7 @@ export default class BrowserTable extends React.Component {
             <BrowserRow
               appId={this.props.appId}
               key={-1}
+              isHighlighted={isRowHighlighted(-1)}
               className={this.props.className}
               columns={this.props.columns}
               currentCol={currentCol}
@@ -294,6 +305,8 @@ export default class BrowserTable extends React.Component {
               setShowAggregatedData={this.props.setShowAggregatedData}
               setErrorAggregatedData={this.props.setErrorAggregatedData}
               firstSelectedCell={this.props.firstSelectedCell}
+              arrayConfigParams={this.props.arrayConfigParams}
+              onAddToArrayConfig={this.props.onAddToArrayConfig}
             />
             <Button
               value="Add"
@@ -344,6 +357,7 @@ export default class BrowserTable extends React.Component {
             appId={this.props.appId}
             key={index}
             isEditing={isEditingRow}
+            isHighlighted={isRowHighlighted(i)}
             className={this.props.className}
             columns={this.props.columns}
             schema={this.props.schema}
@@ -379,6 +393,9 @@ export default class BrowserTable extends React.Component {
             onEditSelectedRow={this.props.onEditSelectedRow}
             showNote={this.props.showNote}
             onRefresh={this.props.onRefresh}
+            onRefreshObjects={this.props.onRefreshObjects}
+            reloadDataTableAfterScript={this.props.reloadDataTableAfterScript}
+            onScriptModalResponse={this.props.onScriptModalResponse}
             scripts={this.context.scripts}
             selectedCells={this.props.selectedCells}
             handleCellClick={this.props.handleCellClick}
@@ -389,6 +406,8 @@ export default class BrowserTable extends React.Component {
             setShowAggregatedData={this.props.setShowAggregatedData}
             setErrorAggregatedData={this.props.setErrorAggregatedData}
             firstSelectedCell={this.props.firstSelectedCell}
+            arrayConfigParams={this.props.arrayConfigParams}
+            onAddToArrayConfig={this.props.onAddToArrayConfig}
           />
         );
       }
@@ -484,6 +503,10 @@ export default class BrowserTable extends React.Component {
                   this.props.setEditing(false);
                 }}
                 onCancel={() => this.props.setEditing(false)}
+                setContextMenu={this.props.setContextMenu}
+                arrayConfigParams={this.props.arrayConfigParams}
+                onAddToArrayConfig={this.props.onAddToArrayConfig}
+                getRelatedRecordsMenuItem={this.props.getRelatedRecordsMenuItem}
               />
             );
           }
@@ -565,8 +588,12 @@ export default class BrowserTable extends React.Component {
         );
       }
     }
-    const rightValue =
-      this.props.panelWidth && this.props.isPanelVisible ? `${this.props.panelWidth}px` : '0px';
+    const aggregationPanelWidth =
+      this.props.panelWidth && this.props.isPanelVisible ? this.props.panelWidth : 0;
+    const graphPanelWidth =
+      this.props.graphPanelWidth && this.props.isGraphPanelVisible ? this.props.graphPanelWidth : 0;
+    const totalRightOffset = aggregationPanelWidth + graphPanelWidth;
+    const rightValue = `${totalRightOffset}px`;
 
     return (
       <div
@@ -600,7 +627,6 @@ export default class BrowserTable extends React.Component {
           }
           headers={headers}
           stickyLefts={stickyLefts}
-          handleLefts={handleLefts}
           freezeIndex={this.props.freezeIndex}
           freezeColumns={this.props.freezeColumns}
           unfreezeColumns={this.props.unfreezeColumns}

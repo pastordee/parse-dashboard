@@ -10,19 +10,29 @@ import Dropdown from 'components/Dropdown/Dropdown.react';
 import Field from 'components/Field/Field.react';
 import FileInput from 'components/FileInput/FileInput.react';
 import GeoPointInput from 'components/GeoPointInput/GeoPointInput.react';
+import Icon from 'components/Icon/Icon.react';
 import Label from 'components/Label/Label.react';
 import Modal from 'components/Modal/Modal.react';
+import NonPrintableHighlighter, { hasNonPrintableChars, getNonPrintableCharsFromJson, hasNonAlphanumericChars, getNonAlphanumericCharsFromJson, getRegexValidation, getRegexValidationFromJson } from 'components/NonPrintableHighlighter/NonPrintableHighlighter.react';
 import Option from 'components/Dropdown/Option.react';
 import Parse from 'parse';
 import React from 'react';
 import TextInput from 'components/TextInput/TextInput.react';
 import Toggle from 'components/Toggle/Toggle.react';
+import Popover from 'components/Popover/Popover.react';
+import Position from 'lib/Position';
+import Button from 'components/Button/Button.react';
+import JsonEditor from 'components/JsonEditor/JsonEditor.react';
 import validateNumeric from 'lib/validateNumeric';
 import styles from 'dashboard/Data/Browser/Browser.scss';
 import semver from 'semver/preload.js';
 import { dateStringUTC } from 'lib/DateUtils';
 import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
+import ServerConfigStorage from 'lib/ServerConfigStorage';
+import ConfigConflictDiff from 'dashboard/Data/Config/ConfigConflictDiff.react';
 import { CurrentApp } from 'context/currentApp';
+
+const FORMATTING_CONFIG_KEY = 'config.formatting.syntax';
 
 const PARAM_TYPES = ['Boolean', 'String', 'Number', 'Date', 'Object', 'Array', 'GeoPoint', 'File'];
 
@@ -43,30 +53,36 @@ const EDITORS = {
   Boolean: (value, onChange) => (
     <Toggle type={Toggle.Types.TRUE_FALSE} value={!!value} onChange={onChange} />
   ),
-  String: (value, onChange) => (
-    <TextInput multiline={true} value={value || ''} onChange={onChange} />
+  String: (value, onChange, wordWrap, syntaxColors, options = {}) => (
+    <NonPrintableHighlighter value={value} detectNonPrintable={!!options.detectNonPrintable} detectNonAlphanumeric={!!options.detectNonAlphanumeric} detectRegex={!!options.detectRegex}>
+      <TextInput multiline={true} value={value || ''} onChange={onChange} />
+    </NonPrintableHighlighter>
   ),
   Number: (value, onChange) => (
     <TextInput value={value || ''} onChange={numberValidator(onChange)} />
   ),
   Date: (value, onChange) => <DateTimeInput fixed={true} value={value} onChange={onChange} />,
-  Object: (value, onChange) => (
-    <TextInput
-      multiline={true}
-      monospace={true}
-      placeholder={'{\n  ...\n}'}
-      value={value || ''}
-      onChange={onChange}
-    />
+  Object: (value, onChange, wordWrap, syntaxColors, options = {}) => (
+    <NonPrintableHighlighter value={value} isJson={true} detectNonPrintable={!!options.detectNonPrintable} detectNonAlphanumeric={!!options.detectNonAlphanumeric} detectRegex={!!options.detectRegex}>
+      <JsonEditor
+        value={value || ''}
+        onChange={onChange}
+        placeholder={'{\n  ...\n}'}
+        wordWrap={wordWrap}
+        syntaxColors={syntaxColors}
+      />
+    </NonPrintableHighlighter>
   ),
-  Array: (value, onChange) => (
-    <TextInput
-      multiline={true}
-      monospace={true}
-      placeholder={'[\n  ...\n]'}
-      value={value}
-      onChange={onChange}
-    />
+  Array: (value, onChange, wordWrap, syntaxColors, options = {}) => (
+    <NonPrintableHighlighter value={value} isJson={true} detectNonPrintable={!!options.detectNonPrintable} detectNonAlphanumeric={!!options.detectNonAlphanumeric} detectRegex={!!options.detectRegex}>
+      <JsonEditor
+        value={value || ''}
+        onChange={onChange}
+        placeholder={'[\n  ...\n]'}
+        wordWrap={wordWrap}
+        syntaxColors={syntaxColors}
+      />
+    </NonPrintableHighlighter>
   ),
   GeoPoint: (value, onChange) => <GeoPointInput value={value} onChange={onChange} />,
   File: (value, onChange) => (
@@ -94,24 +110,100 @@ const GET_VALUE = {
 
 export default class ConfigDialog extends React.Component {
   static contextType = CurrentApp;
+
+  static formatJSON(value) {
+    try {
+      const parsed = JSON.parse(value);
+      return { value: JSON.stringify(parsed, null, 2), error: null };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      return { value, error: `Invalid JSON: ${message}` };
+    }
+  }
+
   constructor(props) {
     super();
+    this.optionsRef = React.createRef();
     this.state = {
       value: null,
       type: 'String',
       name: '',
       masterKeyOnly: false,
       selectedIndex: null,
+      wordWrap: false,
+      showDiff: false,
+      confirmOverride: false,
+      optionsMenuOpen: false,
+      error: null,
+      syntaxColors: null,
+      showDiscardConfirm: false,
     };
     if (props.param.length > 0) {
+      let initialValue = props.value;
+      let initialError = null;
+      if ((props.type === 'Object' || props.type === 'Array') && initialValue) {
+        ({ value: initialValue, error: initialError } = ConfigDialog.formatJSON(initialValue));
+      }
       this.state = {
         name: props.param,
         type: props.type,
-        value: props.value,
+        value: initialValue,
         masterKeyOnly: props.masterKeyOnly,
         selectedIndex: 0,
+        wordWrap: false,
+        showDiff: false,
+        confirmOverride: false,
+        error: initialError,
+        syntaxColors: null,
+        showDiscardConfirm: false,
       };
     }
+
+    // Store initial values for change detection
+    this.initialValues = {
+      name: this.state.name,
+      type: this.state.type,
+      value: this.state.value,
+      masterKeyOnly: this.state.masterKeyOnly,
+    };
+  }
+
+  componentDidMount() {
+    this.loadSyntaxColors();
+  }
+
+  async loadSyntaxColors() {
+    try {
+      const serverStorage = new ServerConfigStorage(this.context);
+      if (serverStorage.isServerConfigEnabled()) {
+        const settings = await serverStorage.getConfig(
+          FORMATTING_CONFIG_KEY,
+          this.context.applicationId
+        );
+        if (settings?.colors) {
+          this.setState({ syntaxColors: settings.colors });
+        }
+      }
+    } catch {
+      // Silently fail - use default colors from CSS
+    }
+  }
+
+  getEffectiveDetectionFlags() {
+    const isExistingParam = this.props.param && this.props.param.length > 0;
+    let detectNonPrintable = this.props.detectNonPrintable;
+    if (detectNonPrintable && isExistingParam && this.props.nonPrintableShowOnlyFor.length > 0) {
+      detectNonPrintable = this.props.nonPrintableShowOnlyFor.includes(this.props.param);
+    }
+    let detectNonAlphanumeric = this.props.detectNonAlphanumeric;
+    if (detectNonAlphanumeric && isExistingParam && this.props.nonAlphanumericShowOnlyFor.length > 0) {
+      detectNonAlphanumeric = this.props.nonAlphanumericShowOnlyFor.includes(this.props.param);
+    }
+    let detectRegex = this.props.detectRegex;
+    if (detectRegex && isExistingParam && this.props.regexShowOnlyFor.length > 0) {
+      detectRegex = this.props.regexShowOnlyFor.includes(this.props.param);
+    }
+    return { detectNonPrintable, detectNonAlphanumeric, detectRegex };
   }
 
   valid() {
@@ -120,32 +212,41 @@ export default class ConfigDialog extends React.Component {
     }
     switch (this.state.type) {
       case 'String':
-        return !!this.state.value;
+        if (!this.state.value) {
+          return false;
+        }
+        break;
       case 'Number':
-        return !isNaN(parseFloat(this.state.value));
+        if (isNaN(parseFloat(this.state.value))) {
+          return false;
+        }
+        break;
       case 'Date':
-        return !isNaN(new Date(this.state.value));
+        if (isNaN(new Date(this.state.value))) {
+          return false;
+        }
+        break;
       case 'Object':
         try {
           const obj = JSON.parse(this.state.value);
-          if (obj && typeof obj === 'object') {
-            return true;
+          if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+            return false;
           }
-          return false;
         } catch {
           return false;
         }
+        break;
       case 'Array':
         try {
           const obj = JSON.parse(this.state.value);
-          if (obj && Array.isArray(obj)) {
-            return true;
+          if (!obj || !Array.isArray(obj)) {
+            return false;
           }
-          return false;
         } catch {
           return false;
         }
-      case 'GeoPoint':
+        break;
+      case 'GeoPoint': {
         const val = this.state.value;
         if (!val || typeof val !== 'object') {
           return false;
@@ -161,33 +262,195 @@ export default class ConfigDialog extends React.Component {
         ) {
           return false;
         }
-        return true;
-      case 'File':
+        break;
+      }
+      case 'File': {
         const fileVal = this.state.value;
-        if (fileVal && fileVal.url()) {
-          return true;
+        if (!fileVal || !fileVal.url()) {
+          return false;
         }
-        return false;
+        break;
+      }
+    }
+
+    // Compute effective detection flags (respecting show-only-for settings)
+    const { detectNonPrintable, detectNonAlphanumeric, detectRegex } = this.getEffectiveDetectionFlags();
+
+    // Block save if non-printable characters detected for this param
+    if (
+      detectNonPrintable &&
+      this.props.param.length > 0 &&
+      this.props.nonPrintableBlockSave.includes(this.props.param)
+    ) {
+      const value = this.state.value;
+      if (value && typeof value === 'string') {
+        if (this.state.type === 'Object' || this.state.type === 'Array') {
+          if (getNonPrintableCharsFromJson(value).totalCount > 0) {
+            return false;
+          }
+        } else if (this.state.type === 'String') {
+          if (hasNonPrintableChars(value)) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // Block save if non-alphanumeric characters detected for this param
+    if (
+      detectNonAlphanumeric &&
+      this.props.param.length > 0 &&
+      this.props.nonAlphanumericBlockSave.includes(this.props.param)
+    ) {
+      const value = this.state.value;
+      if (value && typeof value === 'string') {
+        if (this.state.type === 'Object' || this.state.type === 'Array') {
+          if (getNonAlphanumericCharsFromJson(value).totalCount > 0) {
+            return false;
+          }
+        } else if (this.state.type === 'String') {
+          if (hasNonAlphanumericChars(value)) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // Block save if regex validation fails for this param
+    if (
+      detectRegex &&
+      this.props.param.length > 0 &&
+      this.props.regexBlockSave.includes(this.props.param)
+    ) {
+      const value = this.state.value;
+      if (value && typeof value === 'string') {
+        if (this.state.type === 'Object' || this.state.type === 'Array') {
+          const result = getRegexValidationFromJson(value);
+          if (result.results.some(r => !r.isValid)) {
+            return false;
+          }
+        } else if (this.state.type === 'String') {
+          if (!getRegexValidation(value).isValid) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  handleCancel() {
+    if (this.state.showDiscardConfirm) {
+      this.setState({ showDiscardConfirm: false });
+      return;
+    }
+    if (this.hasChanges()) {
+      this.setState({ showDiscardConfirm: true });
+    } else {
+      this.props.onCancel();
+    }
+  }
+
+  hasChanges() {
+    if (
+      this.state.name !== this.initialValues.name ||
+      this.state.type !== this.initialValues.type ||
+      this.state.masterKeyOnly !== this.initialValues.masterKeyOnly
+    ) {
+      return true;
+    }
+    const currVal = this.state.value;
+    const initVal = this.initialValues.value;
+    if (currVal === initVal) {
+      return false;
+    }
+    if (this.state.type === 'Date' && currVal && initVal) {
+      return new Date(currVal).getTime() !== new Date(initVal).getTime();
+    }
+    if (this.state.type === 'GeoPoint' && currVal && initVal) {
+      return currVal.latitude !== initVal.latitude || currVal.longitude !== initVal.longitude;
+    }
+    if (this.state.type === 'File' && currVal && initVal) {
+      return currVal.url() !== initVal.url();
     }
     return true;
   }
 
   submit() {
+    if (this.state.showDiscardConfirm) {
+      return;
+    }
     this.props.onConfirm({
       name: this.state.name,
       type: this.state.type,
       value: GET_VALUE[this.state.type](this.state.value),
       masterKeyOnly: this.state.masterKeyOnly,
+      ...(this.props.conflict && this.state.confirmOverride ? { override: true } : {}),
     });
   }
 
+  updateOptionsMenuPos = () => {
+    if (this.optionsRef.current) {
+      const pos = Position.inWindow(this.optionsRef.current);
+      pos.y -= 4;
+      this.setState({ optionsMenuPos: pos });
+    }
+  };
+
+  formatValue() {
+    const { value, error } = ConfigDialog.formatJSON(this.state.value);
+    this.setState({ value, error });
+  }
+
+  compactValue() {
+    try {
+      const parsed = JSON.parse(this.state.value);
+      const compacted = JSON.stringify(parsed);
+      this.setState({ value: compacted, error: null });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      this.setState({ error: `Invalid JSON: ${message}` });
+    }
+  }
+
+  canFormatValue() {
+    if (this.state.type !== 'Object' && this.state.type !== 'Array') {
+      return false;
+    }
+    try {
+      JSON.parse(this.state.value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   componentDidUpdate(prevProps) {
-    // Update parameter value or masterKeyOnly if they have changed
-    if (this.props.value !== prevProps.value || this.props.masterKeyOnly !== prevProps.masterKeyOnly) {
+    // When a conflict is detected (or server value changes during conflict),
+    // don't reset the editor value — preserve user edits.
+    // Auto-enable the Diff toggle and reset the override confirmation.
+    if (this.props.conflict && (!prevProps.conflict || this.props.value !== prevProps.value)) {
+      this.setState({ showDiff: true, confirmOverride: false, showDiscardConfirm: false });
+      return;
+    }
+
+    // Update parameter value or masterKeyOnly if they have changed (non-conflict)
+    if (!this.props.conflict && (this.props.value !== prevProps.value || this.props.masterKeyOnly !== prevProps.masterKeyOnly)) {
+      let updatedValue = this.props.value;
+      let error = null;
+
+      if ((this.props.type === 'Object' || this.props.type === 'Array') && updatedValue) {
+        ({ value: updatedValue, error } = ConfigDialog.formatJSON(updatedValue));
+      }
+
       this.setState({
-        value: this.props.value,
+        value: updatedValue,
+        error,
         masterKeyOnly: this.props.masterKeyOnly,
       });
+      this.initialValues.value = updatedValue;
+      this.initialValues.masterKeyOnly = this.props.masterKeyOnly;
     }
   }
 
@@ -207,11 +470,7 @@ export default class ConfigDialog extends React.Component {
         ))}
       </Dropdown>
     );
-    const configHistory =
-      localStorage.getItem(`${this.context.applicationId}_configHistory`) &&
-      JSON.parse(localStorage.getItem(`${this.context.applicationId}_configHistory`))[
-        this.state.name
-      ];
+    const configHistory = this.props.configHistory;
     const handleIndexChange = index => {
       if (this.state.type === 'Date') {
         return;
@@ -232,6 +491,13 @@ export default class ConfigDialog extends React.Component {
       }
       this.setState({ selectedIndex: index, value });
     };
+
+    // Determine effective detection flags based on show-only-for settings
+    const {
+      detectNonPrintable: effectiveDetectNonPrintable,
+      detectNonAlphanumeric: effectiveDetectNonAlphanumeric,
+      detectRegex: effectiveDetectRegex,
+    } = this.getEffectiveDetectionFlags();
 
     const dialogContent = (
       <div>
@@ -254,10 +520,35 @@ export default class ConfigDialog extends React.Component {
               description="Use this to configure your app. You can change it at any time."
             />
           }
-          input={EDITORS[this.state.type](this.state.value, value => {
-            this.setState({ value });
-          })}
+          input={EDITORS[this.state.type](
+            this.state.value,
+            value => this.setState({ value, error: null }),
+            this.state.wordWrap,
+            this.state.syntaxColors,
+            { detectNonPrintable: effectiveDetectNonPrintable, detectNonAlphanumeric: effectiveDetectNonAlphanumeric, detectRegex: effectiveDetectRegex }
+          )}
         />
+        {this.state.showDiff && this.props.param.length > 0 && (
+          <Field
+            label={
+              <Label
+                text="Diff"
+                description="Changes compared to the saved version."
+              />
+            }
+            input={
+              <ConfigConflictDiff
+                serverValue={
+                  (this.state.type === 'Object' || this.state.type === 'Array')
+                    ? (() => { try { return JSON.parse(this.props.value); } catch { return this.props.value; } })()
+                    : this.props.value
+                }
+                userValue={this.state.value}
+                type={this.state.type}
+              />
+            }
+          />
+        )}
 
         {
           /*
@@ -294,9 +585,9 @@ export default class ConfigDialog extends React.Component {
               />
             }
             input={
-              <Dropdown value={this.state.selectedIndex} onChange={handleIndexChange}>
+              <Dropdown value={String(this.state.selectedIndex)} onChange={index => handleIndexChange(Number(index))}>
                 {configHistory.map((value, i) => (
-                  <Option key={i} value={i}>
+                  <Option key={i} value={String(i)}>
                     {dateStringUTC(new Date(value.time))}
                   </Option>
                 ))}
@@ -308,23 +599,132 @@ export default class ConfigDialog extends React.Component {
       </div>
     );
 
+    const isJsonType = this.state.type === 'Object' || this.state.type === 'Array';
+    const isDiffableType = isJsonType || this.state.type === 'String';
+    const isExistingParam = this.props.param && this.props.param.length > 0;
+    const customFooter = (
+      <div>
+        {this.props.conflict && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 28px', borderTop: '1px solid #e1e4e8', background: '#ffeef0' }}>
+            <span style={{ color: '#cb2431', fontSize: '13px' }}>
+              Server value changed while editing, see diff view - overwrite it?
+            </span>
+            <Toggle
+              type={Toggle.Types.YES_NO}
+              value={this.state.confirmOverride}
+              onChange={confirmOverride => this.setState({ confirmOverride })}
+              additionalStyles={{ margin: '0px' }}
+            />
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '17px 28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {isJsonType && (
+              <>
+                <Button
+                  value="Format"
+                  onClick={this.formatValue.bind(this)}
+                  disabled={!this.canFormatValue()}
+                />
+                <Button
+                  value="Compact"
+                  onClick={this.compactValue.bind(this)}
+                  disabled={!this.canFormatValue()}
+                />
+                {this.state.error && (
+                  <span style={{ color: '#d73a49', fontSize: '13px' }}>{this.state.error}</span>
+                )}
+              </>
+            )}
+            {(isJsonType || (isDiffableType && isExistingParam)) && (
+              <div ref={this.optionsRef}>
+                <Button
+                  value="Options &#9662;"
+                  onClick={() => {
+                    const node = this.optionsRef.current;
+                    const pos = Position.inWindow(node);
+                    pos.y -= 4; // small gap above button
+                    this.setState({ optionsMenuOpen: !this.state.optionsMenuOpen, optionsMenuPos: pos });
+                  }}
+                />
+                {this.state.optionsMenuOpen && this.state.optionsMenuPos && (
+                  <Popover
+                    fixed={true}
+                    position={this.state.optionsMenuPos}
+                    onExternalClick={() => { document.activeElement?.blur(); this.setState({ optionsMenuOpen: false }); }}
+                  >
+                    <div style={{ background: '#fff', border: '1px solid #e1e4e8', borderRadius: '4px', boxShadow: '0 3px 12px rgba(0,0,0,0.15)', padding: '4px 0', minWidth: '130px', transform: 'translateY(-100%)' }}>
+                      {isJsonType && (
+                        <div
+                          onClick={() => { document.activeElement?.blur(); this.setState({ wordWrap: !this.state.wordWrap, optionsMenuOpen: false }); }}
+                          style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: 'pointer', fontSize: '14px', color: '#333', gap: '8px' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f6f8fa'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ width: '12px', display: 'inline-block' }}>{this.state.wordWrap && <Icon name="check" width={12} height={12} fill="#00db7c" />}</span>
+                          <span>Word wrap</span>
+                        </div>
+                      )}
+                      {isDiffableType && isExistingParam && (
+                        <div
+                          onClick={() => { document.activeElement?.blur(); this.setState({ showDiff: !this.state.showDiff, optionsMenuOpen: false }); }}
+                          style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: 'pointer', fontSize: '14px', color: '#333', gap: '8px' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f6f8fa'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span style={{ width: '12px', display: 'inline-block' }}>{this.state.showDiff && <Icon name="check" width={12} height={12} fill="#00db7c" />}</span>
+                          <span>Diff view</span>
+                        </div>
+                      )}
+                    </div>
+                  </Popover>
+                )}
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button value="Cancel" onClick={this.handleCancel.bind(this)} />
+            <Button
+              primary={true}
+              color="blue"
+              value={newParam ? 'Create' : 'Save'}
+              onClick={this.submit.bind(this)}
+              disabled={!this.valid() || this.props.loading || (this.props.conflict && !this.state.confirmOverride)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+
     return (
-      <Modal
-        type={Modal.Types.INFO}
-        title={newParam ? 'New parameter' : 'Edit parameter'}
-        icon="gear-solid"
-        iconSize={30}
-        subtitle={'Dynamically configure parts of your app'}
-        disabled={!this.valid() || this.props.loading}
-        confirmText={newParam ? 'Create' : 'Save'}
-        cancelText="Cancel"
-        onCancel={this.props.onCancel}
-        onConfirm={this.submit.bind(this)}
-      >
-        <LoaderContainer loading={this.props.loading}>
-          {dialogContent}
-        </LoaderContainer>
-      </Modal>
+      <>
+        <Modal
+          type={Modal.Types.INFO}
+          title={newParam ? 'New parameter' : 'Edit parameter'}
+          icon="gear-solid"
+          iconSize={30}
+          subtitle={'Dynamically configure parts of your app'}
+          customFooter={customFooter}
+          disabled={!this.valid() || this.props.loading || (this.props.conflict && !this.state.confirmOverride)}
+          onCancel={this.handleCancel.bind(this)}
+          onConfirm={this.submit.bind(this)}
+        >
+          <LoaderContainer loading={this.props.loading}>
+            {dialogContent}
+          </LoaderContainer>
+        </Modal>
+        {this.state.showDiscardConfirm && (
+          <Modal
+            type={Modal.Types.DANGER}
+            title="Discard unsaved changes?"
+            subtitle="Your changes will be lost."
+            confirmText="Discard"
+            cancelText="Keep editing"
+            onConfirm={this.props.onCancel}
+            onCancel={() => this.setState({ showDiscardConfirm: false })}
+          />
+        )}
+      </>
     );
   }
 }

@@ -33,11 +33,20 @@ export default class DashboardView extends React.Component {
 
   onRouteChanged() {
     const path = this.props.location?.pathname ?? window.location.pathname;
-    const route = path.split('apps')[1].split('/')[2];
+    const route = path.split('apps')[1]?.split('/')[2] || '';
 
     if (route !== this.state.route) {
       this.setState({ route });
     }
+  }
+
+  getCurrentRoute() {
+    // If state.route is set, use it; otherwise extract from current location
+    if (this.state.route) {
+      return this.state.route;
+    }
+    const path = this.props.location?.pathname ?? window.location.pathname;
+    return path.split('apps')[1]?.split('/')[2] || '';
   }
 
   render() {
@@ -80,6 +89,11 @@ export default class DashboardView extends React.Component {
     coreSubsections.push({
       name: 'Views',
       link: '/views',
+    });
+
+    coreSubsections.push({
+      name: 'Canvas',
+      link: '/canvas',
     });
 
     coreSubsections.push({
@@ -203,6 +217,18 @@ export default class DashboardView extends React.Component {
         name: 'Dashboard',
         link: '/settings/dashboard',
       },
+      {
+        name: 'Data Browser',
+        link: '/settings/data-browser',
+      },
+      {
+        name: 'Cloud Config',
+        link: '/settings/cloud-config',
+      },
+      {
+        name: 'Keyboard Shortcuts',
+        link: '/settings/keyboard-shortcuts',
+      },
     ];
 
     if (this.context.enableSecurityChecks) {
@@ -304,13 +330,10 @@ export default class DashboardView extends React.Component {
     );
 
     let content = <div className={styles.content}>{this.renderContent()}</div>;
-    const allSubsections = [...coreSubsections, ...pushSubsections, ...settingsSections];
-    const allowedRoutes = allSubsections.map(({ link }) => link.split('/')[1]);
-    
-    // Special handling for nested analytics routes
-    const currentRoute = this.state.route;
-    const isAnalyticsRoute = currentRoute === 'analytics';
-    const canRoute = allowedRoutes.includes(currentRoute) || isAnalyticsRoute;
+    const allSections = [...coreSubsections, ...pushSubsections, ...settingsSections];
+    const validRoutes = allSections.map(({ link }) => link.split('/')[1]);
+    const currentRoute = this.getCurrentRoute();
+    const canRoute = validRoutes.includes(currentRoute);
 
     if (!canRoute) {
       content = (

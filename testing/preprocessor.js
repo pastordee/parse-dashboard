@@ -6,7 +6,10 @@
  * the root directory of this source tree.
  */
 const babel = require('@babel/core');
+const path = require('path');
 const extractClassnames = require('./extractClassnames');
+
+const srcDir = path.resolve(__dirname, '..', 'src');
 
 module.exports = {
   process: function (src, filename) {
@@ -18,13 +21,23 @@ module.exports = {
     }
 
     // Let Jest handle our custom module resolution
-    src = src.replace(/from 'stylesheets/g, 'from \'../../stylesheets');
-    src = src.replace(/from 'lib/g, 'from \'../../lib');
-    src = src.replace(/from 'components/g, 'from \'../../components');
+    // Compute relative prefix from file's directory to src/ so that
+    // bare imports like 'components/...' resolve correctly regardless
+    // of the file's depth within the src tree.
+    let relPrefix = '../../';
+    if (filename.startsWith(srcDir + path.sep)) {
+      const rel = path.relative(path.dirname(filename), srcDir);
+      relPrefix = rel ? rel.replace(/\\/g, '/') + '/' : './';
+    }
+    src = src.replace(/from 'stylesheets/g, 'from \'' + relPrefix + 'stylesheets');
+    src = src.replace(/from 'lib/g, 'from \'' + relPrefix + 'lib');
+    src = src.replace(/from 'components/g, 'from \'' + relPrefix + 'components');
+    src = src.replace(/from 'dashboard/g, 'from \'' + relPrefix + 'dashboard');
 
-    // Ignore all files within node_modules
+    // Ignore most files within node_modules, but transpile ESM-only packages
     // babel files can be .js, .es, .jsx or .es6
-    if (filename.indexOf('node_modules') < 0 && !filename.endsWith('package.json')) {
+    const esmPackages = /node_modules[\/\\](marked)[\/\\]/;
+    if ((filename.indexOf('node_modules') < 0 || esmPackages.test(filename)) && !filename.endsWith('package.json')) {
       return babel.transform(src, {
         filename: filename,
         retainLines: true,

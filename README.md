@@ -6,7 +6,7 @@
 [![Build Status](https://github.com/parse-community/parse-dashboard/workflows/ci/badge.svg?branch=release)](https://github.com/parse-community/parse-dashboard/actions?query=workflow%3Aci+branch%3Arelease)
 [![Snyk Badge](https://snyk.io/test/github/parse-community/parse-dashboard/badge.svg)](https://snyk.io/test/github/parse-community/parse-dashboard)
 
-[![Node Version](https://img.shields.io/badge/nodejs-18,_20,_22-green.svg?logo=node.js&style=flat)](https://nodejs.org/)
+[![Node Version](https://img.shields.io/badge/nodejs-20,_22,_24-green.svg?logo=node.js&style=flat)](https://nodejs.org/)
 [![auto-release](https://img.shields.io/badge/%F0%9F%9A%80-auto--release-9e34eb.svg)](https://github.com/parse-community/parse-dashboard/releases)
 
 [![npm latest version](https://img.shields.io/npm/v/parse-dashboard/latest.svg)](https://www.npmjs.com/package/parse-dashboard)
@@ -77,6 +77,14 @@ npx parse-dashboard --config your-config.json
     - [Node.js](#nodejs)
   - [Configuring Parse Dashboard](#configuring-parse-dashboard)
     - [Options](#options)
+      - [Root Options](#root-options)
+        - [App Options](#app-options)
+        - [Column Options](#column-options)
+        - [Script Options](#script-options)
+        - [Info Panel Options](#info-panel-options)
+        - [User Options](#user-options)
+      - [CLI \& Server Options](#cli--server-options)
+      - [Helper CLI Commands](#helper-cli-commands)
     - [File](#file)
     - [Environment variables](#environment-variables)
       - [Multiple apps](#multiple-apps)
@@ -89,16 +97,21 @@ npx parse-dashboard --config your-config.json
     - [Prevent columns sorting](#prevent-columns-sorting)
     - [Custom order in the filter popup](#custom-order-in-the-filter-popup)
     - [Persistent Filters](#persistent-filters)
-    - [Scripts](#scripts)
+    - [Keyboard Shortcuts](#keyboard-shortcuts)
     - [Resource Cache](#resource-cache)
 - [Running as Express Middleware](#running-as-express-middleware)
+  - [Browser Control API (Development Only)](#browser-control-api-development-only)
+    - [⚠️ Security Requirements](#️-security-requirements)
+    - [Configuration](#configuration)
+    - [Usage](#usage)
 - [Deploying Parse Dashboard](#deploying-parse-dashboard)
   - [Preparing for Deployment](#preparing-for-deployment)
   - [Security Considerations](#security-considerations)
     - [Security Checks](#security-checks)
     - [Configuring Basic Authentication](#configuring-basic-authentication)
     - [Multi-Factor Authentication (One-Time Password)](#multi-factor-authentication-one-time-password)
-    - [Separating App Access Based on User Identity](#separating-app-access-based-on-user-identity)
+    - [Running Multiple Dashboard Replicas](#running-multiple-dashboard-replicas)
+      - [Using a Custom Session Store](#using-a-custom-session-store)
   - [Use Read-Only masterKey](#use-read-only-masterkey)
     - [Making an app read-only for all users](#making-an-app-read-only-for-all-users)
     - [Makings users read-only](#makings-users-read-only)
@@ -119,14 +132,31 @@ npx parse-dashboard --config your-config.json
         - [Audio Item](#audio-item)
         - [Button Item](#button-item)
         - [Panel Item](#panel-item)
+      - [Auto-Scroll](#auto-scroll)
       - [Prefetching](#prefetching)
+    - [Scripts](#scripts)
+      - [Script Response Form](#script-response-form)
+        - [Response Fields](#response-fields)
+        - [Form Elements](#form-elements)
+          - [Drop-Down](#drop-down)
+          - [Checkbox](#checkbox)
+          - [Toggle](#toggle)
+          - [Text Input](#text-input)
+    - [Graph](#graph)
+      - [Calculated Values](#calculated-values)
+      - [Formula Operator](#formula-operator)
+        - [Arithmetic Operators](#arithmetic-operators)
+        - [Comparison Operators](#comparison-operators)
+        - [Conditional Operator](#conditional-operator)
+        - [Math Functions](#math-functions)
     - [Freeze Columns](#freeze-columns)
     - [Browse as User](#browse-as-user)
     - [Change Pointer Key](#change-pointer-key)
       - [Limitations](#limitations)
-    - [CSV Export](#csv-export)
+    - [Data Export](#data-export)
+    - [Data Import](#data-import)
   - [AI Agent](#ai-agent)
-    - [Configuration](#configuration)
+    - [Configuration](#configuration-1)
     - [Providers](#providers)
       - [OpenAI](#openai)
   - [Views](#views)
@@ -137,6 +167,7 @@ npx parse-dashboard --config your-config.json
       - [Pointer](#pointer)
       - [Link](#link)
       - [Image](#image)
+      - [Video](#video)
 - [Contributing](#contributing)
 
 # Getting Started
@@ -182,11 +213,11 @@ Parse Dashboard automatically checks the Parse Server version when connecting an
 ### Node.js
 Parse Dashboard is continuously tested with the most recent releases of Node.js to ensure compatibility. We follow the [Node.js Long Term Support plan](https://github.com/nodejs/Release) and only test against versions that are officially supported and have not reached their end-of-life date.
 
-| Version    | Latest Version | End-of-Life | Compatible |
+| Version    | Minimum version | End-of-Life | Compatible |
 |------------|----------------|-------------|------------|
-| Node.js 18 | 18.20.4        | May 2025    | ✅ Yes      |
 | Node.js 20 | 20.18.0        | April 2026  | ✅ Yes      |
 | Node.js 22 | 22.9.0         | April 2027  | ✅ Yes      |
+| Node.js 24 | 24.0.0         | April 2028  | ✅ Yes      |
 
 ## Configuring Parse Dashboard
 
@@ -194,12 +225,12 @@ Parse Dashboard is continuously tested with the most recent releases of Node.js 
 
 This section provides a comprehensive reference for all Parse Dashboard configuration options that can be used in the configuration file, via CLI arguments, or as environment variables.
 
-#### Root Configuration Keys
+#### Root Options
 
 | Key | Type | Required | Default | CLI | Env Variable | Example | Description | Links to Details |
 |-----|------|----------|---------|-----|--------------|---------|-------------|------------------|
-| `apps` | Array&lt;Object&gt; | Yes | - | - | `PARSE_DASHBOARD_CONFIG` | `[{...}]` | Array of Parse Server apps to manage | [App Configuration](#app-configuration-apps-array) |
-| `users` | Array&lt;Object&gt; | No | - | - | - | `[{...}]` | User accounts for dashboard authentication | [User Configuration](#user-configuration-users) |
+| `apps` | Array&lt;Object&gt; | Yes | - | - | `PARSE_DASHBOARD_CONFIG` | `[{...}]` | Array of Parse Server apps to manage | [App Options](#app-options) |
+| `users` | Array&lt;Object&gt; | No | - | - | - | `[{...}]` | User accounts for dashboard authentication | [User Configuration](#user-options) |
 | `useEncryptedPasswords` | Boolean | No | `false` | - | - | `true` | Use bcrypt hashes instead of plain text passwords | - |
 | `trustProxy` | Boolean \| Number | No | `false` | `--trustProxy` | `PARSE_DASHBOARD_TRUST_PROXY` | `1` | Trust X-Forwarded-* headers when behind proxy | - |
 | `iconsFolder` | String | No | - | - | - | `"icons"` | Folder for app icons (relative or absolute path) | - |
@@ -207,7 +238,7 @@ This section provides a comprehensive reference for all Parse Dashboard configur
 | `enableResourceCache` | Boolean | No | `false` | - | - | `true` | Enable browser caching of dashboard resources | - |
 
 
-##### App Configuration (`apps` array)
+##### App Options
 
 | Parameter                  | Type                | Optional | Default   | CLI                  | Env Variable                         | Example                           | Description                                                                                                  |
 | -------------------------- | ------------------- | -------- | --------- | -------------------- | ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -240,7 +271,7 @@ This section provides a comprehensive reference for all Parse Dashboard configur
 | `scripts`                  | Array&lt;Object&gt; | yes      | `[]`      | -                    | -                                    | `[{...}]`                         | Scripts for this app. See [scripts table below](#scripts).                                                   |
 | `infoPanel`                | Array&lt;Object&gt; | yes      | -         | -                    | -                                    | `[{...}]`                         | Info panel config. See [info panel table below](#info-panel).                                                |
 
-##### Column Preference Configuration (`apps[].columnPreference.<className>[]`)
+##### Column Options
 
 Each class in `columnPreference` can have an array of column configurations:
 
@@ -251,7 +282,7 @@ Each class in `columnPreference` can have an array of column configurations:
 | `preventSort`     | Boolean | yes      | `false` | `true`        | Prevent this column from being sortable.           |
 | `filterSortToTop` | Boolean | yes      | `false` | `true`        | Sort this column to the top in filter popup.       |
 
-##### Scripts Configuration (`apps[].scripts[]`)
+##### Script Options
 
 | Parameter                 | Type                                       | Optional | Default | Example         | Description                                       |
 | --------------------------|--------------------------------------------|----------|---------|-----------------|---------------------------------------------------|
@@ -262,7 +293,7 @@ Each class in `columnPreference` can have an array of column configurations:
 | `showConfirmationDialog`  | Boolean                                    | yes      | `false` | `true`          | Show confirmation dialog before execution.        |
 | `confirmationDialogStyle` | String                                     | yes      | `info`  | `critical`      | Dialog style: `info` (blue) or `critical` (red).  |
 
-##### Info Panel Configuration (`apps[].infoPanel[]`)
+##### Info Panel Options
 
 | Parameter           | Type                | Optional | Default | Example            | Description                                   |
 | --------------------|---------------------|----------|---------|--------------------|-----------------------------------------------|
@@ -276,7 +307,7 @@ Each class in `columnPreference` can have an array of column configurations:
 | `prefetchAudio`     | Boolean             | yes      | `true`  | `false`            | Whether to prefetch audio content.            |
 
 
-##### User Configuration (`users[]`)
+##### User Options
 
 | Parameter         | Type                | Optional | Default  | CLI              | Env Variable                    | Example              | Description                            |
 | ------------------|---------------------|----------|----------|------------------|---------------------------------|----------------------|----------------------------------------|
@@ -304,6 +335,7 @@ Each class in `columnPreference` can have an array of column configurations:
 | `cookieSessionSecret` | String  | yes      | Random       | `--cookieSessionSecret` | `PARSE_DASHBOARD_COOKIE_SESSION_SECRET`  | `"secret"`      | Secret for session cookies (for multi-server).   |
 | `cookieSessionMaxAge` | Number  | yes      | Session-only | `--cookieSessionMaxAge` | `PARSE_DASHBOARD_COOKIE_SESSION_MAX_AGE` | `3600`          | Session cookie expiration (seconds).             |
 | `dev`                 | Boolean | yes      | `false`      | `--dev`                 | -                                        | -               | Development mode (**DO NOT use in production**). |
+| `browserControl`      | Boolean | yes      | `false`      | -                       | `PARSE_DASHBOARD_BROWSER_CONTROL`        | `true`          | Enable Browser Control API (dev only, **NEVER in production**). See [Browser Control](Parse-Dashboard/browser-control/). |
 | `config`              | String  | yes      | -            | `--config`              | -                                        | `"config.json"` | Path to JSON configuration file.                 |
 
 #### Helper CLI Commands
@@ -566,109 +598,11 @@ For example:
 
 You can conveniently create a filter definition without having to write it by hand by first saving a filter in the data browser, then exporting the filter definition under *App Settings > Export Class Preferences*.
 
-### Scripts
+### Keyboard Shortcuts
 
-You can specify scripts to execute Cloud Functions with the `scripts` option:
+Configure custom keyboard shortcuts for dashboard actions in **App Settings > Keyboard Shortcuts**.
 
-```json
-"apps": [
-  {
-    "scripts": [
-      {
-        "title": "Delete Account",
-        "classes": ["_User"],
-        "cloudCodeFunction": "deleteAccount",
-        "showConfirmationDialog": true,
-        "confirmationDialogStyle": "critical"
-      }
-    ]
-  }
-]
-```
-
-You can also specify custom fields with the `scrips` option:
-
-```json
-"apps": [
-  {
-    "scripts": [
-      {
-        "title": "Delete account",
-        "classes": [
-          {
-            "name": "_User",
-            "fields": [
-              { "name": "createdAt", "validator": "value => value > new Date(\"2025\")" }
-            ]
-          }
-        ],
-        "cloudCodeFunction": "deleteAccount"
-      }
-    ]
-  }
-]
-
-```
-
-Next, define the Cloud Function in Parse Server that will be called. The object that has been selected in the data browser will be made available as a request parameter:
-
-```js
-Parse.Cloud.define('deleteAccount', async (req) => {
-  req.params.object.set('deleted', true);
-  await req.params.object.save(null, {useMasterKey: true});
-}, {
-  requireMaster: true
-});
-```
-
-The field which the script was invoked on can be accessed by `selectedField`:
-
-```js
-Parse.Cloud.define('deleteAccount', async (req) => {
-  if (req.params.selectedField !== 'objectId') {
-    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, 'Deleting accounts is only available on the objectId field.');
-  }
-  req.params.object.set('deleted', true);
-  await req.params.object.save(null, {useMasterKey: true});
-}, {
-  requireMaster: true
-});
-```
-
-⚠️ Depending on your Parse Server version you may need to set the Parse Server option `encodeParseObjectInCloudFunction` to `true` so that the selected object in the data browser is made available in the Cloud Function as an instance of `Parse.Object`. If the option is not set, is set to `false`, or you are using an older version of Parse Server, the object is made available as a plain JavaScript object and needs to be converted from a JSON object to a `Parse.Object` instance with `req.params.object = Parse.Object.fromJSON(req.params.object);`, before you can call any `Parse.Object` properties and methods on it.
-
-For older versions of Parse Server:
-
-<details>
-<summary>Parse Server &gt;=4.4.0 &lt;6.2.0</summary>
-
-```js
-Parse.Cloud.define('deleteAccount', async (req) => {
-  req.params.object = Parse.Object.fromJSON(req.params.object);
-  req.params.object.set('deleted', true);
-  await req.params.object.save(null, {useMasterKey: true});
-}, {
-  requireMaster: true
-});
-```
-
-</details>
-
-<details>
-<summary>Parse Server &gt;=2.1.4 &lt;4.4.0</summary>
-
-```js
-Parse.Cloud.define('deleteAccount', async (req) => {
-  if (!req.master || !req.params.object) {
-    throw 'Unauthorized';
-  }
-  req.params.object = Parse.Object.fromJSON(req.params.object);
-  req.params.object.set('deleted', true);
-  await req.params.object.save(null, {useMasterKey: true});
-});
-```
-
-</details>
+Delete a shortcut key to disable the shortcut.
 
 ### Resource Cache
 
@@ -757,6 +691,47 @@ app.use('/dashboard', dashboard);
 var httpServer = require('http').createServer(app);
 httpServer.listen(4040);
 ```
+
+## Browser Control API (Development Only)
+
+The Browser Control API allows AI agents to interact with Parse Dashboard through an automated browser during feature implementation and debugging. This is a **development-only tool** designed for real-time verification during active development.
+
+### ⚠️ Security Requirements
+
+The Browser Control API uses **defense-in-depth** with multiple security layers:
+
+1. **Config-level opt-in** (Required)
+   - Must set `"browserControl": true` in your config file
+   - Prevents accidental enablement via environment variables
+
+2. **Production environment blocking**
+   - Automatically disabled when `NODE_ENV=production`
+   - Cannot be overridden, even with explicit flags
+
+3. **Development-only deployment**
+   - Only accessible in `dev` mode or with `PARSE_DASHBOARD_BROWSER_CONTROL=true`
+
+### Configuration
+
+Add to your `parse-dashboard-config.json`:
+
+```json
+{
+  "browserControl": true,
+  "apps": [...],
+  "users": [...]
+}
+```
+
+**⚠️ CRITICAL**: Never deploy with `browserControl: true` in production. Remove this field or set to `false` before deploying.
+
+### Usage
+
+```bash
+npm run browser-control
+```
+
+For complete documentation, API reference, and examples, see the [Browser Control README](Parse-Dashboard/browser-control/README.md).
 
 # Deploying Parse Dashboard
 
@@ -1419,6 +1394,26 @@ Example:
 }
 ```
 
+#### Auto-Scroll
+
+▶️ *Core > Browser > Settings > Info Panel > Auto-scroll*
+
+The info panel supports automatic scrolling, which is useful for hands-free browsing of panel content, for example to conveniently browse through large sets of data.
+
+**How to use:**
+
+1. Enable auto-scroll via *Settings > Info Panel > Auto-scroll*.
+2. Hold the **Command** (⌘) key while scrolling in the panel to record the scroll amount.
+3. Release the Command key after pausing for the desired interval between scrolls.
+4. Auto-scrolling begins automatically, repeating the recorded scroll amount and pause interval.
+
+**Controls:**
+
+- **Escape key**: Stop auto-scrolling.
+- **Command key**: Stop current auto-scroll and start recording a new scroll pattern.
+- **Manual scroll**: Temporarily pauses auto-scrolling, which resumes after inactivity.
+- **Auto-scroll button**: Click the highlighted "Auto-scroll" button in the toolbar to stop.
+
 #### Prefetching
 
 To reduce the time for info panel data to appear, data can be prefetched.
@@ -1434,6 +1429,330 @@ To reduce the time for info panel data to appear, data can be prefetched.
 Prefetching is particularly useful when navigating through lists of objects. To optimize performance and avoid unnecessary data loading, prefetching is triggered only after the user has moved through 3 consecutive rows using the keyboard down-arrow key or by mouse click.
 
 When `prefetchObjects` is enabled, media content (images, videos, and audio) in the info panel can also be prefetched to improve loading performance. By default, all media types are prefetched, but you can selectively disable prefetching for specific media types using the `prefetchImage`, `prefetchVideo`, and `prefetchAudio` options.
+
+### Scripts
+
+You can specify scripts to execute Cloud Functions with the `scripts` option:
+
+```json
+"apps": [
+  {
+    "scripts": [
+      {
+        "title": "Delete Account",
+        "classes": ["_User"],
+        "cloudCodeFunction": "deleteAccount",
+        "showConfirmationDialog": true,
+        "confirmationDialogStyle": "critical"
+      }
+    ]
+  }
+]
+```
+
+You can also specify custom fields with the `scripts` option:
+
+```json
+"apps": [
+  {
+    "scripts": [
+      {
+        "title": "Delete account",
+        "classes": [
+          {
+            "name": "_User",
+            "fields": [
+              { "name": "createdAt", "validator": "value => value > new Date(\"2025\")" }
+            ]
+          }
+        ],
+        "cloudCodeFunction": "deleteAccount"
+      }
+    ]
+  }
+]
+
+```
+
+Next, define the Cloud Function in Parse Server that will be called. The object that has been selected in the data browser will be made available as a request parameter:
+
+```js
+Parse.Cloud.define('deleteAccount', async (req) => {
+  req.params.object.set('deleted', true);
+  await req.params.object.save(null, {useMasterKey: true});
+}, {
+  requireMaster: true
+});
+```
+
+The field which the script was invoked on can be accessed by `selectedField`:
+
+```js
+Parse.Cloud.define('deleteAccount', async (req) => {
+  if (req.params.selectedField !== 'objectId') {
+    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, 'Deleting accounts is only available on the objectId field.');
+  }
+  req.params.object.set('deleted', true);
+  await req.params.object.save(null, {useMasterKey: true});
+}, {
+  requireMaster: true
+});
+```
+
+⚠️ Depending on your Parse Server version you may need to set the Parse Server option `encodeParseObjectInCloudFunction` to `true` so that the selected object in the data browser is made available in the Cloud Function as an instance of `Parse.Object`. If the option is not set, is set to `false`, or you are using an older version of Parse Server, the object is made available as a plain JavaScript object and needs to be converted from a JSON object to a `Parse.Object` instance with `req.params.object = Parse.Object.fromJSON(req.params.object);`, before you can call any `Parse.Object` properties and methods on it.
+
+For older versions of Parse Server:
+
+<details>
+<summary>Parse Server &gt;=4.4.0 &lt;6.2.0</summary>
+
+```js
+Parse.Cloud.define('deleteAccount', async (req) => {
+  req.params.object = Parse.Object.fromJSON(req.params.object);
+  req.params.object.set('deleted', true);
+  await req.params.object.save(null, {useMasterKey: true});
+}, {
+  requireMaster: true
+});
+```
+
+</details>
+
+<details>
+<summary>Parse Server &gt;=2.1.4 &lt;4.4.0</summary>
+
+```js
+Parse.Cloud.define('deleteAccount', async (req) => {
+  if (!req.master || !req.params.object) {
+    throw 'Unauthorized';
+  }
+  req.params.object = Parse.Object.fromJSON(req.params.object);
+  req.params.object.set('deleted', true);
+  await req.params.object.save(null, {useMasterKey: true});
+});
+```
+
+</details>
+
+#### Script Response Form
+
+A Cloud Function invoked by a script can return a structured response that shows a modal dialog with form elements. When the user submits the form, the values are sent to a callback Cloud Function specified in the response.
+
+Return a `ScriptResponse` from the Cloud Function:
+
+```js
+Parse.Cloud.define('assignRole', async (req) => {
+  return {
+    __type: 'ScriptResponse',
+    payload: {
+      requestId: '123-456-789'
+    },
+    form: {
+      title: 'Assign Role',
+      icon: 'gears',
+      cloudCodeFunction: 'assignRoleCallback',
+      elements: [
+        {
+          element: 'dropDown',
+          name: 'role',
+          label: 'Role',
+          items: [
+            { title: 'Admin', value: 'admin' },
+            { title: 'User', value: 'user' }
+          ]
+        }
+      ]
+    }
+  };
+}, {
+  requireMaster: true
+});
+```
+
+Then define the callback Cloud Function that receives the form data:
+
+```js
+Parse.Cloud.define('assignRoleCallback', async (req) => {
+  const { object, payload, formData } = req.params;
+  const role = formData.role;
+  object.set('role', role);
+  await object.save(null, { useMasterKey: true });
+  return `Assigned role "${role}" to ${object.id} (request ${payload.requestId}).`;
+}, {
+  requireMaster: true
+});
+```
+
+> [!NOTE]
+> When executing a script on multiple selected rows, the Cloud Function is called for the first object. If the response is a `ScriptResponse`, the modal is shown once. On submission, the callback Cloud Function is called for all selected objects.
+
+##### Response Fields
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `__type` | `String` | No | - | Must be `"ScriptResponse"` to indicate a structured response. |
+| `payload` | `Object` | Yes | - | Pass-through data forwarded to the callback Cloud Function. |
+| `form.title` | `String` | Yes | `"Script"` | The modal title. |
+| `form.icon` | `String` | Yes | `"gears"` | The modal icon. |
+| `form.cloudCodeFunction` | `String` | Yes | Script `cloudCodeFunction` | The callback Cloud Function to invoke on form submission. |
+| `form.elements` | `Array` | No | - | The form elements to display in the modal. |
+
+##### Form Elements
+
+| Parameter | Value  | Optional | Description                      |
+|-----------|--------|----------|----------------------------------|
+|  `elements` | `Array` | No | The form elements. Elements are rendered in the order they are defined. |
+
+###### Drop-Down
+
+A drop-down to select a single item from a list.
+
+| Parameter | Value  | Optional | Description                      |
+|-----------|--------|----------|----------------------------------|
+| `element`    | `String` | No       | Must be `"dropDown"`.         |
+| `name`       | `String` | No       | The key used in `formData`.   |
+| `label`     | `String` | No       | The display label shown next to the dropdown. |
+| `description` | `String` | Yes      | Secondary text below the label. |
+|  `items` | `Array` | No | The selectable options. |
+|  `items[].title` | `String` | No | The display text of the option. |
+|  `items[].value` | `String` | No | The value of the option. |
+
+###### Checkbox
+
+A checkbox for boolean input.
+
+| Parameter | Value  | Optional | Default | Description                      |
+|-----------|--------|----------|---------|----------------------------------|
+| `element`     | `String` | No       | -       | Must be `"checkbox"`.         |
+| `name`        | `String` | No       | -       | The key used in `formData`.   |
+| `label`       | `String` | No       | -       | The display label.            |
+| `description` | `String` | Yes      | -       | Secondary text below the label. |
+| `default`     | `Boolean`| Yes      | `false` | The initial checked state.    |
+
+###### Toggle
+
+A toggle switch for boolean input.
+
+| Parameter    | Value    | Optional | Default | Description                      |
+|-------------|----------|----------|---------|----------------------------------|
+| `element`      | `String` | No       | -       | Must be `"toggle"`.           |
+| `name`         | `String` | No       | -       | The key used in `formData`.   |
+| `label`        | `String` | No       | -       | The display label.            |
+| `description`  | `String` | Yes      | -       | Secondary text below the label. |
+| `default`      | `Boolean`| Yes      | `false` | The initial toggle state.     |
+| `labelTrue`    | `String` | Yes      | `"Yes"` | Label for the `true` side.    |
+| `labelFalse`   | `String` | Yes      | `"No"`  | Label for the `false` side.   |
+
+###### Text Input
+
+A single-line text input.
+
+| Parameter    | Value    | Optional | Default | Description                      |
+|-------------|----------|----------|---------|----------------------------------|
+| `element`      | `String` | No       | -       | Must be `"textInput"`.        |
+| `name`         | `String` | No       | -       | The key used in `formData`.   |
+| `label`        | `String` | No       | -       | The display label.            |
+| `description`  | `String` | Yes      | -       | Secondary text below the label. |
+| `placeholder`  | `String` | Yes      | `""`    | Placeholder text.             |
+| `default`      | `String` | Yes      | `""`    | The initial value.            |
+
+### Graph
+
+▶️ *Core > Browser > Graph*
+
+The data browser includes a graph feature that allows you to visualize data in pie charts, bar charts, or line charts. You can configure calculated values to display aggregated or computed data.
+
+#### Calculated Values
+
+Calculated values allow you to derive new values from your data. The following operators are available:
+
+| Operator | Description |
+|----------|-------------|
+| Sum | Sum of all values in the selected field |
+| Percent | Percentage of numerator relative to denominator |
+| Average | Average of all values in the selected field |
+| Difference | Difference between two fields |
+| Ratio | Ratio of numerator to denominator |
+| Formula | Custom formula using mathematical expressions |
+
+**Naming Rules:**
+Calculated value names must follow Parse field naming conventions:
+- Start with a letter or underscore
+- Contain only letters, numbers, and underscores
+- No spaces or special characters
+
+#### Formula Operator
+
+The Formula operator allows you to define custom calculations using a safe expression syntax. You can reference field values directly by their names.
+
+**Syntax:**
+- Use field names directly as variables (e.g., `price`, `quantity`)
+- Reference previous calculated values by name (e.g., `profit`, `total_cost`)
+- Optionally prefix field names with `$` (e.g., `$price`, `$quantity`)
+
+> [!TIP]
+> If a field name conflicts with a reserved function name (like `round`, `min`, `max`), prefix it with `$` to reference the field. For example, use `$round` to reference a field named "round": `round($round, 2)`.
+
+**Example formulas:**
+```
+price * quantity                              # Multiply two fields
+round(revenue / cost * 100, 2)                # Calculate percentage with rounding
+max(value, 0)                                 # Floor at 0 (no negatives)
+min(value, 100)                               # Cap at 100
+score > 50 ? score : 0                        # Conditional logic
+round((revenue - cost) / revenue * 100, 1)    # Profit margin calculation
+```
+
+##### Arithmetic Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `+` | Addition | `price + tax` |
+| `-` | Subtraction | `revenue - cost` |
+| `*` | Multiplication | `price * quantity` |
+| `/` | Division | `total / count` |
+| `%` | Modulo (remainder) | `value % 10` |
+| `^` | Power | `base ^ 2` |
+| `()` | Grouping | `(a + b) * c` |
+
+##### Comparison Operators
+
+Comparison operators return `1` for true and `0` for false.
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `>` | Greater than | `value > 100` |
+| `<` | Less than | `value < 0` |
+| `>=` | Greater than or equal | `value >= 50` |
+| `<=` | Less than or equal | `value <= 100` |
+| `==` | Equal | `status == 1` |
+| `!=` | Not equal | `status != 0` |
+
+##### Conditional Operator
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `? :` | Ternary conditional | `value > 0 ? value : 0` |
+
+##### Math Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `round(value)` | Round to nearest integer | `round(3.7)` → `4` |
+| `round(value, decimals)` | Round to decimal places | `round(3.14159, 2)` → `3.14` |
+| `floor(value)` | Round down | `floor(3.7)` → `3` |
+| `ceil(value)` | Round up | `ceil(3.2)` → `4` |
+| `trunc(value)` | Truncate decimal part | `trunc(3.7)` → `3` |
+| `abs(value)` | Absolute value | `abs(-5)` → `5` |
+| `sign(value)` | Sign of number (-1, 0, 1) | `sign(-5)` → `-1` |
+| `min(a, b, ...)` | Minimum value | `min(10, 5, 8)` → `5` |
+| `max(a, b, ...)` | Maximum value | `max(10, 5, 8)` → `10` |
+| `sqrt(value)` | Square root | `sqrt(16)` → `4` |
+| `cbrt(value)` | Cube root | `cbrt(27)` → `3` |
+| `exp(value)` | Exponential (e^x) | `exp(1)` → `2.718...` |
+| `log(value)` | Natural logarithm | `log(2.718)` → `1` |
+| `log10(value)` | Base-10 logarithm | `log10(100)` → `2` |
+| `log2(value)` | Base-2 logarithm | `log2(8)` → `3` |
 
 ### Freeze Columns
 
@@ -1463,13 +1782,34 @@ This feature allows you to change how a pointer is represented in the browser. B
 
 > ⚠️ For each custom pointer key in each row, a server request is triggered to resolve the custom pointer key. For example, if the browser shows a class with 50 rows and each row contains 3 custom pointer keys, a total of 150 separate server requests are triggered.
 
-### CSV Export
+### Data Export
 
 ▶️ *Core > Browser > Export*
 
 This feature will take either selected rows or all rows of an individual class and saves them to a CSV file, which is then downloaded. CSV headers are added to the top of the file matching the column names.
 
 > ⚠️ There is currently a 10,000 row limit when exporting all data. If more than 10,000 rows are present in the class, the CSV file will only contain 10,000 rows.
+
+### Data Import
+
+▶️ *Core > Browser > Data > Import*
+
+Import data into a class from a JSON or CSV file. The file format is the same as the export format, so you can export data from one class and import it into another.
+
+- **JSON** — An array of objects, e.g. `[{ "name": "Alice", "score": 100 }, ...]`. Typed fields such as `Pointer`, `Date`, `GeoPoint`, and `File` are expected in Parse `_toFullJSON()` format.
+- **CSV** — Comma-separated with a header row. Column types are reconstructed from the class schema.
+
+The import dialog provides the following options:
+
+| Option | Description |
+|---|---|
+| Preserve object IDs | Use `objectId` values from the file instead of generating new ones. Requires the server option `allowCustomObjectId`. |
+| Preserve timestamps | Use `createdAt` / `updatedAt` from the file. Requires `apps[].maintenanceKey` in the dashboard config. |
+| Duplicate handling | When preserving object IDs: overwrite, skip, or fail on duplicates. |
+| Unknown columns | Auto-create new columns, ignore them, or fail on unknown columns. |
+| Continue on errors | Skip failing rows and continue, or stop on the first error. |
+
+> ⚠️ Disabling *Preserve object IDs* means new object IDs are generated. Any `Pointer` or `Relation` fields that reference objects within the same import file will not resolve correctly.
 
 ## AI Agent
 
@@ -1669,6 +2009,24 @@ Example:
 
 > [!Warning]
 > The URL will be directly invoked by the browser when trying to display the image. For security reasons, make sure you either control the full URL, including the image file name, or sanitize the URL before returning it to the dashboard. URLs containing `javascript:` or `<script` will be blocked automatically and replaced with a placeholder.
+
+#### Video
+
+Videos are rendered directly in the output table with a `<video>` tag that includes playback controls. The content mode is always "scale to fit", meaning that the video maintains its aspect ratio within the specified dimensions.
+
+Example:
+
+```json
+{
+  "__type": "Video",
+  "url": "https://example.com/video.mp4",
+  "width": "320",
+  "height": "240"
+}
+```
+
+> [!Warning]
+> The URL will be directly invoked by the browser when trying to display the video. For security reasons, make sure you either control the full URL, including the video file name, or sanitize the URL before returning it to the dashboard. URLs containing `javascript:` or `<script` will be blocked automatically and replaced with a placeholder.
 
 # Contributing
 

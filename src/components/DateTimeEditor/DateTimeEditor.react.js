@@ -27,10 +27,6 @@ export default class DateTimeEditor extends React.Component {
     this.editorRef = React.createRef();
   }
 
-  componentWillReceiveProps(props) {
-    this.setState({ value: props.value, text: props.value.toISOString() });
-  }
-
   componentDidMount() {
     document.body.addEventListener('click', this.checkExternalClick);
     document.body.addEventListener('touchend', this.checkExternalClick);
@@ -85,9 +81,11 @@ export default class DateTimeEditor extends React.Component {
         text: this.props.value.toISOString(),
       });
     } else {
-      if (this.state.text.endsWith('Z')) {
+      if (this.state.text.endsWith('Z') || this.state.text.endsWith('UTC')) {
+        // Timezone is explicit; the parsed Date is already correct.
         this.setState({ value: date });
       } else {
+        // No timezone indicator; treat input as local time.
         const utc = new Date(
           Date.UTC(
             date.getFullYear(),
