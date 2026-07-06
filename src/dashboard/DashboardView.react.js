@@ -368,6 +368,8 @@ export default class DashboardView extends React.Component {
     const currentRoute = this.getCurrentRoute();
     const canRoute = validRoutes.includes(currentRoute);
 
+    console.log('🔍 DashboardView route check:', { currentRoute, validRoutes, canRoute, allSectionsCount: allSections.length });
+
     if (!canRoute) {
       content = (
         <div className={styles.empty}>
