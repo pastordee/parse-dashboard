@@ -114,17 +114,20 @@ class CustomAnalyticsPluginComponent extends DashboardView {
     // Handle different plugin types
     if (plugin.type === 'remote-html' || plugin.type === 'iframe') {
       return (
-        <iframe
-          src={plugin.url}
-          style={{
-            width: '100%',
-            height: plugin.height || '800px',
-            border: 'none',
-            borderRadius: '4px',
-          }}
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-          title={plugin.label}
-        />
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <iframe
+            src={plugin.url}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              borderRadius: '4px',
+              flex: 1,
+            }}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            title={plugin.label}
+          />
+        </div>
       );
     }
 
