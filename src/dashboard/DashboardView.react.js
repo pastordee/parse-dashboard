@@ -34,7 +34,7 @@ export default class DashboardView extends React.Component {
 
   onRouteChanged() {
     const path = this.props.location?.pathname ?? window.location.pathname;
-    const route = path.split('apps')[1]?.split('/')[2] || '';
+    const route = path.split('apps')[1]?.split('/')[1] || '';
 
     if (route !== this.state.route) {
       this.setState({ route });
@@ -47,7 +47,7 @@ export default class DashboardView extends React.Component {
       return this.state.route;
     }
     const path = this.props.location?.pathname ?? window.location.pathname;
-    return path.split('apps')[1]?.split('/')[2] || '';
+    return path.split('apps')[1]?.split('/')[1] || '';
   }
 
   render() {
@@ -363,7 +363,7 @@ export default class DashboardView extends React.Component {
     );
 
     let content = <div className={styles.content}>{this.renderContent()}</div>;
-    const allSections = [...coreSubsections, ...pushSubsections, ...settingsSections];
+    const allSections = [...coreSubsections, ...pushSubsections, ...analyticsSidebarSections, ...settingsSections];
     const validRoutes = allSections.map(({ link }) => link.split('/')[1]);
     const currentRoute = this.getCurrentRoute();
     const canRoute = validRoutes.includes(currentRoute);
