@@ -39,19 +39,48 @@ class CustomAnalyticsPluginComponent extends DashboardView {
       const plugins = currentApp?.analytics?.customPlugins || [];
       const plugin = plugins.find(p => p.id === pluginId);
 
-      if (!plugin) {
+      if (plugin) {
         this.setState({
-          error: `Plugin "${pluginId}" not found`,
+          plugin,
+          subsection: plugin.label,
           loading: false
         });
         return;
       }
 
-      this.setState({
-        plugin,
-        subsection: plugin.label,
-        loading: false
-      });
+      // If not found in AppsManager, try fetching from /analytics-config endpoint
+      if (this.context?.serverURL) {
+        const rootURL = this.context.serverURL.replace(/\/parse$/, '');
+        fetch(`${rootURL}/analytics-config`)
+          .then(res => res.json())
+          .then(data => {
+            const fetchedPlugins = data?.analytics?.customPlugins || [];
+            const foundPlugin = fetchedPlugins.find(p => p.id === pluginId);
+            if (foundPlugin) {
+              this.setState({
+                plugin: foundPlugin,
+                subsection: foundPlugin.label,
+                loading: false
+              });
+            } else {
+              this.setState({
+                error: `Plugin "${pluginId}" not found`,
+                loading: false
+              });
+            }
+          })
+          .catch(err => {
+            this.setState({
+              error: `Failed to load plugin: ${err.message}`,
+              loading: false
+            });
+          });
+      } else {
+        this.setState({
+          error: `Plugin "${pluginId}" not found`,
+          loading: false
+        });
+      }
     } catch (error) {
       this.setState({
         error: error.message,
