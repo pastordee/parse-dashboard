@@ -1184,7 +1184,7 @@ You have direct access to the Parse database through function calls, so you can 
     });
 
     // Analytics dashboard routes - Only serve custom analytics if analyticsPage is configured
-    app.get('/apps/:appId/analytics_dashboard', function(req, res) {
+    app.get('/apps/:appId/analytics_dashboard', function(req, res, next) {
       console.log('🎯 Analytics dashboard route hit:', req.path, req.url);
       
       if (users && (!req.user || !req.user.isAuthenticated)) {
@@ -1235,11 +1235,12 @@ You have direct access to the Parse database through function calls, so you can 
       
       // No custom analytics page configured or file not found - let React component handle it
       console.log('🔄 No custom analyticsPage configured, falling through to React component');
-      return; // This will fall through to the catch-all route for React routing
+      // A bare return never answered: the page hung on reload or a direct link.
+      return next(); // on to the catch-all route for React routing
     });
 
     // Alternative analytics dashboard route (with slash instead of underscore)
-    app.get('/apps/:appId/analytics/dashboard', function(req, res) {
+    app.get('/apps/:appId/analytics/dashboard', function(req, res, next) {
       console.log('🎯 Alternative analytics route hit:', req.path, req.url);
       
       if (users && (!req.user || !req.user.isAuthenticated)) {
@@ -1290,7 +1291,8 @@ You have direct access to the Parse database through function calls, so you can 
       
       // No custom analytics page configured or file not found - let React component handle it
       console.log('🔄 No custom analyticsPage configured, falling through to React component');
-      return; // This will fall through to the catch-all route for React routing
+      // A bare return never answered: the page hung on reload or a direct link.
+      return next(); // on to the catch-all route for React routing
     });
 
     // For every other request, go to index.html. Let client-side handle the rest.
