@@ -326,6 +326,14 @@ export default class DashboardView extends React.Component {
       });
     }*/
 
+    const adminSubsections = [
+      { name: 'Social posts', link: '/admin/social' },
+      { name: 'Reports', link: '/admin/reports' },
+      { name: 'Inbox', link: '/admin/inbox' },
+      { name: 'Audit log', link: '/admin/audit' },
+      { name: 'Admins', link: '/admin/admins' },
+    ];
+
     const appSidebarSections = [];
 
     if (coreSubsections.length > 0) {
@@ -356,6 +364,15 @@ export default class DashboardView extends React.Component {
       });
     }
 
+    // What the admin phone app (pc_server_app) does, in the dashboard
+    // (2026-09-27). Uses the same cloud/admin functions with the master key.
+    appSidebarSections.push({
+      name: 'Admin',
+      icon: 'keys-solid',
+      link: '/admin',
+      subsections: adminSubsections,
+    });
+
     if (settingsSections.length > 0) {
       appSidebarSections.push({
         name: 'App Settings',
@@ -381,7 +398,7 @@ export default class DashboardView extends React.Component {
     );
 
     let content = <div className={styles.content}>{this.renderContent()}</div>;
-    const allSections = [...coreSubsections, ...pushSubsections, ...analyticsSidebarSections, ...settingsSections];
+    const allSections = [...coreSubsections, ...pushSubsections, ...analyticsSidebarSections, ...adminSubsections, ...settingsSections];
     const validRoutes = allSections.map(({ link }) => link.split('/')[1]);
     const currentRoute = this.getCurrentRoute();
     const canRoute = validRoutes.includes(currentRoute);

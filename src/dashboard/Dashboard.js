@@ -13,6 +13,11 @@ import AnalyticsOverview from './Analytics/Overview/Overview.react';
 import LiveDashboard from './Analytics/Live/LiveDashboard.react';
 import WebsiteAnalytics from './Analytics/Website/WebsiteAnalytics.react';
 import Announcements from './Push/Announcements/Announcements.react';
+import SocialPosts from './Admin/SocialPosts.react';
+import Reports from './Admin/Reports.react';
+import Inbox from './Admin/Inbox.react';
+import AuditLog from './Admin/AuditLog.react';
+import Admins from './Admin/Admins.react';
 import ApiConsole from './Data/ApiConsole/ApiConsole.react';
 import AppData from './AppData.react';
 import AppsIndex from './Apps/AppsIndex.react';
@@ -328,6 +333,13 @@ export default class Dashboard extends React.Component {
         <Route path="push/audiences" element={<PushAudiencesIndex />} />
         <Route path="push/new" element={<PushNew />} />
         <Route path="push/announcements" element={<Announcements />} />
+
+        <Route path="admin" element={<Navigate replace to="social" />} />
+        <Route path="admin/social" element={<SocialPosts />} />
+        <Route path="admin/reports" element={<Reports />} />
+        <Route path="admin/inbox" element={<Inbox />} />
+        <Route path="admin/audit" element={<AuditLog />} />
+        <Route path="admin/admins" element={<Admins />} />
         <Route path="push/:pushId" element={<PushDetails />} />
 
         {/* Unused routes... */}

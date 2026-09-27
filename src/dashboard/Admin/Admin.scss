@@ -1,0 +1,279 @@
+// Created: 2026-09-27
+// Shared look for the Admin section (Social posts, Reports, Inbox, Audit, Admins).
+@import 'stylesheets/globals.scss';
+
+$ink: #2c3e50;
+$muted: #7f8c8d;
+$line: #e5e7eb;
+$blue: #169cee;
+$green: #3c9d31;
+$amber: #e0930b;
+$red: #e74c3c;
+
+// The dashboard's title bar is fixed and 96px tall: start below it.
+.page {
+  padding: 116px 20px 40px;
+  background: #f5f6fa;
+  min-height: 100vh;
+  color: $ink;
+  font-size: 14px;
+}
+
+// Toolbar's actions slot sits 4px down from the top of the 96px bar.
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 88px;
+
+  select {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+  }
+}
+
+.notice {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: #fff8e6;
+  color: #8a5a00;
+}
+
+.error {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: #fdecea;
+  color: #b03a2e;
+}
+
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  max-width: 420px;
+  background: $ink;
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  white-space: pre-line;
+}
+
+.toastBad { background: #b03a2e; }
+
+.hint {
+  color: $muted;
+  font-size: 12.5px;
+  margin: 0 0 16px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: $muted;
+  margin: 24px 0 10px;
+}
+
+.empty {
+  color: $muted;
+  padding: 30px 0;
+  text-align: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.meta {
+  color: $muted;
+  font-size: 12.5px;
+}
+
+.pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #eef0f4;
+  color: $muted;
+}
+
+.pillBlue { background: rgba(22, 156, 238, 0.12); color: #0f7cbf; }
+.pillGreen { background: rgba(60, 157, 49, 0.12); color: $green; }
+.pillAmber { background: rgba(224, 147, 11, 0.14); color: #a86b00; }
+.pillRed { background: rgba(231, 76, 60, 0.12); color: #c0392b; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.linkBtn {
+  cursor: pointer;
+  color: $blue;
+  font-weight: 600;
+  font-size: 13px;
+  background: none;
+  border: 0;
+  padding: 0;
+
+  &:disabled { color: $muted; cursor: default; }
+}
+
+.danger { color: $red !important; }
+
+// ── Social posts ──
+.post {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .post { grid-template-columns: 1fr; }
+}
+
+.thumb {
+  width: 180px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #eef0f4;
+  display: block;
+}
+
+.caption {
+  margin-bottom: 10px;
+
+  label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 700;
+    color: $muted;
+    margin-bottom: 4px;
+  }
+
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.45;
+    color: $ink;
+    border: 1px solid #d9dce3;
+    border-radius: 6px;
+    padding: 8px 10px;
+    resize: vertical;
+    min-height: 70px;
+
+    &:disabled { background: #f8f9fb; }
+  }
+}
+
+.over { color: $red; }
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 13px;
+
+  a { color: $blue; }
+}
+
+// ── Tables (Audit, Admins, Reports) ──
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $muted;
+    padding: 10px 14px;
+    border-bottom: 1px solid $line;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f0f1f5;
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+}
+
+.mono {
+  font-family: Menlo, Monaco, monospace;
+  font-size: 12px;
+  color: $muted;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dim td { opacity: 0.55; }
+
+.unread { font-weight: 700; }
+
+.body {
+  white-space: pre-wrap;
+  color: $ink;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  input {
+    flex: 1;
+    max-width: 360px;
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid #d9dce3;
+    border-radius: 6px;
+  }
+}
