@@ -13,6 +13,7 @@ import AnalyticsOverview from './Analytics/Overview/Overview.react';
 import LiveDashboard from './Analytics/Live/LiveDashboard.react';
 import WebsiteAnalytics from './Analytics/Website/WebsiteAnalytics.react';
 import Announcements from './Push/Announcements/Announcements.react';
+import CloudFunctions from './Settings/CloudFunctions/CloudFunctions.react';
 import SocialPosts from './Admin/SocialPosts.react';
 import Reports from './Admin/Reports.react';
 import Inbox from './Admin/Inbox.react';
@@ -250,6 +251,7 @@ export default class Dashboard extends React.Component {
         <Route path="security" element={<Security />} />
         <Route path="keyboard-shortcuts" element={<KeyboardShortcutsSettings />} />
         <Route path="cloud-config" element={<CloudConfigSettings />} />
+        <Route path="cloud-functions" element={<CloudFunctions />} />
         <Route path="data-browser" element={<DataBrowserSettings />} />
         <Route path="general" element={<GeneralSettings />} />
         <Route path="keys" element={<SecuritySettings />} />

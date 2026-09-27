@@ -277,6 +277,11 @@ export default class DashboardView extends React.Component {
         link: '/settings/cloud-config',
       },
       {
+        // Every function / job / trigger on the server, read-only (2026-09-27).
+        name: 'Cloud functions',
+        link: '/settings/cloud-functions',
+      },
+      {
         name: 'Keyboard Shortcuts',
         link: '/settings/keyboard-shortcuts',
       },
