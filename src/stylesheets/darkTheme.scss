@@ -1,0 +1,339 @@
+// Created: 2026-09-27
+// Dark theme for the whole dashboard, applied under html[data-theme="dark"]
+// (lib/theme.js). One place instead of 148 stylesheets: component classes are
+// readable (File__class__hash, webpack/base.config.js), so they're targeted
+// with [class*="File__class"] selectors. Written from an automated check that
+// lists components still drawing light backgrounds or dark text.
+//
+// The sidebar and the title bar were already dark and are left alone.
+
+$dk-bg: #12161f;       // page
+$dk-surface: #1b2130;  // cards, panels, tables
+$dk-surface2: #232a3b; // headers, inputs, stripes
+$dk-hover: #2a3246;
+$dk-border: #2f374a;
+$dk-text: #e6e9ef;
+$dk-muted: #9aa3b5;
+$dk-link: #5fb3f5;
+
+// "Any element whose class comes from File.scss's .name".
+@function c($name) {
+  @return '[class*="#{$name}__"]';
+}
+
+:global {
+  html[data-theme='dark'] {
+    background: $dk-bg;
+    color-scheme: dark;
+
+    body {
+      background: $dk-bg;
+      color: $dk-text;
+    }
+
+    // ── Sidebar: the bright blues become deep navy ─────────────────────────
+    // Same structure and contrast as light mode, just calmer: the selected
+    // section stays clearly blue so you can still see where you are.
+    #{c('Sidebar__sidebar')},
+    #{c('Sidebar__section')},
+    #{c('Sidebar__menuSection')} {
+      background: #141a26 !important;
+    }
+
+    #{c('Sidebar__header')},
+    #{c('Sidebar__footer')} {
+      background: #0d1119 !important;
+    }
+
+    #{c('Sidebar__currentApp')},
+    #{c('Sidebar__menuRow')},
+    #{c('Sidebar__appsMenu')},
+    #{c('Sidebar__pinContainer')},
+    #{c('Sidebar__action')} {
+      background: #1a2231 !important;
+    }
+
+    #{c('Sidebar__section_header')}:hover,
+    #{c('Sidebar__action')}:hover,
+    #{c('Sidebar__appsMenu')} #{c('Sidebar__menuRow')}:hover {
+      background: #222b3d !important;
+    }
+
+    #{c('Sidebar__active')},
+    #{c('Sidebar__active')} #{c('Sidebar__section_header')},
+    #{c('Sidebar__active')} #{c('Sidebar__section_header')}:hover {
+      background: #1f4b78 !important;
+    }
+
+    #{c('Sidebar__section_contents')} {
+      background: #182030 !important;
+    }
+
+    #{c('Sidebar__popup')} {
+      background: $dk-surface !important;
+      color: $dk-text;
+    }
+
+    // ── Page backgrounds ──────────────────────────────────────────────────
+    // #browser_mount is the app's outer container (plain id, global style).
+    #browser_mount,
+    #{c('DashboardView__content')},
+    #{c('Admin__page')},
+    #{c('WebsiteAnalytics__page')},
+    #{c('Announcements__page')},
+    #{c('AnalyticsDashboard__dashboardContainer')},
+    #{c('LiveDashboard__liveContainer')},
+    #{c('Logs__content')},
+    #{c('LogView__view')},
+    #{c('TableView__rows')},
+    #{c('Performance__content')},
+    #{c('Retention__content')},
+    #{c('Explorer__content')},
+    #{c('Overview__content')} {
+      background: $dk-bg !important;
+      color: $dk-text;
+    }
+
+    // ── Cards and panels ─────────────────────────────────────────────────
+    #{c('Admin__card')},
+    #{c('Admin__table')},
+    #{c('Announcements__table')},
+    #{c('Announcements__form')},
+    #{c('WebsiteAnalytics__panel')},
+    #{c('WebsiteAnalytics__stat')},
+    #{c('AnalyticsDashboard__metricCard')},
+    #{c('AnalyticsDashboard__chartSection')},
+    #{c('LiveDashboard__statCard')},
+    #{c('LiveDashboard__contentCard')},
+    #{c('LiveDashboard__emptyState')},
+    #{c('LiveDashboard__platformBreakdownContainer')},
+    #{c('LiveDashboard__activityBreakdownContainer')},
+    #{c('LiveDashboard__tableContainer')},
+    #{c('Field__field')},
+    #{c('Modal__modal')},
+    #{c('Popover__popover')} {
+      background: $dk-surface !important;
+      border-color: $dk-border !important;
+      color: $dk-text;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) !important;
+    }
+
+    // ── Secondary surfaces: field right-hand sides, inputs, footers, pills
+    #{c('Field__right')},
+    #{c('FormButton__input')},
+    #{c('TextInput__text_input')},
+    #{c('Dropdown__dropdown')},
+    #{c('BrowserFooter__footer')},
+    #{c('FlowFooter__footer')},
+    #{c('Admin__pill')},
+    #{c('AnalyticsDashboard__metricIcon')},
+    #{c('Modal__footer')},
+    #{c('Modal__content')} {
+      background: $dk-surface2 !important;
+      border-color: $dk-border !important;
+      color: $dk-text;
+    }
+
+    pre,
+    code {
+      background: $dk-surface2;
+      color: $dk-text;
+    }
+
+    // Folder rows and striped rows in tables.
+    #{c('Admin__table')} td[colspan],
+    #{c('TableView__rows')} tr:nth-child(odd) {
+      background: $dk-surface2 !important;
+    }
+
+    #{c('TableView__rows')} tr {
+      background: $dk-surface !important;
+      color: $dk-text;
+    }
+
+    // ── Text ─────────────────────────────────────────────────────────────
+    #{c('Admin__cardTitle')},
+    #{c('Admin__table')} td,
+    #{c('Admin__table')} strong,
+    #{c('Admin__body')},
+    #{c('Announcements__title')},
+    #{c('WebsiteAnalytics__rowName')},
+    #{c('WebsiteAnalytics__rowCount')},
+    #{c('WebsiteAnalytics__panelTitle')},
+    #{c('WebsiteAnalytics__statIcon')},
+    #{c('WebsiteAnalytics__table')} td,
+    #{c('AnalyticsDashboard__metricValue')},
+    #{c('AnalyticsDashboard__metricTitle')},
+    #{c('AnalyticsDashboard__chartTitle')},
+    #{c('AnalyticsDashboard__engagementValue')},
+    #{c('AnalyticsDashboard__engagementLabel')},
+    #{c('LiveDashboard__sectionTitle')},
+    #{c('LiveDashboard__statCardValue')},
+    #{c('LiveDashboard__metricValue')},
+    #{c('LiveDashboard__contentCardValue')},
+    #{c('LiveDashboard__platformLabel')},
+    #{c('Fieldset__description')},
+    #{c('Label__label')},
+    #{c('Field__label')} {
+      color: $dk-text !important;
+    }
+
+    #{c('Admin__meta')},
+    #{c('Admin__hint')},
+    #{c('Admin__sectionTitle')},
+    #{c('Admin__empty')},
+    #{c('WebsiteAnalytics__statLabel')},
+    #{c('WebsiteAnalytics__statSub')},
+    #{c('WebsiteAnalytics__hint')},
+    #{c('AnalyticsDashboard__metricSubtitle')},
+    #{c('Label__description')} {
+      color: $dk-muted !important;
+    }
+
+    // Controls inside the pages (not the dark title bar's own controls).
+    #{c('Admin__page')},
+    #{c('Announcements__page')},
+    #{c('WebsiteAnalytics__page')},
+    #{c('Field__field')} {
+      textarea,
+      input:not([type='checkbox']):not([type='radio']),
+      select {
+        background: $dk-surface2;
+        color: $dk-text;
+        border-color: $dk-border;
+      }
+    }
+
+    #{c('Admin__caption')} textarea:disabled {
+      background: $dk-bg;
+      color: $dk-muted;
+    }
+
+    // ── Generic tables and form bits ────────────────────────────────────
+    #{c('Table__table')},
+    #{c('Table__tr')} {
+      background: $dk-surface !important;
+      color: $dk-text;
+    }
+
+    #{c('ExplorerQueryComposer__formLabel')} {
+      background: $dk-surface2 !important;
+      color: $dk-text;
+    }
+
+    // ── Charts ───────────────────────────────────────────────────────────
+    #{c('DonutChart__donutCenter')} {
+      fill: $dk-surface2;
+    }
+
+    #{c('DonutChart__donutValue')},
+    #{c('DonutChart__donutLabel')} {
+      fill: $dk-text;
+    }
+
+    // Card icons drew with the default (black) fill.
+    #{c('LiveDashboard__statCardIcon')} svg,
+    #{c('AnalyticsDashboard__metricIcon')} svg {
+      fill: $dk-link;
+    }
+
+    // ── Live page: plain text set to the light theme's ink ──────────────
+    #{c('LiveDashboard__liveContainer')} {
+      td,
+      p,
+      span:not([class*='Badge']):not([class*='live']):not([class*='Pulse']) {
+        color: $dk-text;
+      }
+    }
+
+    #{c('LiveDashboard__platformBadge')} {
+      color: $dk-link !important;
+    }
+
+    #{c('Admin__thumb')} {
+      background: $dk-surface2;
+    }
+
+    // ── Data browser ─────────────────────────────────────────────────────
+    #{c('Browser__checkCell')} {
+      background: $dk-surface !important;
+    }
+
+    // Cell text was the light theme's dark blue (#0E69A1) — unreadable here.
+    #{c('BrowserCell__cell')} {
+      color: $dk-link;
+      border-right-color: $dk-border !important;
+    }
+
+    #{c('BrowserCell__empty')} {
+      color: $dk-muted;
+    }
+
+    #{c('BrowserCell__readonly')} {
+      color: $dk-text;
+    }
+
+    #{c('BrowserCell__selected')} {
+      background-color: #1f3550 !important;
+    }
+
+    // Table rules on the dark pages were near-white lines.
+    #{c('Admin__page')},
+    #{c('WebsiteAnalytics__page')},
+    #{c('Announcements__page')},
+    #{c('AnalyticsDashboard__dashboardContainer')},
+    #{c('LiveDashboard__liveContainer')},
+    #{c('TableView__rows')} {
+      th,
+      td {
+        border-color: $dk-border !important;
+      }
+    }
+
+    // Field descriptions (API console etc.) were #555572.
+    #{c('Field__left')} span,
+    #{c('Label__description')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('LiveDashboard__tableContainer')} td {
+      color: $dk-text !important;
+    }
+
+    #{c('Pill__pill')} {
+      color: $dk-link;
+
+      a {
+        background: $dk-hover;
+
+        svg {
+          fill: $dk-link;
+        }
+      }
+    }
+
+    // Buttons that were light grey (secondary) stay readable on dark.
+    #{c('Button__button')}:not(#{c('Button__primary')}) {
+      background: $dk-surface2;
+      border-color: $dk-border;
+      color: $dk-text;
+    }
+
+    // Light badges in the Admin pages keep their colour but on a dark tint.
+    #{c('Admin__pill')}:not([class*='pillBlue']):not([class*='pillGreen']):not([class*='pillAmber']):not([class*='pillRed']) {
+      color: $dk-muted;
+    }
+
+    #{c('Admin__notice')} {
+      background: #3a2f12;
+      color: #f3d27a;
+    }
+
+    #{c('Admin__error')},
+    #{c('WebsiteAnalytics__error')},
+    #{c('Announcements__error')} {
+      background: #3b1d1d;
+      color: #f5a3a3;
+    }
+  }
+}

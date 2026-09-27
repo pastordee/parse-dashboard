@@ -51,6 +51,10 @@ module.exports = {
               modules: {
                 namedExport: false,
                 exportLocalsConvention: 'as-is',
+                // Readable class names (file__class__hash) so the dark theme
+                // (src/stylesheets/darkTheme.scss) can restyle components from
+                // one place without editing all 148 stylesheets.
+                localIdentName: '[name]__[local]__[hash:base64:5]',
               },
               importLoaders: 2,
             },

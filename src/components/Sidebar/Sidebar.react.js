@@ -17,6 +17,7 @@ import SidebarSubItem from 'components/Sidebar/SidebarSubItem.react';
 import styles from 'components/Sidebar/Sidebar.scss';
 import { CurrentApp } from 'context/currentApp';
 import Icon from 'components/Icon/Icon.react';
+import { themePreference, cycleTheme } from 'lib/theme';
 const mountPath = window.PARSE_DASHBOARD_PATH;
 
 const Sidebar = ({
@@ -185,15 +186,33 @@ const Sidebar = ({
     >
       <SidebarHeader isCollapsed={!appsMenuOpen && collapsed} dashboardUser={dashboardUser} />
       {sidebarContent}
-      {dashboardUser && (
-        <div className={styles.footer}>
+      <div className={styles.footer}>
+        <ThemeSwitch />
+        {dashboardUser && (
           <a href={`${mountPath}logout`} className={styles.more}>
             <Icon height={16} width={16} name="logout" />
             Logout
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </div>
+  );
+};
+
+// Light → Dark → Match device, remembered per browser (lib/theme.js).
+const THEME_LABELS = { light: '☀️ Light', dark: '🌙 Dark', system: '🖥 Match device' };
+const ThemeSwitch = () => {
+  const [pref, setPref] = useState(themePreference());
+  return (
+    <a
+      role="button"
+      className={styles.more}
+      title="Change the dashboard theme"
+      onClick={() => setPref(cycleTheme())}
+      style={{ cursor: 'pointer', marginBottom: 6 }}
+    >
+      {THEME_LABELS[pref]}
+    </a>
   );
 };
 

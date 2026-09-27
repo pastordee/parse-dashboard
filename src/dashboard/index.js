@@ -12,6 +12,8 @@ import installDevTools from 'immutable-devtools';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Dashboard from './Dashboard';
+import { installTheme } from 'lib/theme';
+import 'stylesheets/darkTheme.scss';
 import registerServiceWorker from '../registerServiceWorker';
 
 require('stylesheets/fonts.scss');
@@ -19,5 +21,7 @@ require('graphiql/graphiql.min.css');
 installDevTools(Immutable);
 
 const path = window.PARSE_DASHBOARD_PATH || '/';
+// Before the first render, so a dark theme doesn't flash white.
+installTheme();
 ReactDOM.render(<Dashboard path={path} />, document.getElementById('browser_mount'));
 registerServiceWorker();
