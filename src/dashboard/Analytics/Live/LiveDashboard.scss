@@ -10,7 +10,8 @@ $mediumGray: #7f8c8d;
 $white: #ffffff;
 
 .liveContainer {
-  padding: 16px 20px;
+  // The dashboard's title bar is fixed and 96px tall: start below it.
+  padding: 116px 20px 20px;
   background-color: $lightGray;
   min-height: 100vh;
 
@@ -629,5 +630,19 @@ $white: #ffffff;
         }
       }
     }
+  }
+}
+
+// Badge, last-updated time and Refresh in the dashboard's own title bar
+// (Toolbar's actions slot, which sits 4px down from the top of the 96px bar).
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 88px;
+
+  .lastUpdate {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
   }
 }

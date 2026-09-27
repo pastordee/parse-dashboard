@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { CurrentApp } from 'context/currentApp';
 import AppsManager from 'lib/AppsManager';
 import styles from '../Dashboard/AnalyticsDashboard.scss';
+import Toolbar from 'components/Toolbar/Toolbar.react';
 
 // Wrapper component to inject useParams hook
 function CustomAnalyticsPluginWrapper() {
@@ -113,20 +114,20 @@ class CustomAnalyticsPluginComponent extends DashboardView {
 
     // Handle different plugin types
     if (plugin.type === 'remote-html' || plugin.type === 'iframe') {
+      // Nothing above this has a fixed height, so "height: 100%" fell back to
+      // the browser's 150px iframe default. Size it to the window instead:
+      // everything below the dashboard's fixed 96px title bar.
       return (
-        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <iframe
-            src={plugin.url}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              borderRadius: '4px',
-              flex: 1,
-            }}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            title={plugin.label}
-          />
+        <div>
+          <div style={{ paddingTop: '96px', height: '100vh', boxSizing: 'border-box', display: 'flex' }}>
+            <iframe
+              src={plugin.url}
+              style={{ width: '100%', height: '100%', border: 'none', flex: 1 }}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              title={plugin.label}
+            />
+          </div>
+          <Toolbar section="Analytics" subsection={plugin.label} />
         </div>
       );
     }

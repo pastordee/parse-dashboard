@@ -11,6 +11,8 @@ import Agent from './Data/Agent/Agent.react';
 import AnalyticsDashboard from './Analytics/Dashboard/AnalyticsDashboard.react';
 import AnalyticsOverview from './Analytics/Overview/Overview.react';
 import LiveDashboard from './Analytics/Live/LiveDashboard.react';
+import WebsiteAnalytics from './Analytics/Website/WebsiteAnalytics.react';
+import Announcements from './Push/Announcements/Announcements.react';
 import ApiConsole from './Data/ApiConsole/ApiConsole.react';
 import AppData from './AppData.react';
 import AppsIndex from './Apps/AppsIndex.react';
@@ -267,6 +269,7 @@ export default class Dashboard extends React.Component {
         <Route path="dashboard" element={<AnalyticsDashboard />} />
         <Route path="overview" element={<AnalyticsOverview />} />
         <Route path="live" element={<LiveDashboard />} />
+        <Route path="website" element={<WebsiteAnalytics />} />
         <Route path="explorer/:displayType" element={<Explorer />} />
         <Route path="retention" element={<Retention />} />
         <Route path="performance" element={<Performance />} />
@@ -324,6 +327,7 @@ export default class Dashboard extends React.Component {
         <Route path="push/activity/:category" element={<PushIndex />} />
         <Route path="push/audiences" element={<PushAudiencesIndex />} />
         <Route path="push/new" element={<PushNew />} />
+        <Route path="push/announcements" element={<Announcements />} />
         <Route path="push/:pushId" element={<PushDetails />} />
 
         {/* Unused routes... */}

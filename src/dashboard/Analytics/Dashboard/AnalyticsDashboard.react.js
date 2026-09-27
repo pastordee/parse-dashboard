@@ -472,13 +472,8 @@ export default class AnalyticsDashboard extends DashboardView {
 
     return (
       <div className={styles.dashboardContainer}>
-        <Toolbar>
-          <div className={styles.toolbar}>
-            <div className={styles.toolbarTitle}>
-              <Icon name='analytics-outline' width={24} height={24} />
-              Analytics Dashboard
-            </div>
-            <div className={styles.toolbarActions}>
+        <Toolbar section="Analytics" subsection="Dashboard">
+          <div className={styles.barActions}>
               <select 
                 className={styles.dateRangePicker}
                 value={this.state.dateRange}
@@ -494,12 +489,11 @@ export default class AnalyticsDashboard extends DashboardView {
                 onClick={this.refreshData}
                 primary={false}
               />
-            </div>
           </div>
         </Toolbar>
 
         {/* Key Metrics Grid */}
-        <div className={styles.metricsGrid} style={{ marginTop: '80px' }}>
+        <div className={styles.metricsGrid}>
           {this.renderMetricCard('Total Users', audienceData.totalUsers || 0, 'All time', 'users-outline', 12.5)}
           {this.renderMetricCard('Daily Active', audienceData.dailyActiveUsers || 0, 'Last 24 hours', 'pulse-outline', 8.2)}
           {this.renderMetricCard('Weekly Active', audienceData.weeklyActiveUsers || 0, 'Last 7 days', 'trending-up-outline', 15.3)}

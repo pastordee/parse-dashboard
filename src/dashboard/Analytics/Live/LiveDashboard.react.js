@@ -220,25 +220,19 @@ export default class LiveDashboard extends DashboardView {
 
     return (
       <div className={styles.liveContainer}>
-        <Toolbar>
-          <div className={styles.toolbar}>
-            <div className={styles.toolbarTitle}>
-              <Icon name='analytics-outline' width={24} height={24} />
-              Live Dashboard
-              {this.renderLiveBadge()}
-            </div>
-            <div className={styles.toolbarActions}>
-              {lastUpdate && (
-                <div className={styles.lastUpdate}>
-                  Updated {this.formatUpdateTime(lastUpdate)}
-                </div>
-              )}
-              <Button
-                value="Refresh"
-                onClick={this.handleRefresh}
-                primary={false}
-              />
-            </div>
+        <Toolbar section="Analytics" subsection="Live">
+          <div className={styles.barActions}>
+            {this.renderLiveBadge()}
+            {lastUpdate && (
+              <div className={styles.lastUpdate}>
+                Updated {this.formatUpdateTime(lastUpdate)}
+              </div>
+            )}
+            <Button
+              value="Refresh"
+              onClick={this.handleRefresh}
+              primary={false}
+            />
           </div>
         </Toolbar>
 

@@ -9,7 +9,8 @@ $darkGray: #2c3e50;
 $mediumGray: #7f8c8d;
 
 .dashboardContainer {
-  padding: 16px 20px;
+  // The dashboard's title bar is fixed and 96px tall: start below it.
+  padding: 116px 20px 20px;
   background-color: $lightGray;
   min-height: 100vh;
 
@@ -709,5 +710,24 @@ $mediumGray: #7f8c8d;
   .chartSection,
   .metricGroup {
     padding: 20px;
+  }
+}
+
+// Buttons in the dashboard's own title bar (Toolbar's actions slot, which
+// sits 4px down from the top of the 96px bar).
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 88px;
+
+  select {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
   }
 }

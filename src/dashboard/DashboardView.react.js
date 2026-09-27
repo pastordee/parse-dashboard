@@ -180,6 +180,12 @@ export default class DashboardView extends React.Component {
       });
     }
 
+    // In-app announcement banners (Push → Announcements, 2026-09-27).
+    pushSubsections.push({
+      name: 'Announcements',
+      link: '/push/announcements',
+    });
+
     const analyticsSidebarSections = [];
 
     // Add all analytics subsections
@@ -217,6 +223,12 @@ export default class DashboardView extends React.Component {
       name: 'Live',
       link: '/analytics/live',
       icon: 'pulse-solid'
+    });
+
+    // prayercircle.co.uk visitors + downloads per advert (2026-09-27).
+    analyticsSidebarSections.push({
+      name: 'Website',
+      link: '/analytics/website'
     });
 
     // Add custom analytics plugins from app config

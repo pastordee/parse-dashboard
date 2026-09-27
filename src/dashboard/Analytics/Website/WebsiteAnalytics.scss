@@ -1,0 +1,233 @@
+// Created: 2026-09-27
+@import 'stylesheets/globals.scss';
+
+$ink: #2c3e50;
+$muted: #7f8c8d;
+$views: #5298fc;
+$visitors: #9b59b6;
+
+// The dashboard's title bar is fixed and 96px tall: start below it.
+.page {
+  padding: 116px 20px 40px;
+  background: #f5f6fa;
+  min-height: 100vh;
+  color: $ink;
+}
+
+// Toolbar's actions slot sits 4px down from the top of the 96px bar.
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 88px;
+
+  select {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+  }
+}
+
+.online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+
+  i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #61c354;
+  }
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.statIcon { font-size: 20px; }
+.statLabel { margin-top: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: $muted; }
+.statValue { font-size: 28px; font-weight: 700; margin: 4px 0 2px; }
+.statSub { font-size: 12px; color: $muted; }
+
+.purple { color: $visitors; }
+.blue { color: $views; }
+.cyan { color: #16a2b8; }
+.green { color: #3c9d31; }
+.amber { color: #e0930b; }
+.red { color: #e74c3c; }
+
+.panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.panelTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.count {
+  font-size: 12px;
+  font-weight: 600;
+  color: $muted;
+  margin-left: 6px;
+}
+
+.hint {
+  font-size: 12px;
+  color: $muted;
+  margin: -6px 0 12px;
+
+  code { background: #f0f1f5; padding: 1px 5px; border-radius: 4px; }
+}
+
+.empty {
+  font-size: 13px;
+  color: $muted;
+  padding: 12px 0;
+}
+
+.chart {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: 200px;
+}
+
+.chartCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chartBars {
+  flex: 1;
+  position: relative;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.barViews,
+.barVisitors {
+  position: absolute;
+  bottom: 0;
+  border-radius: 3px 3px 0 0;
+}
+
+.barViews { left: 0; right: 0; background: $views; }
+.barVisitors { left: 25%; right: 25%; background: $visitors; opacity: 0.55; }
+
+.chartDay {
+  font-size: 10px;
+  color: $muted;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: $muted;
+
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+}
+
+.legendViews { background: $views; }
+.legendVisitors { background: $visitors; opacity: 0.55; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: $muted;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #f0f1f5;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0 20px;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.rowBar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(82, 152, 252, 0.12);
+}
+
+.rowName {
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowCount {
+  position: relative;
+  font-weight: 600;
+}
+
+.error {
+  background: #fdecea;
+  color: #b03a2e;
+  border-radius: 8px;
+  padding: 14px 18px;
+}
