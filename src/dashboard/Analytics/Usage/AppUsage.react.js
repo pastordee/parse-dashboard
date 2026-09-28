@@ -24,6 +24,16 @@ const RANGES = [
   { days: 90, label: 'Last 90 days' },
 ];
 
+// Which app's usage: the main app, Prayer Circle Creator, or both together.
+// Main app first: the pages open on it, so the two apps stay apart unless
+// "Both apps" is chosen.
+export const APPS = [
+  { value: 'main', label: 'Main app' },
+  { value: 'creator', label: 'Creator' },
+  { value: 'all', label: 'Both apps' },
+];
+export const APP_LABEL = { main: 'Main app', creator: 'Creator' };
+
 export function duration(sec) {
   sec = Math.round(sec || 0);
   if (sec < 60) {
@@ -45,17 +55,17 @@ class AppUsage extends DashboardView {
     super(props);
     this.section = 'Analytics';
     this.subsection = 'App usage';
-    this.state = { days: 7, loading: true, error: null, data: null };
+    this.state = { days: 7, app: 'main', loading: true, error: null, data: null };
   }
 
   componentDidMount() {
     this.load();
   }
 
-  async load(days = this.state.days) {
-    this.setState({ loading: true, error: null, days });
+  async load(days = this.state.days, app = this.state.app) {
+    this.setState({ loading: true, error: null, days, app });
     try {
-      const data = await adminCall(this.context, 'adminAppUsage', { days });
+      const data = await adminCall(this.context, 'adminAppUsage', { days, app });
       this.setState({ data, loading: false });
     } catch (e) {
       const msg = e.message || String(e);
@@ -163,11 +173,14 @@ class AppUsage extends DashboardView {
   }
 
   renderContent() {
-    const { loading, error, data, days } = this.state;
+    const { loading, error, data, days, app } = this.state;
     const toolbar = (
       <Toolbar section="Analytics" subsection="App usage">
         <div className={styles.barActions}>
-          <select value={days} onChange={e => this.load(parseInt(e.target.value, 10))}>
+          <select value={app} onChange={e => this.load(days, e.target.value)}>
+            {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+          </select>
+          <select value={days} onChange={e => this.load(parseInt(e.target.value, 10), app)}>
             {RANGES.map(r => <option key={r.days} value={r.days}>{r.label}</option>)}
           </select>
           <Button value="Refresh" onClick={() => this.load()} primary={false} />
@@ -202,6 +215,7 @@ class AppUsage extends DashboardView {
             {this.list('⚡ Actions', data.actions)}
             {this.list('📱 Platforms (people)', data.platforms)}
             {this.list('🏷️ App versions (people)', data.versions)}
+            {app === 'all' && this.list('🧩 Apps (people)', (data.apps || []).map(a => ({ ...a, name: APP_LABEL[a.name] || a.name })))}
           </div>
           {this.cohorts(data.cohorts || [])}
           <div className={styles.panel}>
@@ -210,7 +224,7 @@ class AppUsage extends DashboardView {
             {people.length > 0 && (
               <table className={styles.table}>
                 <thead>
-                  <tr><th>Person</th><th>Time</th><th>Visits</th><th>Days</th><th>Device</th></tr>
+                  <tr><th>Person</th><th>Time</th><th>Visits</th><th>Days</th><th>App</th><th>Device</th></tr>
                 </thead>
                 <tbody>
                   {people.map(p => (
@@ -226,6 +240,7 @@ class AppUsage extends DashboardView {
                       <td>{duration(p.seconds)}</td>
                       <td>{fmt(p.sessions)}</td>
                       <td>{p.days}</td>
+                      <td>{(p.apps || []).map(a => APP_LABEL[a] || a).join(', ')}</td>
                       <td>{[p.platform, p.appVersion].filter(Boolean).join(' · ')}</td>
                     </tr>
                   ))}

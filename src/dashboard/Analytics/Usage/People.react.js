@@ -14,7 +14,7 @@ import Button from 'components/Button/Button.react';
 import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
 import { CurrentApp } from 'context/currentApp';
 import { adminCall, when, ago } from 'dashboard/Admin/adminApi';
-import { duration } from './AppUsage.react';
+import { duration, APPS, APP_LABEL } from './AppUsage.react';
 import styles from 'dashboard/Admin/Admin.scss';
 
 const RANGES = [7, 14, 30, 90];
@@ -31,7 +31,7 @@ class People extends DashboardView {
     super(props);
     this.section = 'Analytics';
     this.subsection = 'People';
-    this.state = { query: '', results: null, searching: false, userId: null, days: 14, timeline: null, loading: false, error: null, open: {} };
+    this.state = { query: '', results: null, searching: false, userId: null, days: 14, app: 'main', timeline: null, loading: false, error: null, open: {} };
   }
 
   componentDidMount() {
@@ -49,17 +49,17 @@ class People extends DashboardView {
     }
     this.setState({ searching: true, error: null });
     try {
-      const results = await adminCall(this.context, 'adminAppPeople', { query });
+      const results = await adminCall(this.context, 'adminAppPeople', { query, app: this.state.app });
       this.setState({ results, searching: false });
     } catch (err) {
       this.setState({ error: err.message || String(err), searching: false });
     }
   }
 
-  async openPerson(userId, days = this.state.days) {
-    this.setState({ userId, days, loading: true, error: null, timeline: null, open: {} });
+  async openPerson(userId, days = this.state.days, app = this.state.app) {
+    this.setState({ userId, days, app, loading: true, error: null, timeline: null, open: {} });
     try {
-      const timeline = await adminCall(this.context, 'adminUserTimeline', { userId, days });
+      const timeline = await adminCall(this.context, 'adminUserTimeline', { userId, days, app });
       // Newest visit open to begin with.
       const first = timeline.sessions[0];
       this.setState({ timeline, loading: false, open: first ? { [first.id]: true } : {} });
@@ -79,7 +79,7 @@ class People extends DashboardView {
         {results && results.length === 0 && <div className={styles.empty}>Nobody matches.</div>}
         {results && results.length > 0 && (
           <table className={styles.table}>
-            <thead><tr><th>Person</th><th>Last seen</th><th>Days used (30d)</th><th>Time (30d)</th></tr></thead>
+            <thead><tr><th>Person</th><th>Last seen</th><th>Days used (30d)</th><th>Time (30d)</th><th>Apps</th></tr></thead>
             <tbody>
               {results.map(r => (
                 <tr key={r.userId} style={{ cursor: 'pointer' }} onClick={() => this.openPerson(r.userId)}>
@@ -87,6 +87,7 @@ class People extends DashboardView {
                   <td className={styles.meta}>{r.lastseen ? ago(r.lastseen) : '—'}</td>
                   <td>{r.days30}</td>
                   <td>{duration(r.seconds30)}</td>
+                  <td className={styles.meta}>{(r.apps || []).map(a => APP_LABEL[a] || a).join(', ') || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -130,6 +131,7 @@ class People extends DashboardView {
               onClick={() => this.setState({ open: { ...open, [s.id]: !open[s.id] } })}>
               <span className={styles.cardTitle}>{when(s.start)}</span>
               <span className={styles.pill}>{s.seconds != null ? duration(s.seconds) : 'still open'}</span>
+              {s.app === 'creator' && <span className={`${styles.pill} ${styles.pillAmber}`}>Creator</span>}
               <span className={styles.meta}>
                 {s.steps.filter(x => x.type === 'screen').length} screens · {s.steps.filter(x => x.type === 'action').length} actions
                 {s.platform ? ` · ${s.platform}` : ''}{s.appVersion ? ` ${s.appVersion}` : ''}
@@ -161,12 +163,15 @@ class People extends DashboardView {
   }
 
   renderContent() {
-    const { userId, days, timeline, loading, error } = this.state;
+    const { userId, days, app, timeline, loading, error } = this.state;
     const toolbar = (
       <Toolbar section="Analytics" subsection="People">
         <div className={styles.barActions}>
+          <select value={app} onChange={e => (userId ? this.openPerson(userId, days, e.target.value) : this.setState({ app: e.target.value, results: null }))}>
+            {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+          </select>
           {userId && (
-            <select value={days} onChange={e => this.openPerson(userId, parseInt(e.target.value, 10))}>
+            <select value={days} onChange={e => this.openPerson(userId, parseInt(e.target.value, 10), app)}>
               {RANGES.map(d => <option key={d} value={d}>Last {d} days</option>)}
             </select>
           )}

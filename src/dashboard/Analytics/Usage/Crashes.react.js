@@ -13,6 +13,7 @@ import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
 import { CurrentApp } from 'context/currentApp';
 import { adminCall, ago } from 'dashboard/Admin/adminApi';
 import styles from 'dashboard/Admin/Admin.scss';
+import { APPS } from './AppUsage.react';
 
 const RANGES = [1, 7, 30, 90];
 const SOURCE = { flutter: 'Flutter', async: 'Async', caught: 'Caught', exit: 'App closed' };
@@ -24,17 +25,17 @@ class Crashes extends DashboardView {
     super(props);
     this.section = 'Analytics';
     this.subsection = 'Crashes & errors';
-    this.state = { days: 7, loading: true, error: null, data: null, open: null };
+    this.state = { days: 7, app: 'main', loading: true, error: null, data: null, open: null };
   }
 
   componentDidMount() {
     this.load();
   }
 
-  async load(days = this.state.days) {
-    this.setState({ loading: true, error: null, days });
+  async load(days = this.state.days, app = this.state.app) {
+    this.setState({ loading: true, error: null, days, app });
     try {
-      const data = await adminCall(this.context, 'adminAppErrors', { days });
+      const data = await adminCall(this.context, 'adminAppErrors', { days, app });
       this.setState({ data, loading: false });
     } catch (e) {
       const msg = e.message || String(e);
@@ -46,11 +47,14 @@ class Crashes extends DashboardView {
   }
 
   renderContent() {
-    const { loading, error, data, days, open } = this.state;
+    const { loading, error, data, days, app, open } = this.state;
     const toolbar = (
       <Toolbar section="Analytics" subsection="Crashes & errors">
         <div className={styles.barActions}>
-          <select value={days} onChange={e => this.load(parseInt(e.target.value, 10))}>
+          <select value={app} onChange={e => this.load(days, e.target.value)}>
+            {APPS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+          </select>
+          <select value={days} onChange={e => this.load(parseInt(e.target.value, 10), app)}>
             {RANGES.map(d => <option key={d} value={d}>{d === 1 ? 'Last 24 hours' : `Last ${d} days`}</option>)}
           </select>
           <Button value="Refresh" onClick={() => this.load()} primary={false} />
