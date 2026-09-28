@@ -55,7 +55,7 @@ class AppUsage extends DashboardView {
     super(props);
     this.section = 'Analytics';
     this.subsection = 'App usage';
-    this.state = { days: 7, app: 'main', loading: true, error: null, data: null };
+    this.state = { days: 7, app: 'main', loading: true, error: null, data: null, bible: null, bibleError: null };
   }
 
   componentDidMount() {
@@ -65,8 +65,18 @@ class AppUsage extends DashboardView {
   async load(days = this.state.days, app = this.state.app) {
     this.setState({ loading: true, error: null, days, app });
     try {
-      const data = await adminCall(this.context, 'adminAppUsage', { days, app });
-      this.setState({ data, loading: false });
+      // Bible reading is the main app's; it loads alongside and never blocks
+      // the rest of the page.
+      const bible = app === 'creator'
+        ? Promise.resolve(null)
+        : adminCall(this.context, 'adminBibleReading', { days }).catch(e => ({ error: e.message || String(e) }));
+      const [data, b] = await Promise.all([adminCall(this.context, 'adminAppUsage', { days, app }), bible]);
+      this.setState({
+        data,
+        loading: false,
+        bible: b && !b.error ? b : null,
+        bibleError: b && b.error ? (/Invalid function/i.test(b.error) ? 'Bible reading arrives with the next Parse restart.' : b.error) : null,
+      });
     } catch (e) {
       const msg = e.message || String(e);
       this.setState({
@@ -129,6 +139,73 @@ class AppUsage extends DashboardView {
     );
   }
 
+  bibleSection(b) {
+    const t = b.totals;
+    const max = Math.max(1, ...b.series.map(s => s.chapters));
+    return (
+      <>
+        <div className={styles.panelTitle} style={{ margin: '28px 0 12px', fontSize: 18 }}>📖 Bible reading</div>
+        <div className={styles.hint}>
+          Chapters finished in the Bible reader (30 seconds or more on a chapter). Streaks are days in a row with at least one chapter.
+        </div>
+        <div className={styles.stats}>
+          {this.stat('📖', 'Readers', fmt(t.readers), `${fmt(t.readersEver)} have ever read`, 'purple')}
+          {this.stat('📜', 'Chapters', fmt(t.chapters), t.readers ? `${t.chaptersPerReader} per reader` : '—', 'blue')}
+          {this.stat('⏱️', 'Time reading', duration(t.seconds), t.chapters ? `${duration(t.avgSecondsPerChapter)} per chapter` : '—', 'green')}
+          {this.stat('🔥', 'On a streak', fmt(t.onStreak), '2 or more days in a row', 'amber')}
+          {this.stat('🗓️', 'Reading plans', fmt(t.activePlans), `${fmt(t.planPeople)} people in them`, 'cyan')}
+        </div>
+        <div className={styles.panel}>
+          <div className={styles.panelTitle}>Chapters read, per day</div>
+          <div className={styles.chart}>
+            {b.series.map(s => (
+              <div key={s.day} className={styles.chartCol}
+                title={`${s.day}: ${s.chapters} chapters by ${s.readers} ${s.readers === 1 ? 'person' : 'people'}, ${duration(s.seconds)}`}>
+                <div className={styles.chartBars}>
+                  <div className={styles.barViews} style={{ height: `${(s.chapters / max) * 100}%` }} />
+                  <div className={styles.barVisitors} style={{ height: `${(s.readers / max) * 100}%` }} />
+                </div>
+                {b.series.length <= 31 && <div className={styles.chartDay}>{s.day.slice(8)}</div>}
+              </div>
+            ))}
+          </div>
+          <div className={styles.legend}>
+            <span><i className={styles.legendViews} />Chapters</span>
+            <span><i className={styles.legendVisitors} />Readers</span>
+          </div>
+        </div>
+        <div className={styles.grid}>
+          {this.list('📚 Books read (chapters)', b.books)}
+          {this.list('🗓️ Active reading plans', b.plansByType)}
+          {b.streaks.length > 0 && this.list('🔥 Current streaks (days)', b.streaks.map(s => ({ name: s.name || s.username || s.userId, value: s.current })))}
+        </div>
+        <div className={styles.panel}>
+          <div className={styles.panelTitle}>Top readers <span className={styles.count}>{b.topReaders.length || ''}</span></div>
+          {b.topReaders.length === 0 && <div className={styles.empty}>Nobody read in this period</div>}
+          {b.topReaders.length > 0 && (
+            <table className={styles.table}>
+              <thead><tr><th>Person</th><th>Chapters</th><th>Time</th><th>Days read</th><th>Streak</th></tr></thead>
+              <tbody>
+                {b.topReaders.map(r => (
+                  <tr key={r.userId}>
+                    <td>
+                      <Link to={generatePath(this.context, `analytics/people?user=${r.userId}`)}>{r.name || r.username || r.userId}</Link>
+                      {r.username && r.name ? <span style={{ opacity: 0.6 }}> · @{r.username}</span> : null}
+                    </td>
+                    <td>{fmt(r.chapters)}</td>
+                    <td>{duration(r.seconds)}</td>
+                    <td>{r.days}</td>
+                    <td>{r.streak >= 2 ? `🔥 ${r.streak}` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </>
+    );
+  }
+
   cohorts(rows) {
     if (!rows.length) {
       return null;
@@ -173,7 +250,7 @@ class AppUsage extends DashboardView {
   }
 
   renderContent() {
-    const { loading, error, data, days, app } = this.state;
+    const { loading, error, data, days, app, bible, bibleError } = this.state;
     const toolbar = (
       <Toolbar section="Analytics" subsection="App usage">
         <div className={styles.barActions}>
@@ -248,6 +325,8 @@ class AppUsage extends DashboardView {
               </table>
             )}
           </div>
+          {app !== 'creator' && bible && this.bibleSection(bible)}
+          {app !== 'creator' && bibleError && <div className={styles.hint}>📖 {bibleError}</div>}
         </>
       );
     }
