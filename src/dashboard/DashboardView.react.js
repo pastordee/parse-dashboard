@@ -231,6 +231,12 @@ export default class DashboardView extends React.Component {
       link: '/analytics/website'
     });
 
+    // In-app usage, per person, and crash/error reports from the app's own
+    // first-party analytics (2026-09-28).
+    analyticsSidebarSections.push({ name: 'App usage', link: '/analytics/app-usage' });
+    analyticsSidebarSections.push({ name: 'People', link: '/analytics/people' });
+    analyticsSidebarSections.push({ name: 'Crashes & errors', link: '/analytics/crashes' });
+
     // Add custom analytics plugins from app config
     // First try context, then fetch from API if available
     let customPlugins = this.context?.analytics?.customPlugins || this.state.customPlugins;

@@ -12,6 +12,9 @@ import AnalyticsDashboard from './Analytics/Dashboard/AnalyticsDashboard.react';
 import AnalyticsOverview from './Analytics/Overview/Overview.react';
 import LiveDashboard from './Analytics/Live/LiveDashboard.react';
 import WebsiteAnalytics from './Analytics/Website/WebsiteAnalytics.react';
+import AppUsage from './Analytics/Usage/AppUsage.react';
+import People from './Analytics/Usage/People.react';
+import Crashes from './Analytics/Usage/Crashes.react';
 import Announcements from './Push/Announcements/Announcements.react';
 import CloudFunctions from './Settings/CloudFunctions/CloudFunctions.react';
 import SocialPosts from './Admin/SocialPosts.react';
@@ -277,6 +280,9 @@ export default class Dashboard extends React.Component {
         <Route path="overview" element={<AnalyticsOverview />} />
         <Route path="live" element={<LiveDashboard />} />
         <Route path="website" element={<WebsiteAnalytics />} />
+        <Route path="app-usage" element={<AppUsage />} />
+        <Route path="people" element={<People />} />
+        <Route path="crashes" element={<Crashes />} />
         <Route path="explorer/:displayType" element={<Explorer />} />
         <Route path="retention" element={<Retention />} />
         <Route path="performance" element={<Performance />} />
