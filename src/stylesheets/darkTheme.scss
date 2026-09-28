@@ -314,9 +314,9 @@ $dk-link: #5fb3f5;
 
     // Buttons that were light grey (secondary) stay readable on dark.
     #{c('Button__button')}:not(#{c('Button__primary')}) {
-      background: $dk-surface2;
-      border-color: $dk-border;
-      color: $dk-text;
+      background: $dk-surface2 !important;
+      border-color: $dk-border !important;
+      color: $dk-text !important;
     }
 
     // Light badges in the Admin pages keep their colour but on a dark tint.
@@ -334,6 +334,172 @@ $dk-link: #5fb3f5;
     #{c('Announcements__error')} {
       background: #3b1d1d;
       color: #f5a3a3;
+    }
+
+    // ── Pages missed first time (second automated sweep, 2026-09-28) ─────
+    // Empty states (Views, Canvas, Agent, Webhooks, Explorer).
+    #{c('EmptyState__icon')} {
+      background: $dk-surface2 !important;
+    }
+
+    #{c('EmptyState__title')},
+    #{c('EmptyState__description')} {
+      color: $dk-muted !important;
+    }
+
+    // Canvas and Agent: whole page areas.
+    #{c('CustomDashboard__canvas')},
+    #{c('Agent__chatWindow')} {
+      background: $dk-bg !important;
+    }
+
+    // Analytics → Overview: health banner, stat boxes, billing donuts.
+    #{c('Overview__healthInfoContainer')},
+    #{c('Overview__infoContainer')} {
+      background: $dk-surface !important;
+      border-color: $dk-border !important;
+    }
+
+    #{c('Overview__infoNumber')},
+    #{c('Overview__healthInfo')} {
+      color: $dk-text !important;
+    }
+
+    #{c('Overview__infoLabel')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('DonutChart__donutValue')} {
+      fill: $dk-text !important;
+    }
+
+    #{c('DonutChart__donutLabel')} {
+      fill: $dk-muted !important;
+    }
+
+    #{c('LoaderContainer__loaderParent')} {
+      background: rgba(18, 22, 31, 0.7) !important;
+    }
+
+    // Analytics → Explorer / Performance / Retention: header and footer bars,
+    // the chart card, and the grey retention cells (the blue ones are set
+    // inline by the page and stay as they are).
+    #{c('Explorer__header')},
+    #{c('Explorer__footer')},
+    #{c('Performance__header')},
+    #{c('Performance__footer')},
+    #{c('Retention__footer')},
+    #{c('Chart__chart')} {
+      background: $dk-surface !important;
+      border-color: $dk-border !important;
+    }
+
+    #{c('Chart__label')},
+    #{c('Chart__tick')},
+    #{c('Retention__right')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('Retention__right')} select {
+      background: $dk-surface2 !important;
+      color: $dk-text !important;
+      border-color: $dk-border !important;
+    }
+
+    // Cell colours are computed in Retention.react.js (theme-aware).
+    #{c('Retention__retentionCell')} {
+      color: $dk-text;
+    }
+
+    // Push → Send new push: audience rows and the preview panel.
+    #{c('PushAudiencesOption__row')} {
+      background: $dk-surface !important;
+      border-color: $dk-border !important;
+
+      &:hover {
+        background: $dk-hover !important;
+      }
+    }
+
+    #{c('PushAudiencesOption__headline')},
+    #{c('PushAudiencesOption__cell')} {
+      color: $dk-text !important;
+    }
+
+    #{c('PushAudiencesOption__shortInfo')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('PushPreview__wrap')} {
+      background: $dk-surface !important;
+    }
+
+    // The panel behind the phone mock-up. The phone pictures (iphone.jpg etc.)
+    // carry their own light grey surround, which CSS can't recolour.
+    #{c('PushPreview__preview')},
+    #{c('PushPreview__noPreview')} {
+      background-color: $dk-surface2 !important;
+    }
+
+    #{c('PushPreview__rowLabel')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('PushPreview__rowContent')} {
+      color: $dk-text !important;
+    }
+
+    // Settings: multi-selects (Cloud Config), key fields, file inputs.
+    // Cloud Config's pickers set this background inline.
+    [style*='background: rgb(246, 250, 251)'],
+    #{c('MultiSelect__dropdown')},
+    #{c('KeyField__key')},
+    #{c('FileInput__input')} {
+      background: $dk-surface2 !important;
+      color: $dk-text !important;
+      border-color: $dk-border !important;
+    }
+
+    // Toggle labels: the colours the component itself uses on a dark
+    // background (Toggle.scss .darkBg) — chosen side white, other side grey.
+    #{c('Toggle__label')}:first-of-type {
+      color: #babac4 !important;
+    }
+
+    #{c('Toggle__label')}:last-of-type,
+    #{c('Toggle__left')} #{c('Toggle__label')}:first-of-type {
+      color: #ffffff !important;
+    }
+
+    #{c('Toggle__left')} #{c('Toggle__label')}:last-of-type {
+      color: #babac4 !important;
+    }
+
+    // "Reset to Defaults" (Keyboard Shortcuts) is a white button.
+    #{c('Button__white')} {
+      background: $dk-surface2 !important;
+      border-color: $dk-border !important;
+      color: $dk-text !important;
+    }
+
+    #{c('PushPreview__title')} {
+      color: $dk-muted !important;
+    }
+
+    // Error toast at the bottom right.
+    #{c('Browser__notificationError')} {
+      background: #3b1d1d !important;
+      color: #f5a3a3 !important;
+      border-color: #6b2b2b !important;
+    }
+
+    // Data browser column types and log timestamps: a notch lighter.
+    #{c('DataBrowserHeader__type')} {
+      color: #c3c8d4 !important;
+    }
+
+    #{c('LogViewEntry__time')} {
+      color: #6fcf7f !important;
     }
   }
 }

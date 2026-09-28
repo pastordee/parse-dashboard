@@ -13,6 +13,8 @@ import Button from 'components/Button/Button.react';
 import LoaderContainer from 'components/LoaderContainer/LoaderContainer.react';
 import { CurrentApp } from 'context/currentApp';
 import { adminCall } from 'dashboard/Admin/adminApi';
+import generatePath from 'lib/generatePath';
+import { Link } from 'react-router-dom';
 import styles from 'dashboard/Analytics/Website/WebsiteAnalytics.scss';
 
 const RANGES = [
@@ -215,7 +217,9 @@ class AppUsage extends DashboardView {
                     <tr key={p.owner}>
                       <td>
                         {p.userId
-                          ? <a href={`people?user=${p.userId}`}>{p.name || p.username || p.userId}</a>
+                          // The page has <base href="/dashboard/">, so a relative href lands on
+                          // /dashboard/people (404). Route through the app path instead.
+                          ? <Link to={generatePath(this.context, `analytics/people?user=${p.userId}`)}>{p.name || p.username || p.userId}</Link>
                           : <span style={{ opacity: 0.7 }}>Signed-out device</span>}
                         {p.username && p.name ? <span style={{ opacity: 0.6 }}> · @{p.username}</span> : null}
                       </td>

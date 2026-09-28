@@ -60,16 +60,19 @@ const REVERSED_RETENTION_DAYS = RETENTION_DAYS.slice().reverse();
 
 const retentionChartColor = percent => {
   let red, blue, green;
+  // 0% starts from the page's card colour: light grey, or dark slate in dark
+  // mode (html[data-theme], lib/theme.js) so empty cells don't glow white.
+  const dark = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'dark';
+  const [r0, g0, b0] = dark ? [35, 42, 59] : [228, 233, 237];
   if (percent > 50) {
     red = 23 + ((percent - 50) * 2 * 11) / 100;
     green = 166 - ((percent - 50) * 2 * 166) / 100;
     blue = 255;
   } else {
-    red = 228 - (percent * 2 * 205) / 100;
-    green = 233 - (percent * 2 * 67) / 100;
-    blue = 237 + (percent * 2 * 18) / 100;
+    red = r0 - (percent * 2 * (r0 - 23)) / 100;
+    green = g0 - (percent * 2 * (g0 - 166)) / 100;
+    blue = b0 + (percent * 2 * (255 - b0)) / 100;
   }
-  //return without decimals since css doesn't allow them
   return 'rgb(' + red.toFixed(0) + ', ' + green.toFixed(0) + ', ' + blue.toFixed(0) + ')';
 };
 
