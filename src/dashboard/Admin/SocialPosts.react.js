@@ -177,6 +177,39 @@ class SocialPosts extends DashboardView {
     }
   }
 
+  // YouTube has no API for Community posts (the Data API covers videos and
+  // comments only -- checked 2026-10-01), so this is the hand-off: the card is
+  // downloaded and the caption copied, ready for youtube.com → Create → Post.
+  // The caption is the Facebook one (full text, clickable link), re-tagged
+  // ?src=yt so YouTube downloads show separately in /web-analytics.
+  youtubeCaption(post) {
+    const c = post.captions || {};
+    return (c.facebook || c.instagram || '')
+      .replace(/download\?src=fb/g, 'download?src=yt')
+      .replace('Link in bio.', 'Download: https://prayercircle.co.uk/download?src=yt');
+  }
+
+  async forYouTube(post) {
+    try {
+      const res = await fetch(post.imageUrl);
+      if (!res.ok) {
+        throw new Error(`Could not fetch the picture (${res.status})`);
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prayer-circle-${post.draftedFor || post.id}-${post.slot || 'post'}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      await navigator.clipboard.writeText(this.youtubeCaption(post));
+      this.say('Picture downloaded and caption copied. On youtube.com: Create → Post, paste, add the picture.');
+    } catch (e) {
+      this.say(e.message || String(e), true);
+    }
+  }
+
   renderResults(post) {
     const results = post.results || {};
     const nets = Object.keys(results);
@@ -245,6 +278,12 @@ class SocialPosts extends DashboardView {
             })}
 
             {this.renderResults(post)}
+
+            {(post.status === 'posted' || post.status === 'partial') && post.imageUrl && (
+              <div className={styles.actions}>
+                <Button value="For YouTube" primary={false} onClick={() => this.forYouTube(post)} />
+              </div>
+            )}
 
             {working && <div className={styles.meta}>{working}</div>}
             {open && !working && (
