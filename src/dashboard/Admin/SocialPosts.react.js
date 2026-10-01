@@ -190,8 +190,24 @@ class SocialPosts extends DashboardView {
   }
 
   async forYouTube(post) {
+    // Copy FIRST, while still inside the click: Safari refuses clipboard writes
+    // that happen after an await. If it refuses anyway, the caption is shown to
+    // copy by hand.
+    const caption = this.youtubeCaption(post);
+    let copied = false;
     try {
-      const res = await fetch(post.imageUrl);
+      await navigator.clipboard.writeText(caption);
+      copied = true;
+    } catch {
+      window.prompt('Copy this caption (Cmd+C), then press OK:', caption);
+    }
+    try {
+      // The thumbnail <img> on this page caches the card WITHOUT the CORS
+      // header (R2 only sends it when asked, and doesn't Vary on Origin), and a
+      // fetch() would reuse that copy and fail as "Failed to fetch". A unique
+      // query string makes this a fresh, CORS request.
+      const sep = post.imageUrl.includes('?') ? '&' : '?';
+      const res = await fetch(`${post.imageUrl}${sep}dl=${Date.now()}`, { mode: 'cors', cache: 'no-store' });
       if (!res.ok) {
         throw new Error(`Could not fetch the picture (${res.status})`);
       }
@@ -203,10 +219,10 @@ class SocialPosts extends DashboardView {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      await navigator.clipboard.writeText(this.youtubeCaption(post));
-      this.say('Picture downloaded and caption copied. On youtube.com: Create → Post, paste, add the picture.');
+      this.say(`Picture downloaded${copied ? ' and caption copied' : ''}. On youtube.com: Create → Post, paste, add the picture.`);
     } catch (e) {
-      this.say(e.message || String(e), true);
+      this.say(`${copied ? 'Caption copied, but ' : ''}the picture didn't download: ${e.message || e}. ` +
+        'Open the picture (click the thumbnail) and save it instead.', true);
     }
   }
 
