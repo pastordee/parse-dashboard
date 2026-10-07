@@ -20,6 +20,7 @@ import CloudFunctions from './Settings/CloudFunctions/CloudFunctions.react';
 import SocialPosts from './Admin/SocialPosts.react';
 import Reports from './Admin/Reports.react';
 import Inbox from './Admin/Inbox.react';
+import Support from './Admin/Support.react';
 import AuditLog from './Admin/AuditLog.react';
 import Admins from './Admin/Admins.react';
 import ApiConsole from './Data/ApiConsole/ApiConsole.react';
@@ -345,6 +346,7 @@ export default class Dashboard extends React.Component {
         <Route path="admin" element={<Navigate replace to="social" />} />
         <Route path="admin/social" element={<SocialPosts />} />
         <Route path="admin/reports" element={<Reports />} />
+        <Route path="admin/support" element={<Support />} />
         <Route path="admin/inbox" element={<Inbox />} />
         <Route path="admin/audit" element={<AuditLog />} />
         <Route path="admin/admins" element={<Admins />} />

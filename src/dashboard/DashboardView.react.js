@@ -340,6 +340,7 @@ export default class DashboardView extends React.Component {
     const adminSubsections = [
       { name: 'Social posts', link: '/admin/social' },
       { name: 'Reports', link: '/admin/reports' },
+      { name: 'Support', link: '/admin/support' },
       { name: 'Inbox', link: '/admin/inbox' },
       { name: 'Audit log', link: '/admin/audit' },
       { name: 'Admins', link: '/admin/admins' },
