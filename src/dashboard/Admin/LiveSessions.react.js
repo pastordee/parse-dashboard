@@ -1,7 +1,8 @@
 // Created: 2026-10-10
 /*
  * Admin → Live: every live session running now — Creator live sermons
- * (preparing or on air), church feed livestreams, group prayer rooms, and any
+ * (preparing or on air), Creator live reels, church feed livestreams, group
+ * prayer rooms, and any
  * LiveKit room with nothing behind it (stuck) — how long each has been on,
  * who is in it, whether it has been reported, and Shut down.
  *
@@ -21,8 +22,11 @@ import styles from './Admin.scss';
 
 const REFRESH_MS = 15000;
 
+// The server sends each session's label; these are only the fallback for an
+// older server.
 const KIND = {
   sermon: 'Live sermon',
+  reel: 'Live reel',
   feed: 'Feed livestream',
   group: 'Prayer room',
   room: 'Room only',
@@ -90,7 +94,7 @@ class LiveSessions extends DashboardView {
   }
 
   async end(s) {
-    const what = `${KIND[s.kind] || 'Session'}: "${s.title}"${s.host ? ` (${s.host})` : ''}`;
+    const what = `${s.label || KIND[s.kind] || 'Session'}: "${s.title}"${s.host ? ` (${s.host})` : ''}`;
     const reason = window.prompt(
       `Shut down ${what}?\n\nEveryone in it is disconnected at once and any recording stops. ` +
       'This cannot be undone.\n\nReason (kept in the audit log):', s.reports ? 'Reported' : '');
@@ -121,7 +125,7 @@ class LiveSessions extends DashboardView {
 
     let body = null;
     if (error) {
-      body = <div className={styles.error}>Live sessions couldn't be loaded: {error}</div>;
+      body = <div className={styles.error}>Live sessions couldn’t be loaded: {error}</div>;
     } else if (!loading) {
       body = (
         <>
@@ -129,7 +133,7 @@ class LiveSessions extends DashboardView {
             Everything live or getting ready right now. Refreshes every 15 seconds.
             Shut down disconnects everyone in the session and stops its recording.
           </p>
-          {!livekit && <div className={styles.notice}>The live server isn't configured here — viewer counts and stuck rooms can't be shown.</div>}
+          {!livekit && <div className={styles.notice}>The live server isn’t configured here — viewer counts and stuck rooms can’t be shown.</div>}
           {sessions.length === 0 ? (
             <div className={styles.empty}>Nothing is live right now.</div>
           ) : (
@@ -150,7 +154,7 @@ class LiveSessions extends DashboardView {
                     <td>
                       <strong>{s.title}</strong>
                       <div className={styles.meta}>
-                        {KIND[s.kind] || s.kind}
+                        {s.label || KIND[s.kind] || s.kind}
                         {s.where && s.where !== s.title ? ` · ${s.where}` : ''}
                         {s.host ? ` · host ${s.host}` : ''}
                       </div>
