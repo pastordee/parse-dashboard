@@ -23,6 +23,7 @@ import Inbox from './Admin/Inbox.react';
 import Support from './Admin/Support.react';
 import AuditLog from './Admin/AuditLog.react';
 import Admins from './Admin/Admins.react';
+import LiveSessions from './Admin/LiveSessions.react';
 import ApiConsole from './Data/ApiConsole/ApiConsole.react';
 import AppData from './AppData.react';
 import AppsIndex from './Apps/AppsIndex.react';
@@ -346,6 +347,7 @@ export default class Dashboard extends React.Component {
         <Route path="admin" element={<Navigate replace to="social" />} />
         <Route path="admin/social" element={<SocialPosts />} />
         <Route path="admin/reports" element={<Reports />} />
+        <Route path="admin/live" element={<LiveSessions />} />
         <Route path="admin/support" element={<Support />} />
         <Route path="admin/inbox" element={<Inbox />} />
         <Route path="admin/audit" element={<AuditLog />} />
