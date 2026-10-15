@@ -324,6 +324,22 @@ $dk-link: #5fb3f5;
       color: $dk-muted;
     }
 
+    // Admin → Live tabs, meters, graphs, report text (2026-10-15)
+    #{c('Admin__tab')} {
+      background: $dk-surface !important;
+      border-color: $dk-border !important;
+      color: $dk-text !important;
+    }
+    #{c('Admin__tabOn')} {
+      background: $dk-text !important;
+      color: $dk-bg !important;
+    }
+    #{c('Admin__meter')},
+    #{c('Admin__reportText')} {
+      background: $dk-bg !important;
+      color: $dk-text;
+    }
+
     #{c('Admin__notice')} {
       background: #3a2f12;
       color: #f3d27a;

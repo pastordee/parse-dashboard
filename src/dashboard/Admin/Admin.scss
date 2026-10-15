@@ -277,3 +277,88 @@ $red: #e74c3c;
     border-radius: 6px;
   }
 }
+
+// ── Live → load, capacity, history, reports (2026-10-15) ─────────────────
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  border: 1px solid $line;
+  background: #fff;
+  color: $ink;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tabOn {
+  background: $ink;
+  border-color: $ink;
+  color: #fff;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 4px;
+
+  > div { margin-bottom: 0; }
+}
+
+.bigNum {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.unit {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.meter {
+  height: 6px;
+  border-radius: 3px;
+  background: #eef0f4;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.meterFill { height: 100%; border-radius: 3px; }
+.meterGreen { background: $green; }
+.meterAmber { background: $amber; }
+.meterRed { background: $red; }
+
+.spark polyline { stroke: $blue; }
+
+.graphs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-end;
+  padding: 6px 0;
+}
+
+.reportText {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin: 0;
+  background: #f8f9fb;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
