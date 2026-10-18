@@ -5,8 +5,11 @@
  *
  *   Awaiting approval  new sponsors and new adverts. Prayer Circle is a
  *                      Christian organisation, so every advert is WATCHED here
- *                      before it can play; the price per 1,000 plays is set
- *                      (or adjusted) when approving.
+ *                      before it can play; the price per 1,000 plays of 30 s
+ *                      is set (or adjusted) when approving — longer adverts
+ *                      (up to 2 min) pay pro rata. New sponsors show what the
+ *                      portal asked: person, phone, organisation and its
+ *                      number, address, what they'll advertise, budget.
  *   Sponsors           every sponsor with their campaigns: plays, spend of
  *                      budget, dates, on/off, and editing a campaign's title,
  *                      price, budget, dates.
@@ -61,7 +64,23 @@ const thisMonth = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 };
 
-const seconds = ms => `${Math.round((ms || 0) / 1000)} s`;
+const seconds = ms => {
+  const half = Math.round((ms || 0) / 30000);
+  return (ms || 0) < 60000 ? `${Math.round((ms || 0) / 1000)} s` : `${Math.floor(half / 2)}${half % 2 ? '½' : ''} min`;
+};
+
+// The price is per 1,000 plays of 30 s; an advert pays for its length
+// (owner, 2026-10-18 — adverts up to 2 minutes).
+const priceForSlot = (cpmPence, slotMs) => Math.round(((cpmPence || 0) * (slotMs || 30000)) / 30000);
+
+// What the sponsor portal's application asks (the server keeps the same lists, tv.cjs).
+const ORG_TYPES = { business: 'Business', charity: 'Charity', church: 'Church or ministry', other: 'Other' };
+const CATEGORIES = {
+  'christian-media': 'Christian books, music & media', education: 'Education & courses', events: 'Events & conferences',
+  'charity-mission': 'Charity & mission', 'food-drink': 'Food & drink', health: 'Health & wellbeing',
+  'local-business': 'Local business & services', 'finance-legal': 'Finance & legal', other: 'Something else',
+};
+const BUDGETS = { 'under-100': 'Under £100 a month', '100-500': '£100 – £500 a month', '500-2000': '£500 – £2,000 a month', '2000-plus': 'Over £2,000 a month' };
 
 function statusChip(status) {
   const cls = { approved: styles.pillGreen, pending: styles.pillAmber, rejected: styles.pillRed }[status] || '';
@@ -344,6 +363,22 @@ class TvSponsors extends DashboardView {
             <span>Contact</span>
             {s.contactEmail ? <a href={`mailto:${s.contactEmail}`}>{s.contactEmail}</a> : '—'}
           </div>
+          <div>
+            <span>Person</span>
+            {s.contactName || '—'}
+            {s.phone && <> · <a href={`tel:${s.phone.replace(/[^+\d]/g, '')}`}>{s.phone}</a></>}
+          </div>
+          <div>
+            <span>Organisation</span>
+            {ORG_TYPES[s.orgType] || '—'}
+            {s.registrationNumber && ` · No. ${s.registrationNumber}`}
+          </div>
+          <div>
+            <span>Based in</span>
+            {[s.address, s.country].filter(Boolean).join(', ') || '—'}
+          </div>
+          <div><span>Will advertise</span>{CATEGORIES[s.category] || '—'}</div>
+          <div><span>Budget</span>{BUDGETS[s.monthlyBudget] || '—'}</div>
         </div>
         <div className={styles.body}>{s.about || <em>No description given.</em>}</div>
         {this.renderNote(key, 'e.g. Welcome aboard / We can only accept…')}
@@ -392,7 +427,7 @@ class TvSponsors extends DashboardView {
               <div><span>Runs</span>{day(c.from)} – {day(c.until)}</div>
             </div>
             <label className={styles.tvField}>
-              <span>Price per 1,000 plays (£)</span>
+              <span>Price per 1,000 plays of 30 s (£) — this {seconds(c.slotMs)} advert pays {money(priceForSlot(toPence(price != null ? price : toPounds(c.cpmPence)), c.slotMs))}</span>
               <input
                 inputMode="decimal"
                 value={price != null ? price : toPounds(c.cpmPence)}
@@ -438,7 +473,7 @@ class TvSponsors extends DashboardView {
         <td colSpan={7} className={styles.tvEditCell}>
           <form className={styles.tvEdit} onSubmit={e => this.saveEdit(e, c)}>
             {input('title', 'Title')}
-            {input('price', 'Price per 1,000 plays (£)', { inputMode: 'decimal' })}
+            {input('price', 'Price per 1,000 plays of 30 s (£)', { inputMode: 'decimal' })}
             {input('budget', 'Budget (£)', { inputMode: 'decimal' })}
             {input('from', 'Starts', { type: 'date' })}
             {input('until', 'Ends', { type: 'date' })}
@@ -466,7 +501,7 @@ class TvSponsors extends DashboardView {
       <tr key={c.campaignId} className={c.active ? '' : styles.dim}>
         <td>
           <strong>{c.title}</strong>
-          <div className={styles.meta}>{seconds(c.slotMs)} slot · {money(c.cpmPence)} per 1,000</div>
+          <div className={styles.meta}>{seconds(c.slotMs)} slot · {money(priceForSlot(c.cpmPence, c.slotMs))} per 1,000 ({money(c.cpmPence)} per 30 s)</div>
           {c.reviewNote && <div className={styles.meta}>Note: {c.reviewNote}</div>}
         </td>
         <td>{statusChip(c.status)}</td>
@@ -503,6 +538,11 @@ class TvSponsors extends DashboardView {
           {statusChip(s.status)}
           {s.website && <a className={styles.meta} href={s.website} target="_blank" rel="noopener noreferrer">{s.website}</a>}
           {s.contactEmail && <a className={styles.meta} href={`mailto:${s.contactEmail}`}>{s.contactEmail}</a>}
+          {s.contactName && (
+            <span className={styles.meta}>
+              {s.contactName}{s.phone && ` · ${s.phone}`}{s.country && ` · ${s.country}`}
+            </span>
+          )}
           {s.sponsorId && (
             <label className={styles.tvActive}>
               <span className={styles.meta}>{s.active ? 'Active' : 'Off'}</span>
