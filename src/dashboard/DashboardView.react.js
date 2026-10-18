@@ -341,6 +341,8 @@ export default class DashboardView extends React.Component {
       { name: 'Social posts', link: '/admin/social' },
       { name: 'Reports', link: '/admin/reports' },
       { name: 'Live', link: '/admin/live' },
+      // Church TV advert sponsors: vetting, campaigns, monthly split (2026-10-18).
+      { name: 'TV sponsors', link: '/admin/tv-sponsors' },
       { name: 'Support', link: '/admin/support' },
       { name: 'Inbox', link: '/admin/inbox' },
       { name: 'Audit log', link: '/admin/audit' },
