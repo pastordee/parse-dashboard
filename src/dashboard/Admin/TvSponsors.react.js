@@ -10,6 +10,8 @@
  *                      (up to 2 min) pay pro rata. New sponsors show what the
  *                      portal asked: person, phone, organisation and its
  *                      number, address, what they'll advertise, budget.
+ *                      The message to the sponsor comes pre-filled (welcome
+ *                      / approved, with the advertising standards link).
  *   Sponsors           every sponsor with their campaigns: plays, spend of
  *                      budget, dates, on/off, and editing a campaign's title,
  *                      price, budget, dates.
@@ -81,6 +83,21 @@ const CATEGORIES = {
   'local-business': 'Local business & services', 'finance-legal': 'Finance & legal', other: 'Something else',
 };
 const BUDGETS = { 'under-100': 'Under £100 a month', '100-500': '£100 – £500 a month', '500-2000': '£500 – £2,000 a month', '2000-plus': 'Over £2,000 a month' };
+
+// The sponsor's message box starts with these (owner, 2026-10-18): the
+// reviewer adds to them if needed. Every one points at the advertising
+// standards page on the website's sponsor portal.
+const STANDARDS_URL = 'https://prayercircle.co.uk/sponsors/standards';
+const sponsorWelcome = s =>
+  `Welcome to Church TV, ${s.contactName || s.name}! Your sponsor account is approved, so you can now upload adverts from your sponsor account. ` +
+  `Prayer Circle is a Christian platform and we watch every advert before it plays, so please read our advertising standards first: ${STANDARDS_URL} ` +
+  'An advert that doesn’t meet them will be turned down.';
+const sponsorTurnDown = () => 'Thank you for applying to sponsor Church TV. We can’t approve your account because ';
+const campaignApproved = c =>
+  `Your advert “${c.title}” is approved. It plays in churches’ breaks from ${day(c.from)} to ${day(c.until)}, or until its budget is spent. ` +
+  `Thank you for keeping to our advertising standards: ${STANDARDS_URL}`;
+const campaignTurnDown = c =>
+  `Thank you for your advert. We can’t approve “${c.title}” because it doesn’t meet our advertising standards (${STANDARDS_URL}): `;
 
 function statusChip(status) {
   const cls = { approved: styles.pillGreen, pending: styles.pillAmber, rejected: styles.pillRed }[status] || '';
@@ -177,13 +194,30 @@ class TvSponsors extends DashboardView {
     this.setState(({ notes }) => ({ notes: { ...notes, [key]: value } }));
   }
 
+  // The message as it stands: what the reviewer typed, else the pre-filled one.
+  noteText(key, prefill) {
+    const typed = this.state.notes[key];
+    return typed != null ? typed : prefill;
+  }
+
+  // Turning down needs a reason. While the box still holds the welcome (or
+  // the bare start of a turn-down), it becomes the start of a turn-down to
+  // finish, and nothing is sent yet.
+  reasonGiven(key, note, welcome, turnDown) {
+    if (note && note !== welcome.trim() && note !== turnDown.trim()) {
+      return true;
+    }
+    this.setNote(key, turnDown);
+    this.say('Finish the message saying why it was turned down — the sponsor sees it — then press Turn down again.', true);
+    return false;
+  }
+
   // ── Review ──────────────────────────────────────────────────────────────
 
   reviewSponsor(s, approve) {
     const key = `sponsor:${s.sponsorId}`;
-    const note = (this.state.notes[key] || '').trim();
-    if (!approve && !note) {
-      this.say('Add a note saying why it was turned down — the sponsor sees it.', true);
+    const note = this.noteText(key, sponsorWelcome(s)).trim();
+    if (!approve && !this.reasonGiven(key, note, sponsorWelcome(s), sponsorTurnDown())) {
       return;
     }
     this.run(
@@ -195,7 +229,7 @@ class TvSponsors extends DashboardView {
 
   reviewCampaign(c, approve) {
     const key = `campaign:${c.campaignId}`;
-    const note = (this.state.notes[key] || '').trim();
+    const note = this.noteText(key, campaignApproved(c)).trim();
     const params = { campaignId: c.campaignId, approve, note };
     if (approve) {
       const priceText = this.state.prices[c.campaignId];
@@ -209,8 +243,7 @@ class TvSponsors extends DashboardView {
         return;
       }
       params.cpmPence = cpmPence;
-    } else if (!note) {
-      this.say('Add a note saying why it was turned down — the sponsor sees it.', true);
+    } else if (!this.reasonGiven(key, note, campaignApproved(c), campaignTurnDown(c))) {
       return;
     }
     this.run(
@@ -318,14 +351,13 @@ class TvSponsors extends DashboardView {
 
   // ── Rendering ───────────────────────────────────────────────────────────
 
-  renderNote(key, placeholder) {
+  renderNote(key, prefill) {
     return (
       <div className={styles.caption}>
-        <label>Note (required to turn down — the sponsor sees it)</label>
+        <label>Message to the sponsor (they see it) — pre-filled; add to it if you need to. Turning down needs a reason.</label>
         <textarea
-          rows={2}
-          value={this.state.notes[key] || ''}
-          placeholder={placeholder}
+          rows={4}
+          value={this.noteText(key, prefill)}
           onChange={e => this.setNote(key, e.target.value)}
         />
       </div>
@@ -379,9 +411,10 @@ class TvSponsors extends DashboardView {
           </div>
           <div><span>Will advertise</span>{CATEGORIES[s.category] || '—'}</div>
           <div><span>Budget</span>{BUDGETS[s.monthlyBudget] || '—'}</div>
+          <div><span>Advertising standards</span>{s.standardsAgreedAt ? `Agreed ${day(s.standardsAgreedAt)}` : 'Not agreed yet'}</div>
         </div>
         <div className={styles.body}>{s.about || <em>No description given.</em>}</div>
-        {this.renderNote(key, 'e.g. Welcome aboard / We can only accept…')}
+        {this.renderNote(key, sponsorWelcome(s))}
         {this.renderReviewButtons(key, () => this.reviewSponsor(s, true), () => this.reviewSponsor(s, false))}
       </div>
     );
@@ -437,7 +470,7 @@ class TvSponsors extends DashboardView {
                 }}
               />
             </label>
-            {this.renderNote(key, 'e.g. Approved / The message doesn\'t fit Church TV because…')}
+            {this.renderNote(key, campaignApproved(c))}
             {this.renderReviewButtons(key, () => this.reviewCampaign(c, true), () => this.reviewCampaign(c, false))}
           </div>
         </div>
