@@ -142,6 +142,7 @@ $dk-link: #5fb3f5;
 
     // Folder rows and striped rows in tables.
     #{c('Admin__table')} td[colspan],
+    #{c('Admin__tvEditCell')},
     #{c('TableView__rows')} tr:nth-child(odd) {
       background: $dk-surface2 !important;
     }
@@ -179,6 +180,7 @@ $dk-link: #5fb3f5;
     }
 
     #{c('Admin__meta')},
+    #{c('Admin__tvField')},
     #{c('Admin__hint')},
     #{c('Admin__sectionTitle')},
     #{c('Admin__empty')},
