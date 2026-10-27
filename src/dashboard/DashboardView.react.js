@@ -343,6 +343,8 @@ export default class DashboardView extends React.Component {
       { name: 'Live', link: '/admin/live' },
       // Church TV advert sponsors: vetting, campaigns, monthly split (2026-10-18).
       { name: 'TV sponsors', link: '/admin/tv-sponsors' },
+      // R2 media: unused files, trash, restore (2026-10-27).
+      { name: 'Storage', link: '/admin/storage' },
       { name: 'Support', link: '/admin/support' },
       { name: 'Inbox', link: '/admin/inbox' },
       { name: 'Audit log', link: '/admin/audit' },
