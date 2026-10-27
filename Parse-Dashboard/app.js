@@ -294,8 +294,8 @@ module.exports = function(config, options) {
           return res.status(400).json({ error: 'Please replace the placeholder API key with your actual API key' });
         }
 
-        // Only support OpenAI for now
-        if (provider.toLowerCase() !== 'openai') {
+        // OpenAI, and Anthropic (Claude) since 7.4.39
+        if (!['openai', 'anthropic'].includes(provider.toLowerCase())) {
           return res.status(400).json({ error: `Provider "${provider}" is not supported yet` });
         }
 
@@ -314,8 +314,9 @@ module.exports = function(config, options) {
         // preventing privilege escalation via self-authorized permissions in the request body
         const effectivePermissions = isReadOnly ? {} : (permissions || {});
 
-        // Make request to OpenAI API with app context and conversation history
-        const response = await makeOpenAIRequest(message, model, apiKey, appContext, conversationHistory, operationLog, effectivePermissions);
+        // Make request to the provider's API with app context and conversation history
+        const makeRequest = provider.toLowerCase() === 'anthropic' ? makeAnthropicRequest : makeOpenAIRequest;
+        const response = await makeRequest(message, model, apiKey, appContext, conversationHistory, operationLog, effectivePermissions);
 
         // Update conversation history with user message and AI response
         conversationHistory.push(
@@ -869,22 +870,14 @@ module.exports = function(config, options) {
     }
 
     /**
-     * Make a request to OpenAI API
+     * The agent's instructions, the same for every provider.
      */
-    async function makeOpenAIRequest(userMessage, model, apiKey, appContext = null, conversationHistory = [], operationLog = [], permissions = {}) {
-      const fetch = (await import('node-fetch')).default;
-
-      const url = 'https://api.openai.com/v1/chat/completions';
-
+    function agentSystemPrompt(appContext) {
       const appInfo = appContext ?
         `\n\nContext: You are currently helping with the Parse Server app "${appContext.appName}" (ID: ${appContext.appId}) at ${appContext.serverURL}.` :
         '';
 
-      // Build messages array starting with system message
-      const messages = [
-        {
-          role: 'system',
-          content: `You are an AI assistant integrated into Parse Dashboard, a data management interface for Parse Server applications.
+      return `You are an AI assistant integrated into Parse Dashboard, a data management interface for Parse Server applications.
 
 Your role is to help users with:
 - Database queries and data operations using the Parse JS SDK
@@ -961,7 +954,124 @@ When responding:
   * When listing database classes, format as a numbered list with descriptions
   * Use tables for structured data comparison
 
-You have direct access to the Parse database through function calls, so you can query actual data and provide real-time information.${appInfo}`
+You have direct access to the Parse database through function calls, so you can query actual data and provide real-time information.${appInfo}`;
+    }
+
+    /**
+     * Make a request to the Anthropic API (Claude). Same tools, instructions
+     * and confirm-before-writing rule as the OpenAI path; the tool loop runs
+     * until Claude answers in text (at most AGENT_MAX_TOOL_ROUNDS rounds).
+     */
+    const AGENT_MAX_TOOL_ROUNDS = 8;
+    async function makeAnthropicRequest(userMessage, model, apiKey, appContext = null, conversationHistory = [], operationLog = [], permissions = {}) {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey });
+
+      const tools = databaseTools.map(t => ({
+        name: t.function.name,
+        description: t.function.description,
+        input_schema: t.function.parameters,
+      }));
+
+      const messages = (conversationHistory || [])
+        .filter(msg => msg && (msg.role === 'user' || msg.role === 'assistant') &&
+          typeof msg.content === 'string' && msg.content !== '')
+        .map(msg => ({ role: msg.role, content: msg.content }));
+      messages.push({ role: 'user', content: userMessage });
+
+      for (let round = 0; round <= AGENT_MAX_TOOL_ROUNDS; round++) {
+        let response;
+        try {
+          response = await client.beta.messages.create({
+            model,
+            max_tokens: 16000,
+            system: agentSystemPrompt(appContext),
+            tools,
+            messages,
+            // A request a safety classifier declines is re-run on a fallback model.
+            betas: ['server-side-fallback-2026-07-01'],
+            fallbacks: 'default',
+          });
+        } catch (error) {
+          if (error instanceof Anthropic.AuthenticationError) {
+            throw new Error('Invalid API key. Please check your Anthropic API key configuration.');
+          } else if (error instanceof Anthropic.RateLimitError) {
+            throw new Error('Rate limit exceeded. Please try again in a moment.');
+          } else if (error instanceof Anthropic.PermissionDeniedError) {
+            throw new Error('Access forbidden. Please check your API key permissions.');
+          } else if (error instanceof Anthropic.InternalServerError) {
+            throw new Error('Anthropic service is temporarily unavailable. Please try again later.');
+          } else if (error instanceof Anthropic.APIError) {
+            throw new Error(`Anthropic API error: ${error.message}`);
+          }
+          throw error;
+        }
+
+        const text = response.content
+          .filter(b => b.type === 'text')
+          .map(b => b.text)
+          .join('\n')
+          .trim();
+
+        if (response.stop_reason === 'refusal') {
+          return text || 'Claude declined this request.';
+        }
+        if (response.stop_reason === 'pause_turn') {
+          messages.push({ role: 'assistant', content: response.content });
+          continue;
+        }
+        if (response.stop_reason !== 'tool_use') {
+          return text || 'Done.';
+        }
+
+        // Run every tool call, then send all results back in one message.
+        messages.push({ role: 'assistant', content: response.content });
+        const results = [];
+        for (const block of response.content) {
+          if (block.type !== 'tool_use') {
+            continue;
+          }
+          try {
+            console.log('Executing database function:', {
+              functionName: block.name,
+              args: block.input,
+              appId: appContext.appId,
+              serverURL: appContext.serverURL,
+              timestamp: new Date().toISOString()
+            });
+            const result = await executeDatabaseFunction(block.name, block.input || {}, appContext, operationLog, permissions);
+            results.push({
+              type: 'tool_result',
+              tool_use_id: block.id,
+              content: result ? JSON.stringify(result) : JSON.stringify({ success: true }),
+            });
+          } catch (error) {
+            results.push({
+              type: 'tool_result',
+              tool_use_id: block.id,
+              content: JSON.stringify({ error: error.message || 'Unknown error occurred' }),
+              is_error: true,
+            });
+          }
+        }
+        messages.push({ role: 'user', content: results });
+      }
+      return 'Stopped after too many database steps. Ask again with a narrower request.';
+    }
+
+    /**
+     * Make a request to OpenAI API
+     */
+    async function makeOpenAIRequest(userMessage, model, apiKey, appContext = null, conversationHistory = [], operationLog = [], permissions = {}) {
+      const fetch = (await import('node-fetch')).default;
+
+      const url = 'https://api.openai.com/v1/chat/completions';
+
+      // Build messages array starting with system message
+      const messages = [
+        {
+          role: 'system',
+          content: agentSystemPrompt(appContext)
         }
       ];
 
