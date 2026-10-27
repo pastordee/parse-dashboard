@@ -371,6 +371,104 @@ $dk-link: #5fb3f5;
       background: $dk-bg !important;
     }
 
+    // Agent chat (2026-10-27): replies were white cards with dark text, and
+    // the input bar a white strip. The user's blue bubble stays as it is.
+    #{c('Agent__agent')} {
+      background: $dk-surface !important;
+      color: $dk-text !important;
+      border-color: $dk-border !important;
+      box-shadow: none !important;
+    }
+
+    #{c('Agent__agent')}#{c('Agent__error')} {
+      background: #3b1d1d !important;
+      color: #f5a3a3 !important;
+      border-color: #5c2a2a !important;
+    }
+
+    #{c('Agent__agent')} #{c('Agent__messageContent')} {
+      code {
+        background: $dk-surface2;
+        color: $dk-text;
+      }
+
+      pre {
+        background: $dk-bg;
+        border: 1px solid $dk-border;
+      }
+
+      pre code {
+        background: transparent;
+      }
+
+      th,
+      td {
+        border-color: $dk-border;
+      }
+
+      th {
+        background: $dk-surface2;
+      }
+
+      blockquote {
+        border-left-color: $dk-border;
+        color: $dk-muted;
+      }
+
+      a {
+        color: $dk-link;
+      }
+    }
+
+    #{c('Agent__messageTime')} {
+      color: $dk-muted;
+    }
+
+    #{c('Agent__typing')} span {
+      background: $dk-muted !important;
+    }
+
+    #{c('Agent__chatForm')} {
+      background: $dk-surface !important;
+      border-top-color: $dk-border !important;
+    }
+
+    #{c('Agent__chatInput')} {
+      background: $dk-surface2 !important;
+      color: $dk-text !important;
+      border-color: $dk-border !important;
+
+      &::placeholder {
+        color: $dk-muted;
+      }
+
+      &:disabled {
+        background: $dk-surface !important;
+        color: $dk-muted !important;
+      }
+    }
+
+    #{c('Agent__exampleButton')} {
+      background: $dk-surface !important;
+      border-color: $dk-link !important;
+      color: $dk-link !important;
+
+      &:hover {
+        background: #007bff !important;
+        color: #fff !important;
+      }
+    }
+
+    #{c('Agent__exampleQueries')} h4 {
+      color: $dk-muted !important;
+    }
+
+    #{c('Agent__warningMessage')} {
+      background: #3a3016 !important;
+      border-color: #5c4b1d !important;
+      color: #f2d27a !important;
+    }
+
     // Analytics → Overview: health banner, stat boxes, billing donuts.
     #{c('Overview__healthInfoContainer')},
     #{c('Overview__infoContainer')} {
