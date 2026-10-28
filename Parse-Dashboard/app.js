@@ -314,6 +314,9 @@ module.exports = function(config, options) {
         // preventing privilege escalation via self-authorized permissions in the request body
         const effectivePermissions = isReadOnly ? {} : (permissions || {});
 
+        // The owner's standing rules and the Mac's notes, read fresh each message.
+        appContext.agentExtra = await agentExtra(appContext);
+
         // Make request to the provider's API with app context and conversation history
         const makeRequest = provider.toLowerCase() === 'anthropic' ? makeAnthropicRequest : makeOpenAIRequest;
         const response = await makeRequest(message, model, apiKey, appContext, conversationHistory, operationLog, effectivePermissions);
@@ -870,6 +873,50 @@ module.exports = function(config, options) {
     }
 
     /**
+     * What the owner adds to the agent's instructions, read on every message so
+     * an edit needs no restart:
+     *   agent.instructionsFile  a Markdown file of standing rules (the
+     *                           server's "CLAUDE.md"); missing → nothing added.
+     *   agent.notesClass        a Parse class shared with the owner's Claude Code
+     *                           sessions on the Mac: rows {from: 'mac'|'dashboard',
+     *                           text, topic?}. The latest notes from the Mac are
+     *                           shown here; the agent writes {from: 'dashboard'}
+     *                           rows (with the user's confirmation) to reply.
+     */
+    async function agentExtra(appContext) {
+      const agent = config.agent || {};
+      let extra = '';
+      if (agent.instructionsFile) {
+        try {
+          const text = fs.readFileSync(agent.instructionsFile, 'utf8').slice(0, 30000).trim();
+          if (text) extra += `\n\n# Standing instructions from the owner (follow these; they override the defaults above)\n\n${text}`;
+        } catch (e) {
+          // No file: the defaults alone.
+        }
+      }
+      if (agent.notesClass && appContext && appContext.serverURL && appContext.masterKey) {
+        try {
+          const fetch = (await import('node-fetch')).default;
+          const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
+          const where = encodeURIComponent(JSON.stringify({ from: 'mac', createdAt: { $gte: { __type: 'Date', iso: since } } }));
+          const res = await fetch(`${appContext.serverURL.replace(/\/$/, '')}/classes/${encodeURIComponent(agent.notesClass)}?where=${where}&order=-createdAt&limit=10`, {
+            headers: { 'X-Parse-Application-Id': appContext.appId, 'X-Parse-Master-Key': appContext.masterKey },
+          });
+          const rows = res.ok ? ((await res.json()).results || []) : [];
+          extra += `\n\n# Notes channel with the owner's Claude Code sessions (class \`${agent.notesClass}\`)\n` +
+            `To leave a note for them, create a \`${agent.notesClass}\` object {from: "dashboard", text, topic} (ask the user first, as for any write). ` +
+            `Notes from them (from: "mac"), newest first, last 14 days:` +
+            (rows.length
+              ? '\n' + rows.map(r => `- ${r.createdAt}${r.topic ? ` [${String(r.topic).slice(0, 60)}]` : ''}: ${String(r.text || '').slice(0, 2000)}`).join('\n')
+              : ' (none)');
+        } catch (e) {
+          console.error('Agent notes: could not read', e.message);
+        }
+      }
+      return extra;
+    }
+
+    /**
      * The agent's instructions, the same for every provider.
      */
     function agentSystemPrompt(appContext) {
@@ -954,7 +1001,7 @@ When responding:
   * When listing database classes, format as a numbered list with descriptions
   * Use tables for structured data comparison
 
-You have direct access to the Parse database through function calls, so you can query actual data and provide real-time information.${appInfo}`;
+You have direct access to the Parse database through function calls, so you can query actual data and provide real-time information.${appInfo}${(appContext && appContext.agentExtra) || ''}`;
     }
 
     /**
