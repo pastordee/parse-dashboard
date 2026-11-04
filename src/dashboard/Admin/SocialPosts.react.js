@@ -44,6 +44,9 @@ const STAT_COLUMNS = [
   { key: 'shares', label: 'Shares' },
   { key: 'saves', label: 'Saves' },
   { key: 'clicks', label: 'Clicks' },
+  // Started following because of the post: Instagram, Facebook Reels (within
+  // 24 hours of watching), YouTube (subscribers gained, a few days behind).
+  { key: 'follows', label: 'New followers' },
   // From our own /download log (stats.cjs downloadTaps), robots left out.
   { key: 'taps', label: 'Download taps' },
   { key: 'toStore', label: 'To the store' },
@@ -326,6 +329,8 @@ class SocialPosts extends DashboardView {
           Download taps: different people who opened the download link from that network between this post and
           the next; &ldquo;To the store&rdquo; is how many were sent on to the App Store or Google Play. Link-preview
           robots are left out (unnamed browsers, and the first 5 minutes after posting).
+          New followers: Instagram and Facebook Reels count follows that came from the post; YouTube counts
+          subscribers gained on the video, two or three days behind. Facebook photo posts and X don&apos;t say.
         </div>
       </div>
     );
@@ -344,6 +349,7 @@ class SocialPosts extends DashboardView {
             <th>Likes</th>
             <th>Comments</th>
             <th>Shares</th>
+            <th>New followers</th>
             <th>Download taps</th>
           </tr>
         </thead>
@@ -365,6 +371,7 @@ class SocialPosts extends DashboardView {
                 <td>{shown ? fmt(t.likes) : ''}</td>
                 <td>{shown ? fmt((t.comments || 0) + (t.replies || 0)) : ''}</td>
                 <td>{shown ? fmt(t.shares) : ''}</td>
+                <td>{shown ? fmt(t.follows) : ''}</td>
                 <td>{shown ? fmt(t.taps) : ''}</td>
               </tr>
             );
