@@ -44,6 +44,9 @@ const STAT_COLUMNS = [
   { key: 'shares', label: 'Shares' },
   { key: 'saves', label: 'Saves' },
   { key: 'clicks', label: 'Clicks' },
+  // From our own /download log (stats.cjs downloadTaps), robots left out.
+  { key: 'taps', label: 'Download taps' },
+  { key: 'toStore', label: 'To the store' },
 ];
 
 const fmt = v => (typeof v === 'number' ? v.toLocaleString() : '–');
@@ -320,6 +323,9 @@ class SocialPosts extends DashboardView {
         <div className={styles.meta}>
           People are counted per post, so the total can include the same person more than once.
           X is read once a day for a post&apos;s first {this.state.data.statsDays?.x || 14} days (each read is billed).
+          Download taps: different people who opened the download link from that network between this post and
+          the next; &ldquo;To the store&rdquo; is how many were sent on to the App Store or Google Play. Link-preview
+          robots are left out (unnamed browsers, and the first 5 minutes after posting).
         </div>
       </div>
     );
@@ -338,6 +344,7 @@ class SocialPosts extends DashboardView {
             <th>Likes</th>
             <th>Comments</th>
             <th>Shares</th>
+            <th>Download taps</th>
           </tr>
         </thead>
         <tbody>
@@ -358,6 +365,7 @@ class SocialPosts extends DashboardView {
                 <td>{shown ? fmt(t.likes) : ''}</td>
                 <td>{shown ? fmt((t.comments || 0) + (t.replies || 0)) : ''}</td>
                 <td>{shown ? fmt(t.shares) : ''}</td>
+                <td>{shown ? fmt(t.taps) : ''}</td>
               </tr>
             );
           })}
