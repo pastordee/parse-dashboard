@@ -7,6 +7,10 @@
  *
  * An approved post waits for its time; an unapproved one is dropped when its
  * time passes (the server's rule, not this page's).
+ *
+ * Posted ones show their numbers per network (2026-11-04): views, people
+ * reached, likes, comments, shares, saves -- refreshed by the server every
+ * 6 hours (cloud/social/stats.cjs), or now with "Refresh numbers".
  */
 import React from 'react';
 import DashboardView from 'dashboard/DashboardView.react';
@@ -29,6 +33,34 @@ const STATUS = {
   expired: { text: 'Expired', cls: '' },
 };
 
+// The numbers shown for a posted post, in this order. A network that doesn't
+// give one shows a dash.
+const STAT_COLUMNS = [
+  { key: 'views', label: 'Views' },
+  { key: 'people', label: 'People' },
+  { key: 'likes', label: 'Likes' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'replies', label: 'Replies' },
+  { key: 'shares', label: 'Shares' },
+  { key: 'saves', label: 'Saves' },
+  { key: 'clicks', label: 'Clicks' },
+];
+
+const fmt = v => (typeof v === 'number' ? v.toLocaleString() : '–');
+
+// Sums [rows] ({ key: number }) column by column; a column nobody gave stays empty.
+function sumRows(rows) {
+  const total = {};
+  for (const r of rows) {
+    for (const c of STAT_COLUMNS) {
+      if (typeof r[c.key] === 'number') {
+        total[c.key] = (total[c.key] || 0) + r[c.key];
+      }
+    }
+  }
+  return total;
+}
+
 // datetime-local wants local time without a zone.
 function toLocalInput(date) {
   const d = date instanceof Date ? date : new Date(date?.iso || date || Date.now());
@@ -43,7 +75,8 @@ class SocialPosts extends DashboardView {
     this.section = 'Admin';
     this.subsection = 'Social posts';
     // edits: { [postId]: { [network]: caption } } — unsaved caption changes.
-    this.state = { loading: true, error: null, data: null, edits: {}, busy: {}, toast: null };
+    // tab: today | upcoming | past. openId: the past post opened for its insights.
+    this.state = { loading: true, error: null, data: null, edits: {}, busy: {}, toast: null, tab: 'today', openId: null };
     this.load = this.load.bind(this);
   }
 
@@ -177,6 +210,183 @@ class SocialPosts extends DashboardView {
     }
   }
 
+  label(key) {
+    return (this.state.data.labels || {})[key] ||
+      ((this.state.data.networks || []).find(n => n.key === key) || {}).label || key;
+  }
+
+  async refreshStats(post) {
+    this.setBusy(post ? post.id : 'all', 'Getting the latest numbers…');
+    try {
+      const r = await adminCall(this.context, 'adminSocialRefreshStats', post ? { id: post.id } : {});
+      const problems = [r.ytError && `YouTube: ${r.ytError}`, r.xError && `X: ${r.xError}`].filter(Boolean);
+      this.say(problems.length ? `Updated, except ${problems.join('; ')}` : 'Numbers updated', problems.length > 0);
+      await this.load(true);
+    } catch (e) {
+      this.say(e.message || String(e), true);
+    } finally {
+      this.setBusy(post ? post.id : 'all', null);
+    }
+  }
+
+  // One table: a row per network, with a total when there's more than one.
+  renderStatsTable(rowsByKey) {
+    const keys = Object.keys(rowsByKey);
+    const used = STAT_COLUMNS.filter(c => keys.some(k => typeof rowsByKey[k][c.key] === 'number'));
+    if (!keys.length) {
+      return null;
+    }
+    const numbers = keys.filter(k => !rowsByKey[k].error);
+    const total = sumRows(numbers.map(k => rowsByKey[k]));
+    return (
+      <table className={`${styles.table} ${styles.statsTable}`}>
+        <thead>
+          <tr>
+            <th>Where</th>
+            {used.map(c => <th key={c.key}>{c.label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {keys.map(k => {
+            const r = rowsByKey[k];
+            return (
+              <tr key={k}>
+                <td>{this.label(k)}</td>
+                {r.error
+                  ? <td colSpan={Math.max(used.length, 1)} className={styles.danger}>{r.error}</td>
+                  : used.map(c => <td key={c.key}>{fmt(r[c.key])}</td>)}
+              </tr>
+            );
+          })}
+          {numbers.length > 1 && (
+            <tr className={styles.statsTotal}>
+              <td><strong>Total</strong></td>
+              {used.map(c => <td key={c.key}><strong>{fmt(total[c.key])}</strong></td>)}
+            </tr>
+          )}
+        </tbody>
+      </table>
+    );
+  }
+
+  renderStats(post) {
+    if (post.status !== 'posted' && post.status !== 'partial') {
+      return null;
+    }
+    const stats = post.stats || {};
+    const networks = stats.networks || {};
+    const working = this.state.busy[post.id];
+    return (
+      <div className={styles.stats}>
+        {Object.keys(networks).length
+          ? this.renderStatsTable(networks)
+          : <div className={styles.meta}>No numbers yet — the server reads them every 6 hours.</div>}
+        <div className={styles.meta}>
+          {stats.updatedAt ? `Numbers from ${ago(stats.updatedAt)}. ` : ''}
+          {!working && <a href="#" onClick={e => { e.preventDefault(); this.refreshStats(post); }}>Refresh numbers</a>}
+        </div>
+      </div>
+    );
+  }
+
+  // Every posted post in the list, added up per network.
+  renderSummary(posts) {
+    const rows = {};
+    let counted = 0;
+    for (const p of posts) {
+      const networks = (p.stats || {}).networks || {};
+      if (Object.keys(networks).length) {
+        counted++;
+      }
+      for (const [k, r] of Object.entries(networks)) {
+        if (!r.error) {
+          rows[k] = sumRows([rows[k] || {}, r]);
+        }
+      }
+    }
+    if (!counted) {
+      return null;
+    }
+    return (
+      <div className={styles.card}>
+        <div className={styles.cardHead}>
+          <span className={styles.cardTitle}>All posts below · {counted} with numbers</span>
+          {!this.state.busy.all && (
+            <Button value="Refresh all numbers" primary={false} onClick={() => this.refreshStats(null)} />
+          )}
+          {this.state.busy.all && <span className={styles.meta}>{this.state.busy.all}</span>}
+        </div>
+        {this.renderStatsTable(rows)}
+        <div className={styles.meta}>
+          People are counted per post, so the total can include the same person more than once.
+          X is read once a day for a post&apos;s first {this.state.data.statsDays?.x || 14} days (each read is billed).
+        </div>
+      </div>
+    );
+  }
+
+  // Past posts as one table: a row each with its totals; click for the full insights.
+  renderPastTable(posts) {
+    return (
+      <table className={`${styles.table} ${styles.pastTable}`}>
+        <thead>
+          <tr>
+            <th />
+            <th>Post</th>
+            <th>Posted</th>
+            <th>Views</th>
+            <th>Likes</th>
+            <th>Comments</th>
+            <th>Shares</th>
+          </tr>
+        </thead>
+        <tbody>
+          {posts.map(p => {
+            const networks = (p.stats || {}).networks || {};
+            const t = sumRows(Object.values(networks).filter(r => !r.error));
+            const status = STATUS[p.status] || { text: p.status, cls: '' };
+            const shown = p.status === 'posted' || p.status === 'partial';
+            return (
+              <tr key={p.id} className={styles.pastRow} onClick={() => this.setState({ openId: p.id })}>
+                <td>{p.imageUrl && <img className={styles.pastThumb} src={p.imageUrl} alt="" loading="lazy" />}</td>
+                <td>
+                  <div>{p.describe}</div>
+                  {!shown && <span className={`${styles.pill} ${styles[status.cls] || ''}`}>{status.text}</span>}
+                </td>
+                <td>{when(p.postedAt || p.scheduledFor) || p.draftedFor}</td>
+                <td>{shown ? fmt(t.views) : ''}</td>
+                <td>{shown ? fmt(t.likes) : ''}</td>
+                <td>{shown ? fmt((t.comments || 0) + (t.replies || 0)) : ''}</td>
+                <td>{shown ? fmt(t.shares) : ''}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
+
+  renderPast(data) {
+    const open = data.recent.find(p => p.id === this.state.openId);
+    if (open) {
+      return (
+        <>
+          <div className={styles.actions}>
+            <Button value="← All past posts" primary={false} onClick={() => this.setState({ openId: null })} />
+          </div>
+          {this.renderPost(open)}
+        </>
+      );
+    }
+    return (
+      <>
+        {data.recent.length === 0 && <div className={styles.empty}>Nothing yet.</div>}
+        {this.renderSummary(data.recent)}
+        {data.recent.length > 0 && this.renderPastTable(data.recent)}
+      </>
+    );
+  }
+
   // YouTube has no API for Community posts (the Data API covers videos and
   // comments only -- checked 2026-10-01), so this is the hand-off: the card is
   // downloaded and the caption copied, ready for youtube.com → Create → Post.
@@ -232,7 +442,7 @@ class SocialPosts extends DashboardView {
     if (!nets.length) {
       return null;
     }
-    const label = key => (this.state.data.networks.find(n => n.key === key) || {}).label || key;
+    const label = key => this.label(key);
     return (
       <div className={styles.results}>
         {nets.map(key => {
@@ -294,6 +504,7 @@ class SocialPosts extends DashboardView {
             })}
 
             {this.renderResults(post)}
+            {this.renderStats(post)}
 
             {(post.status === 'posted' || post.status === 'partial') && post.imageUrl && (
               <div className={styles.actions}>
@@ -320,7 +531,7 @@ class SocialPosts extends DashboardView {
   }
 
   renderContent() {
-    const { loading, error, data, toast } = this.state;
+    const { loading, error, data, toast, tab } = this.state;
     const drafts = (data?.upcoming || []).filter(p => p.status === 'draft').length;
     const toolbar = (
       <Toolbar section="Admin" subsection="Social posts">
@@ -336,7 +547,19 @@ class SocialPosts extends DashboardView {
     if (error) {
       body = <div className={styles.error}>Social posts couldn't be loaded: {error}</div>;
     } else if (data) {
-      const slots = (data.slots || []).map(s => `${s.label.toLowerCase()} at ${s.time}`).join(' and ');
+      // Today (London): whatever is due or went out today, skipped ones aside.
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+      const todays = [...data.recent, ...data.upcoming]
+        .filter(p => p.draftedFor === today && p.status !== 'skipped')
+        .sort((a, b) => String(a.scheduledFor?.iso || a.scheduledFor).localeCompare(String(b.scheduledFor?.iso || b.scheduledFor)));
+      const tabs = [
+        ['today', `Today · ${todays.length}`],
+        ['upcoming', `Coming up · ${data.upcoming.length}`],
+        ['past', `Past posts · ${data.recent.length}`],
+      ];
+      const active = (data.slots || []).filter(s => !s.paused);
+      const paused = (data.slots || []).filter(s => s.paused);
+      const slots = active.map(s => `${s.label.toLowerCase()} at ${s.time}`).join(' and ');
       body = (
         <>
           {!data.enabled && (
@@ -348,17 +571,36 @@ class SocialPosts extends DashboardView {
             <div key={n.key} className={styles.notice}>{n.label} is not connected, so it is skipped.</div>
           ))}
           <p className={styles.hint}>
-            Two posts a day: {slots} (UK time, unless moved). Anything not approved by its time is dropped.
+            {active.length === 1 ? 'One post a day' : `${active.length} posts a day`}: {slots} (UK time, unless moved).
+            {paused.length ? ` ${paused.map(s => s.label).join(', ')} paused.` : ''} Anything not approved by its time is dropped.
             Edit a caption and it saves with Approve.
           </p>
 
-          <div className={styles.sectionTitle}>Coming up · {data.upcoming.length}</div>
-          {data.upcoming.length === 0 && <div className={styles.empty}>Nothing drafted — use “Fill the week”.</div>}
-          {data.upcoming.map(p => this.renderPost(p))}
+          <div className={styles.tabs}>
+            {tabs.map(([id, label]) => (
+              <button
+                key={id}
+                className={`${styles.tab} ${tab === id ? styles.tabOn : ''}`}
+                onClick={() => this.setState({ tab: id, openId: null })}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-          <div className={styles.sectionTitle}>Last two weeks · {data.recent.length}</div>
-          {data.recent.length === 0 && <div className={styles.empty}>Nothing yet.</div>}
-          {data.recent.map(p => this.renderPost(p))}
+          {tab === 'today' && (
+            <>
+              {todays.length === 0 && <div className={styles.empty}>Nothing for today.</div>}
+              {todays.map(p => this.renderPost(p))}
+            </>
+          )}
+          {tab === 'upcoming' && (
+            <>
+              {data.upcoming.length === 0 && <div className={styles.empty}>Nothing drafted — use “Fill the week”.</div>}
+              {data.upcoming.map(p => this.renderPost(p))}
+            </>
+          )}
+          {tab === 'past' && this.renderPast(data)}
         </>
       );
     }

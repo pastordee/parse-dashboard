@@ -332,6 +332,10 @@ $dk-link: #5fb3f5;
       border-color: $dk-border !important;
       color: $dk-text !important;
     }
+    #{c('Admin__pastRow')}:hover td {
+      background: $dk-surface2 !important;
+    }
+
     #{c('Admin__tabOn')} {
       background: $dk-text !important;
       color: $dk-bg !important;

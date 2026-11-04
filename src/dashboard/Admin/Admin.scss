@@ -213,6 +213,45 @@ $red: #e74c3c;
   a { color: $blue; }
 }
 
+// ── Social post numbers (with .table) ──
+.stats {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statsTable {
+  box-shadow: none;
+  border: 1px solid $line;
+
+  th, td { padding: 6px 10px; }
+  td:not(:first-child), th:not(:first-child) { text-align: right; }
+}
+
+.statsTotal td { border-bottom: none; }
+
+.pastTable {
+  margin-top: 12px;
+
+  td { vertical-align: middle; }
+  td:nth-child(n+4), th:nth-child(n+4) { text-align: right; }
+}
+
+.pastRow {
+  cursor: pointer;
+
+  &:hover td { background: rgba(0, 0, 0, 0.03); }
+}
+
+.pastThumb {
+  width: 44px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
 // ── Tables (Audit, Admins, Reports) ──
 .table {
   width: 100%;
