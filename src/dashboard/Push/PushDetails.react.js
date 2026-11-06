@@ -33,6 +33,7 @@ import { Link } from 'react-router-dom';
 import { tableInfoBuilder } from 'lib/PushUtils';
 import generatePath from 'lib/generatePath';
 import { withRouter } from 'lib/withRouter';
+import { duration, handle, hourlyPoints, opensFor, personName, summary } from './pushOpens';
 
 const EXP_STATS_URL = 'http://docs.parseplatform.org/ios/guide/#push-experiments';
 
@@ -255,6 +256,7 @@ class PushDetails extends DashboardView {
         return null;
       }
       this.setState({ pushDetails });
+      this.loadOpens(pushDetails);
       if (pushDetails.statistics && pushDetails.statistics.confidence_interval) {
         this.setState({
           groupColorA: pushDetails.statistics.winner === 'A' ? COLOR_MAP.green : COLOR_MAP.red,
@@ -359,6 +361,25 @@ class PushDetails extends DashboardView {
     });
   }
 
+  // Opens the app reported (pushOpens.js). Its chart replaces the hosted
+  // Parse analytics one, which this server never fills.
+  loadOpens(pushDetails) {
+    if (!pushDetails || !pushDetails.id || pushDetails.is_exp) {
+      return;
+    }
+    opensFor(this.context, pushDetails.id)
+      .then(opens => {
+        const update = { opens };
+        if (opens.length) {
+          update.chartData = {
+            pushes: { color: this.state.standardColor, points: hourlyPoints(opens) },
+          };
+        }
+        this.setState(update);
+      })
+      .catch(() => this.setState({ opens: [] }));
+  }
+
   componentWillUnmount() {
     this.xhrHandles.forEach(xhr => xhr.abort());
   }
@@ -369,7 +390,8 @@ class PushDetails extends DashboardView {
       this.context
         .fetchPushDetails(nextProps.params.pushId)
         .then(pushDetails => {
-          this.setState({ pushDetails });
+          this.setState({ pushDetails, opens: null });
+          this.loadOpens(pushDetails);
         })
         .finally(() => {
           this.setState({ loading: false });
@@ -614,7 +636,7 @@ class PushDetails extends DashboardView {
           {prevLaunchGroup}
           {experimentInfo}
           <PushOpenRate
-            numOpened={pushDetails.get('numOpened') || 0}
+            numOpened={this.state.opens ? this.state.opens.length : pushDetails.get('numOpened') || 0}
             numSent={pushDetails.get('numSent')}
             customColor={this.state.standardColor}
           />
@@ -641,6 +663,62 @@ class PushDetails extends DashboardView {
     } else {
       return null;
     }
+  }
+
+  renderOpens() {
+    const opens = this.state.opens;
+    if (!opens) {
+      return null;
+    }
+    const numSent = this.state.pushDetails.get('numSent') || 0;
+    const s = summary(opens, numSent);
+    const platforms = Object.keys(s.byPlatform)
+      .map(p => `${p === 'ios' ? 'iPhone' : p === 'android' ? 'Android' : p === 'macos' ? 'Mac' : 'Other'} ${s.byPlatform[p]}`)
+      .join(' · ');
+    return (
+      <div className={styles.opens}>
+        <div className={styles.tableSectionHeader}>Who opened it</div>
+        <div className={styles.opensSummary}>
+          <span><b>{prettyNumber(s.count)}</b> opened</span>
+          {s.rate != null ? <span><b>{s.rate}%</b> of {prettyNumber(numSent)} sent</span> : null}
+          {s.median != null ? <span>typically <b>{duration(s.median)}</b> after sending</span> : null}
+          {platforms ? <span>{platforms}</span> : null}
+          {s.count ? <span>{s.coldStarts} started the app</span> : null}
+        </div>
+        {opens.length ? (
+          <table className={styles.opensTable}>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Device</th>
+                <th>Opened</th>
+                <th>After sending</th>
+              </tr>
+            </thead>
+            <tbody>
+              {opens.map(o => {
+                const user = o.get('user');
+                return (
+                  <tr key={o.id}>
+                    <td>
+                      <div>{personName(user)}</div>
+                      <div className={styles.opensHandle}>{handle(user)}</div>
+                    </td>
+                    <td>{o.get('platform') === 'ios' ? 'iPhone' : o.get('platform') === 'android' ? 'Android' : o.get('platform') === 'macos' ? 'Mac' : 'Other'}</td>
+                    <td>{o.createdAt.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{duration(o.get('secondsToOpen'))}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div className={styles.opensEmpty}>
+            No opens yet. Only app versions from 2.5.19 (build 1008) report opens.
+          </div>
+        )}
+      </div>
+    );
   }
 
   renderTargetTable() {
@@ -826,6 +904,7 @@ class PushDetails extends DashboardView {
         <LoaderContainer loading={this.state.loading}>
           {this.renderPushRates(experimentInfo)}
           {this.renderAnalytics()}
+          {this.renderOpens()}
           {this.renderTargetTable()}
           {this.renderStatusTable()}
         </LoaderContainer>

@@ -569,6 +569,24 @@ $dk-link: #5fb3f5;
       color: $dk-text !important;
     }
 
+    // Push details: who opened it.
+    #{c('PushDetails__opensSummary')},
+    #{c('PushDetails__opensHandle')},
+    #{c('PushDetails__opensEmpty')},
+    #{c('PushIndex__openRate')} {
+      color: $dk-muted !important;
+    }
+
+    #{c('PushDetails__opensSummary')} b,
+    #{c('PushDetails__opensTable')} td {
+      color: $dk-text !important;
+    }
+
+    #{c('PushDetails__opensTable')} th,
+    #{c('PushDetails__opensTable')} td {
+      border-color: $dk-border !important;
+    }
+
     // Settings: multi-selects (Cloud Config), key fields, file inputs.
     // Cloud Config's pickers set this background inline.
     [style*='background: rgb(246, 250, 251)'],

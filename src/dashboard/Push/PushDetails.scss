@@ -109,3 +109,59 @@
   font-size: 18px;
   margin-bottom: 10px;
 }
+
+// Who opened it (pushOpens.js, 2026-11-06)
+.opens {
+  max-width: 900px;
+  margin: 40px auto 0;
+  padding: 0 20px;
+}
+
+.opensSummary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+  font-size: 14px;
+  color: #59596e;
+  margin-bottom: 20px;
+
+  b {
+    color: #0e0e1a;
+  }
+}
+
+.opensTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th {
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8fb9cf;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e3e3ea;
+  }
+
+  td {
+    padding: 10px 12px;
+    color: #0e0e1a;
+    border-bottom: 1px solid #f0f0f4;
+    vertical-align: top;
+  }
+}
+
+.opensHandle {
+  font-size: 12px;
+  color: #8a8a99;
+}
+
+.opensEmpty {
+  text-align: center;
+  color: #8a8a99;
+  font-size: 14px;
+  padding: 10px 0 20px;
+}

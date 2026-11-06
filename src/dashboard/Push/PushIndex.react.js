@@ -22,6 +22,7 @@ import TableHeader from 'components/Table/TableHeader.react';
 import Toolbar from 'components/Toolbar/Toolbar.react';
 import generatePath from 'lib/generatePath';
 import { withRouter } from 'lib/withRouter';
+import { openCounts } from './pushOpens';
 
 const PUSH_TYPE_ALL = 'all';
 const PUSH_TYPE_CAMPAIGN = 'campaign';
@@ -251,6 +252,10 @@ class PushIndex extends DashboardView {
           },
           pushes: this.state.pushes.concat(pushes),
         });
+        // Opens per push (pushOpens.js); the column shows "–" until they load.
+        openCounts(this.context, pushes.map(p => p.id))
+          .then(counts => this.setState({ opens: { ...(this.state.opens || {}), ...counts } }))
+          .catch(() => {});
       })
       .finally(() => {
         this.setState({
@@ -348,10 +353,25 @@ class PushIndex extends DashboardView {
           {getPushTarget(push.attributes, this.state.availableDevices)}
         </td>
         <td className={styles.colPushesSent}>{getPushCount(push.attributes)}</td>
+        <td className={styles.colOpened}>{this.renderOpened(push)}</td>
         <td className={styles.colName}>{getPushName(push.attributes)}</td>
         <td className={styles.colTime}>{getPushTime(push.attributes.pushTime, push.updatedAt)}</td>
         <td className={styles.colStatus}>{formatStatus(push.attributes.status)}</td>
       </tr>
+    );
+  }
+
+  renderOpened(push) {
+    if (!this.state.opens) {
+      return '–';
+    }
+    const opened = this.state.opens[push.id] || 0;
+    const sent = push.attributes[PushConstants.SENT_FIELD];
+    return (
+      <span>
+        <strong>{opened}</strong>
+        {sent ? <span className={styles.openRate}> {Math.round((opened / sent) * 100)}%</span> : null}
+      </span>
     );
   }
 
@@ -375,10 +395,13 @@ class PushIndex extends DashboardView {
       <TableHeader key="target" width={15}>
         Target
       </TableHeader>,
-      <TableHeader key="pushes_sent" width={15}>
+      <TableHeader key="pushes_sent" width={10}>
         Pushes Sent
       </TableHeader>,
-      <TableHeader key="name" width={30}>
+      <TableHeader key="opened" width={10}>
+        Opened
+      </TableHeader>,
+      <TableHeader key="name" width={25}>
         Name
       </TableHeader>,
       <TableHeader key="time" width={20}>
