@@ -45,6 +45,12 @@ const filterFormatter = (filters, schema) => {
   });
 };
 
+// Filter takes every class's schema plus the class being filtered (upstream
+// changed it for the data browser); this dialog only ever filters
+// installations. Passing the old `schema` alone blanked the whole page as soon
+// as "Create an audience" opened (2026-11-06).
+const INSTALLATION = '_Installation';
+
 export default class PushAudienceDialog extends React.Component {
   static contextType = CurrentApp;
   constructor() {
@@ -103,7 +109,9 @@ export default class PushAudienceDialog extends React.Component {
     const field = Object.keys(available)[0];
     this.setState(
       ({ filters }) => ({
-        filters: filters.push(new Map({ field: field, constraint: available[field][0] })),
+        filters: filters.push(
+          new Map({ class: INSTALLATION, field: field, constraint: available[field][0] })
+        ),
       }),
       this.fetchAudienceSize.bind(this)
     );
@@ -166,6 +174,7 @@ export default class PushAudienceDialog extends React.Component {
   }
 
   render() {
+    const classes = { [INSTALLATION]: this.props.schema || {} };
     const options = [];
     const availableDevices = this.props.availableDevices;
     // TODO: handle empty case when 0 devices - should display link to device creation.
@@ -284,8 +293,10 @@ export default class PushAudienceDialog extends React.Component {
         />
         <div className={styles.filter}>
           <Filter
-            schema={this.props.schema}
-            filters={this.state.filters}
+            schema={classes}
+            allClasses={classes}
+            className={INSTALLATION}
+            filters={this.state.filters.map(f => (f.get('class') ? f : f.set('class', INSTALLATION)))}
             onChange={filters => {
               this.setState({ filters }, this.fetchAudienceSize.bind(this));
             }}

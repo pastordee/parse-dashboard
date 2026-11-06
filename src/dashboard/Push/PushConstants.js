@@ -31,6 +31,9 @@ export const DEVICE_MAP = {
   winrt: 'Win8',
   winphone: 'Windows Phone',
   embedded: 'Embedded',
+  // The Creator desktop apps register as these (2026-10).
+  MacOS: 'Mac',
+  Windows: 'Windows',
 };
 
 export const DEFAULT_DEVICES = ['ios', 'osx', 'tvos', 'android', 'winrt', 'winphone', 'embedded'];
