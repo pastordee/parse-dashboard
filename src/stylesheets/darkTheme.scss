@@ -569,6 +569,27 @@ $dk-link: #5fb3f5;
       color: $dk-text !important;
     }
 
+    // Push details: the page itself was left white, so its (dark-mode,
+    // light) text vanished — the message title included.
+    #{c('PushDetails__detailsWrapper')},
+    #{c('PushDetails__messageHeader')} {
+      background: $dk-bg !important;
+    }
+
+    #{c('PushDetails__groupHeader')} {
+      background: $dk-surface !important;
+    }
+
+    #{c('PushDetails__headline')},
+    #{c('PushOpenRate__count')} {
+      color: $dk-text !important;
+    }
+
+    #{c('PushDetails__subline')},
+    #{c('PushOpenRate__count_label')} {
+      color: $dk-muted !important;
+    }
+
     // Push details: who opened it.
     #{c('PushDetails__opensSummary')},
     #{c('PushDetails__opensHandle')},

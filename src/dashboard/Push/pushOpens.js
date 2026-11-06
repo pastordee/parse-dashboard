@@ -98,17 +98,28 @@ export function summary(opens, numSent) {
   };
 }
 
-// Opens per hour after sending, as Chart points [[ms, count]].
-export function hourlyPoints(opens) {
+const HOUR = 60 * 60 * 1000;
+
+function hourOf(date) {
+  const hour = new Date(date);
+  hour.setMinutes(0, 0, 0);
+  return hour.getTime();
+}
+
+// Opens per hour from the hour it was sent, as Chart points [[ms, count]].
+// Empty hours are zeros, so even a single open draws a line.
+export function hourlyPoints(opens, sentAt) {
   const buckets = {};
   opens.forEach(o => {
-    const hour = new Date(o.createdAt);
-    hour.setMinutes(0, 0, 0);
-    const t = hour.getTime();
+    const t = hourOf(o.createdAt);
     buckets[t] = (buckets[t] || 0) + 1;
   });
-  return Object.keys(buckets)
-    .map(Number)
-    .sort((a, b) => a - b)
-    .map(t => [t, buckets[t]]);
+  const times = Object.keys(buckets).map(Number);
+  const first = Math.min(sentAt ? hourOf(sentAt) : Infinity, ...times);
+  const last = Math.max(...times, first) + HOUR;
+  const points = [];
+  for (let t = first; t <= last; t += HOUR) {
+    points.push([t, buckets[t] || 0]);
+  }
+  return points;
 }

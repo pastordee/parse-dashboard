@@ -37,9 +37,9 @@ const PushOpenRate = ({
     //check for case when numSent is 0
     rateNum = 0;
   }
-  /* eslint-disable no-unused-vars */
+  // Opens come from PushOpen rows since 7.4.46 (pushOpens.js), so the rate
+  // and count are real again.
   const rateStr = getRateString(rateNum);
-  /* eslint-enable */
 
   const customStyles = {
     standardColor: {},
@@ -50,7 +50,7 @@ const PushOpenRate = ({
   if (customColor) {
     customStyles.standard = {
       color: customColor,
-      background: 'white',
+      background: 'transparent',
     };
 
     customStyles.inverse = {
@@ -73,13 +73,11 @@ const PushOpenRate = ({
         style={customStyles[isWinner ? 'inverse' : 'standard']}
         className={[styles.percent, styles[color + (isWinner ? '_inv' : '')]].join(' ')}
       >
-        {/*<div className={styles.rate}>{rateStr}%</div>*/}
-        <div className={styles.rate}>N/A</div>
+        <div className={styles.rate}>{rateStr}%</div>
         <div className={styles.rate_label}>Open Rate</div>
       </div>
       <div className={styles.count_wrap} style={{ float: 'left', width: '50%' }}>
-        {/*<div className={styles.count}>{numOpened}</div>*/}
-        <div className={styles.count}>N/A</div>
+        <div className={styles.count}>{numOpened}</div>
         <div className={styles.count_label}>Push Opens</div>
       </div>
       <div className={styles.count_wrap} style={{ marginLeft: '50%' }}>

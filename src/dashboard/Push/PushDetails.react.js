@@ -372,7 +372,10 @@ class PushDetails extends DashboardView {
         const update = { opens };
         if (opens.length) {
           update.chartData = {
-            pushes: { color: this.state.standardColor, points: hourlyPoints(opens) },
+            pushes: {
+              color: this.state.standardColor,
+              points: hourlyPoints(opens, pushDetails.get('pushTime') || pushDetails.createdAt),
+            },
           };
         }
         this.setState(update);
