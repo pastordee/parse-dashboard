@@ -140,6 +140,37 @@ const LocalizedMessageField = ({
   );
 };
 
+// Where a tap on the push takes people in the app (owner, 2026-11-06). Sent as
+// data.pcLink; the server keeps it with the message (cloud systemMessages.cjs)
+// and the app follows it. "message" = show the message itself.
+const TAP_TARGETS = [
+  ['message', 'Show the message'],
+  ['bible', 'Bible (optionally a passage)'],
+  ['plan', 'My reading plan'],
+  ['prayers', 'Prayers'],
+  ['feeds', 'Feeds'],
+  ['reels', 'Reels'],
+  ['groups', 'Groups'],
+  ['streak', 'Streak'],
+  ['world', 'Prayer around the world'],
+  ['url', 'A web page'],
+];
+
+function tapLink(changes) {
+  const to = changes.tap_to;
+  if (!to || to === 'message' || changes.data_type === 'json') {
+    return null;
+  }
+  const link = { to };
+  if (to === 'bible' && changes.tap_ref && changes.tap_ref.trim()) {
+    link.ref = changes.tap_ref.trim();
+  }
+  if (to === 'url') {
+    link.url = (changes.tap_url || '').trim();
+  }
+  return link;
+}
+
 const XHR_KEY = 'PushNew';
 
 @subscribeTo('Schema', 'schema')
@@ -212,6 +243,10 @@ class PushNew extends DashboardView {
       changes.data_type === 'json' ? JSON.parse(changes.data) : { alert: changes.data };
     if (changes.increment_badge) {
       payload.badge = 'Increment';
+    }
+    const link = tapLink(changes);
+    if (link) {
+      payload.pcLink = link;
     }
 
     const push_time = extractPushTime(changes);
@@ -888,6 +923,49 @@ class PushNew extends DashboardView {
         <div className={styles.messageContentWrap}>
           {this.renderMessageContent(fields, setField)}
         </div>
+        {fields.data_type !== 'json' ? (
+          <Field
+            label={
+              <Label
+                text="When tapped, open"
+                description="Prayer Circle 2.5.19 and later. Older versions just open the app."
+              />
+            }
+            input={
+              <Dropdown value={fields.tap_to} onChange={setField.bind(null, 'tap_to')}>
+                {TAP_TARGETS.map(([value, label]) => (
+                  <Option key={value} value={value}>
+                    {label}
+                  </Option>
+                ))}
+              </Dropdown>
+            }
+          />
+        ) : null}
+        {fields.data_type !== 'json' && fields.tap_to === 'bible' ? (
+          <Field
+            label={<Label text="Passage" description="Optional, e.g. John 3:16" />}
+            input={
+              <TextInput
+                placeholder="John 3:16"
+                value={fields.tap_ref}
+                onChange={setField.bind(null, 'tap_ref')}
+              />
+            }
+          />
+        ) : null}
+        {fields.data_type !== 'json' && fields.tap_to === 'url' ? (
+          <Field
+            label={<Label text="Web address" description="Must start with https://" />}
+            input={
+              <TextInput
+                placeholder="https://prayercircle.co.uk"
+                value={fields.tap_url}
+                onChange={setField.bind(null, 'tap_url')}
+              />
+            }
+          />
+        ) : null}
         <Field
           label={<Label text="Increment the app badge?" />}
           input={
@@ -956,6 +1034,17 @@ class PushNew extends DashboardView {
             </span>
           );
         }
+      }
+      if (
+        changes.data_type !== 'json' &&
+        changes.tap_to === 'url' &&
+        !/^https:\/\/\S+$/.test((changes.tap_url || '').trim())
+      ) {
+        invalidInputMessages.push(
+          <span key="invalid-url">
+            The <strong>web address</strong> must start with https://
+          </span>
+        );
       }
 
       // localized message is empty
@@ -1069,6 +1158,9 @@ class PushNew extends DashboardView {
           exp_type: 'message',
           exp_enable: null, //if present - isExperiment on ruby logic
           increment_badge: null, //if present - counts as true / existing ruby logic
+          tap_to: 'message', // where a tap goes (pcLink); see TAP_TARGETS
+          tap_ref: '',
+          tap_url: '',
           audience_id: this.state.initialAudienceId,
           data: '', //general message
           data_type: 'text',
